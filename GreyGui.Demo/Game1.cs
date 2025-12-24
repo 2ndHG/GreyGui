@@ -9,6 +9,10 @@ public class Game1 : Game
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
 
+    private Panel panel;
+    private RenderContext renderContext = new();
+    private GuiBatch guiBatch;
+
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
@@ -26,6 +30,17 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
+        GreyGui.Initialize(GraphicsDevice);
+
+        guiBatch = new GuiBatch(GraphicsDevice);
+        panel = new()
+        {
+            Size = new(100, 100),
+            BorderRadius = 20,
+            BorderWidth=5,
+            colorMask=Color.Black
+        };
+
 
         // TODO: use this.Content to load your game content here
     }
@@ -43,7 +58,9 @@ public class Game1 : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
-
+        guiBatch.Draw(panel, renderContext, new Point(50, 50));
+        guiBatch.Draw(panel, renderContext, new Point(75, 75));
+        guiBatch.Flush(renderContext);
         // TODO: Add your drawing code here
 
         base.Draw(gameTime);

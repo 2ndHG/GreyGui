@@ -6,8 +6,10 @@ public abstract class GreyGuiElement
 {
     public bool Enabled { get; set; } = true;
     public Color colorMask = Color.Gray;
+    public Color borderColor = Color.Gray;
     public Point OnScreenPos { get; set; }
     public int BorderRadius { get; set; }
+    public int BorderWidth { get; set; }
     public GreyGuiElement? Parent { get; set; }
     public abstract Vector2 Size { get; set; }
     public abstract int ZIndex { get; set; }

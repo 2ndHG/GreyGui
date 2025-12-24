@@ -53,10 +53,10 @@ public class RenderContext
         IndexCount += indices.Length;
     }
 
-    public void FillRect(Rectangle dest, Color color, float borderRadius, float borderWidth, Texture2D texture, Rectangle scissor)
+    public void FillRect(Rectangle dest, Color color, Color borderColor, float borderRadius, float borderWidth, Texture2D texture, Rectangle scissor)
     {
         EnsureCapacity(4, 6);
-        
+
         DrawBatch lastBatch = Batches[^1];
         if (
             texture != lastBatch.Texture ||
@@ -77,10 +77,10 @@ public class RenderContext
         Vector4 rectParams = new(dest.Width, dest.Height, borderRadius, borderWidth);
         int vOffset = VertexCount;
 
-        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), color, new Vector2(0, 0), new Vector2(0, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), color, new Vector2(1, 0), new Vector2(1, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), color, new Vector2(1, 1), new Vector2(1, 1), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), color, new Vector2(0, 1), new Vector2(0, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), color, borderColor, new Vector2(0, 0), new Vector2(0, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), color, borderColor, new Vector2(1, 0), new Vector2(1, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), color, borderColor, new Vector2(1, 1), new Vector2(1, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), color, borderColor, new Vector2(0, 1), new Vector2(0, 1), rectParams);
 
         _indices[IndexCount++] = vOffset + 0;
         _indices[IndexCount++] = vOffset + 1;
@@ -89,10 +89,11 @@ public class RenderContext
         _indices[IndexCount++] = vOffset + 3;
         _indices[IndexCount++] = vOffset + 0;
     }
-    private void SetVertex(int index, Vector3 pos, Color col, Vector2 uv, Vector2 local, Vector4 rParams)
+    private void SetVertex(int index, Vector3 pos, Color col, Color borderCol, Vector2 uv, Vector2 local, Vector4 rParams)
     {
         _vertices[index].Position = pos;
         _vertices[index].Color = col;
+        _vertices[index].BorderColor = borderCol;
         _vertices[index].TexCoord = uv;
         _vertices[index].LocalCoord = local;
         _vertices[index].RectParams = rParams;
@@ -101,11 +102,11 @@ public class RenderContext
     private void EnsureCapacity(int newVertexCount, int newIndexCount)
     {
         if (VertexCount + newVertexCount > _vertices.Length)
-        { 
+        {
             int newCapacity = Math.Max(_vertices.Length * 2, newVertexCount);
             Array.Resize(ref _vertices, newCapacity);
         }
-        if(IndexCount + newIndexCount > _indices.Length)
+        if (IndexCount + newIndexCount > _indices.Length)
         {
             int newCapacity = Math.Max(_indices.Length * 2, newIndexCount);
             Array.Resize(ref _indices, newCapacity);

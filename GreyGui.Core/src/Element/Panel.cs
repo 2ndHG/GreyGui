@@ -111,8 +111,9 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
         context.FillRect(
             new Rectangle(position.X, position.Y, (int)Size.X, (int)Size.Y),
             colorMask,
+            borderColor,
             BorderRadius,
-            0f,
+            BorderWidth,
             GreyGui.Pixel,
             screenScissor
         );

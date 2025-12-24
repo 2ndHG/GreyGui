@@ -10,4 +10,7 @@
     <PackageReference Include="Monogame.Framework.desktopGL" Version="3.8.4.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <EmbeddedResource Include="resource\UI_SDF.mgfx" />
+  </ItemGroup>
 </Project>

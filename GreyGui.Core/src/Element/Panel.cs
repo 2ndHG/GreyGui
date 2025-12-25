@@ -4,15 +4,25 @@ namespace GreyGui;
 
 public class Panel : GreyGuiElement, IContainer, IPercentElement
 {
-    public override Vector2 Size { get => _size; set => _size = value; }
+    public override Vector2 Size
+    {
+        get => _size;
+        set
+        {
+            if (_size == value)
+                return;
+            _size = value;
+            _isSizeDirty = true;
+        }
+    }
     public Vector2 ContainerSize { get => _containerSize; }
 
-    public bool UsePercentWidth => _usePercentWidth;
+    public bool UsePercentWidth { get => _usePercentWidth; set => _usePercentWidth = value; }
 
-    public bool UseHeightWidthRatio => _useHeightWidthRatio;
+    public bool UseHeightWidthRatio { get => _useHeightWidthRatio; set => _useHeightWidthRatio = value; }
 
-    public float WidthPercent => _widthPercent;
-    public float HeightWidthRatio => _heightWidthRatio;
+    public float WidthPercent { get => _widthPercent; set => _widthPercent = value; }
+    public float HeightWidthRatio { get => _heightWidthRatio; set => _heightWidthRatio = value; }
     public bool IsLayoutDirty { get => _isLayoutDirty; set => _isLayoutDirty = value; }
     public bool IsChildrenIndexDirty { get => _isChildrenIndexDirty; set => _isChildrenIndexDirty = value; }
     public override int ZIndex
@@ -46,11 +56,18 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
     public void AppendChildren(GreyGuiElement[] elements)
     {
         _children.AddRange(elements);
+        foreach (GreyGuiElement child in elements)
+        {
+            child.Parent = this;
+            child.IsSizeDirty = true;
+        }
+        _isLayoutDirty = true;
     }
 
     public void RemoveAllChildren()
     {
         _children.Clear();
+        _isLayoutDirty = true;
     }
 
     public void RemoveChildren(GreyGuiElement[] elements)
@@ -59,6 +76,7 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
         {
             _children.Remove(element);
         }
+        _isLayoutDirty = true;
     }
     public override void ResolveSizeDirty()
     {
@@ -117,7 +135,7 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
             GreyGui.Pixel,
             screenScissor
         );
-        
+
         if (_isLayoutDirty)
         {
             // update layout cache

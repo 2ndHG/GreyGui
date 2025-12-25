@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -36,10 +37,19 @@ public class Game1 : Game
         panel = new()
         {
             Size = new(100, 100),
-            BorderRadius = 20,
-            BorderWidth=5,
-            colorMask=Color.Black
+            BorderRadius = 10,
+            colorMask = new Color(36, 94, 103, 255)
         };
+        Panel childPanel = new()
+        {
+            BorderRadius = 10,
+            UsePercentWidth = true,
+            WidthPercent = .5f,
+            UseHeightWidthRatio = true,
+            HeightWidthRatio = .6f,
+            colorMask = new Color(226, 203, 234, 255)
+        };
+        panel.AppendChildren([childPanel]);
 
 
         // TODO: use this.Content to load your game content here
@@ -51,6 +61,23 @@ public class Game1 : Game
             Exit();
 
         // TODO: Add your update logic here
+        var keyboardState = Keyboard.GetState();
+        if (keyboardState.IsKeyDown(Keys.D))
+        {
+            panel.Size = panel.Size with { X = panel.Size.X + 2 };
+        }
+        else if (keyboardState.IsKeyDown(Keys.A))
+        {
+            panel.Size = panel.Size with { X = panel.Size.X - 2 };
+        }
+        if (keyboardState.IsKeyDown(Keys.W))
+        {
+            panel.Size = panel.Size with { Y = panel.Size.Y - 2 };
+        }
+        else if (keyboardState.IsKeyDown(Keys.S))
+        {
+            panel.Size = panel.Size with { Y = panel.Size.Y + 2 };
+        }
 
         base.Update(gameTime);
     }
@@ -59,7 +86,6 @@ public class Game1 : Game
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
         guiBatch.Draw(panel, renderContext, new Point(50, 50));
-        guiBatch.Draw(panel, renderContext, new Point(75, 75));
         guiBatch.Flush(renderContext);
         // TODO: Add your drawing code here
 

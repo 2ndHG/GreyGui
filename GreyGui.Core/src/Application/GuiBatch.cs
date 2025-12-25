@@ -7,7 +7,7 @@ public class GuiBatch
 {
     private readonly GraphicsDevice _device;
     private readonly Effect _uiShader;
-    private static readonly RasterizerState ScissorState = new() { ScissorTestEnable = true};
+    private static readonly RasterizerState ScissorState = new() { ScissorTestEnable = true };
 
     public GuiBatch(GraphicsDevice device, Effect uiShader)
     {
@@ -34,25 +34,18 @@ public class GuiBatch
         {
             return;
         }
-        Matrix projection = Matrix.CreateOrthographicOffCenter(
-            0,
-            _device.Viewport.Width,
-            _device.Viewport.Height,
-            0,
-            0,
-            1
-        );
+        Matrix projection = Matrix.CreateOrthographicOffCenter(0, _device.Viewport.Width, _device.Viewport.Height, 0, 0, 1);
 
         _device.BlendState = BlendState.NonPremultiplied;
         _device.RasterizerState = ScissorState;
 
+        _uiShader.Parameters["WorldViewProjection"].SetValue(projection);
         foreach (DrawBatch batch in context.Batches)
         {
             if (batch.IndexCount == 0) continue;
 
             _device.ScissorRectangle = batch.Scissor;
             _uiShader.Parameters["Texture"].SetValue(batch.Texture);
-            _uiShader.Parameters["WorldViewProjection"].SetValue(projection);
 
             foreach (EffectPass pass in _uiShader.CurrentTechnique.Passes)
             {

@@ -54,7 +54,7 @@ float4 MainPS(VertexShaderOutput input) : COLOR
 
     float dist = RoundedRectSDF(pixelPos, halfSize, radius);
 
-    float edgeSoftness = 1.0; 
+    float edgeSoftness = 0.1; 
     float alpha = smoothstep(edgeSoftness, 0.0, dist);
 
     float borderAlpha = smoothstep(borderWidth + edgeSoftness, borderWidth, -dist);

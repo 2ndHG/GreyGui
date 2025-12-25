@@ -15,7 +15,7 @@ public abstract class GreyGuiElement
     public abstract int ZIndex { get; set; }
     public virtual bool IsSizeDirty { get => _isSizeDirty; internal set => _isSizeDirty = value; }
 
-    internal bool _isSizeDirty;
+    internal bool _isSizeDirty = true;
 
 
 

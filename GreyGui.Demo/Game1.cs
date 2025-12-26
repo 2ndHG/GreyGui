@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -35,10 +36,18 @@ public class Game1 : Game
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
-        panel = new Panel(colorMask: Color.Gray, size: new Vector2(100, 100), paddingSide: 5, zIndex: 10).SetChildren([
-            new Panel(colorMask:Color.Yellow, usePercentWidth: true, widthPercent: .6f, useHeightWidthRatio:true, heightWidthRatio:.8f, paddingSide: 5, zIndex: 10),
-        ]);
-        panel.AppendChild(new Panel(colorMask: Color.Green, size: new(200, 200)));
+        static Panel[] PanelGen()
+        {
+            Panel[] panels = new Panel[10];
+            for (int i = 0; i < 10; ++i)
+            {
+                panels[i] = new Panel(colorMask: new(0 + i * 20, 153 + i * 10, 204 + i * 5), size: new(120 - i * 3, 30), paddingSide: 5, zIndex: 10, borderRadius: 10);
+            }
+            return panels;
+        }
+        panel = new Panel(colorMask: new(10, 10, 10), size: new Vector2(150, 400), paddingSide: 10, paddingTop: 10, zIndex: 10, borderRadius: 10).SetChildren(
+            PanelGen()
+        );
 
 
         // TODO: use this.Content to load your game content here
@@ -74,7 +83,8 @@ public class Game1 : Game
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(Color.CornflowerBlue);
-        guiBatch.Draw(panel, renderContext, new Point(50, 50));
+        Point point = Mouse.GetState().Position;
+        guiBatch.Draw(panel, renderContext, point);
         guiBatch.Flush(renderContext);
         // TODO: Add your drawing code here
 

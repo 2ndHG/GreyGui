@@ -14,6 +14,7 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
                 return;
             _size = value;
             _isSizeDirty = true;
+            _isLayoutDirty = true;
         }
     }
     public Vector2 ContainerSize { get => _containerSize; }
@@ -193,6 +194,7 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
 
     private void RecalculateSize()
     {
+        Console.WriteLine("Resolve Size");
         // As an IPercentElement
         bool sizeChanged = false;
         if (UsePercentWidth && _parent != null)
@@ -205,7 +207,7 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
             _size.Y = _size.X * _heightWidthRatio;
             sizeChanged = true;
         }
-        if (sizeChanged && _parent != null)
+        if (sizeChanged && _parent is not null)
         {
             _parent.IsLayoutDirty = true;
         }
@@ -219,6 +221,7 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
             child.IsSizeDirty = true;
         }
         _isSizeDirty = false;
+        _isLayoutDirty = _isLayoutDirty || sizeChanged;
     }
 
     public override void Update()
@@ -241,19 +244,31 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
 
         if (_isLayoutDirty)
         {
+            Console.WriteLine("Recalculate Children Layout");
             // update layout cache
             _childrenPosition.Clear();
-            float x = (BorderRadius * (Constant.SQRT2 - 1)) + PaddingSide;
+            float xPadding = (BorderRadius * (Constant.SQRT2 - 1)) + PaddingSide;
+            float x = 0;
+            float rowMaxY = 0;
             float y = BorderRadius * (Constant.SQRT2 - 1) + PaddingTop;
             foreach (GreyGuiElement child in _children)
             {
-                _childrenPosition.Add(new Point((int)x, (int)y));
-                y += child.Size.Y;
+                Vector2 childSize = child.Size;
+                if (x + childSize.X > _containerSize.X)
+                {
+                    x = 0;
+                    y += rowMaxY;
+                    rowMaxY = 0;
+                }
+                _childrenPosition.Add(new Point((int)(xPadding + x), (int)y));
+                x += childSize.X;
+                rowMaxY = Math.Max(childSize.Y, rowMaxY);
             }
             _isLayoutDirty = false;
         }
         if (_isChildrenIndexDirty)
         {
+            Console.WriteLine("Recalculate Children draw order");
             List<GreyGuiElement> sorted = [.. _children];
             sorted.Sort((a, b) => a.ZIndex > b.ZIndex ? 1 : -1);
             _drawOrder.Clear();
@@ -274,5 +289,4 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
             child.Draw(child.OnScreenPos, context, screenScissor);
         }
     }
-
 }

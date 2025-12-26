@@ -5,27 +5,38 @@ namespace GreyGui;
 public abstract class GreyGuiElement
 {
     public bool Enabled { get; set; } = true;
-    public Color colorMask = Color.Gray;
-    public Color borderColor = Color.Gray;
+    public Color ColorMask { get; set; } = Color.Gray;
+    public Color BorderColor { get; set; } = Color.Gray;
     public Point OnScreenPos { get; set; }
     public int BorderRadius { get; set; }
     public int BorderWidth { get; set; }
-    public GreyGuiElement? Parent { get; set; }
+    public IContainer? Parent { get => _parent; }
     public abstract Vector2 Size { get; set; }
     public abstract int ZIndex { get; set; }
-    public virtual bool IsSizeDirty { get => _isSizeDirty; internal set => _isSizeDirty = value; }
+    public virtual bool IsSizeDirty { get => _isSizeDirty; set => _isSizeDirty = value; }
 
-    internal bool _isSizeDirty = true;
-
-
+    protected bool _isSizeDirty = true;
+    protected IContainer? _parent;
 
     public abstract void Update();
     public abstract void ResolveSizeDirty();
     public abstract void Draw(Point position, RenderContext renderContext, Rectangle screenScissor);
 
-
     protected virtual bool IsMouseOver(Point mousePosition)
     {
         return false;
+    }
+
+    public void ChangeParentButParentWillNotKnow(IContainer? newParentValue)
+    {
+        _isSizeDirty = _parent != newParentValue;
+        _parent = newParentValue;
+    }
+    /// <summary>
+    /// Identified to <c>Parent?.RemoveChild(this);</c>
+    /// </summary>
+    public void LeaveParent()
+    {
+        _parent?.RemoveChild(this);
     }
 }

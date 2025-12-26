@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Microsoft.Xna.Framework;
 
 namespace GreyGui;
@@ -17,12 +18,54 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
     }
     public Vector2 ContainerSize { get => _containerSize; }
 
-    public bool UsePercentWidth { get => _usePercentWidth; set => _usePercentWidth = value; }
+    public bool UsePercentWidth
+    {
+        get => _usePercentWidth;
+        set
+        {
+            if (_usePercentWidth == value)
+                return;
+            _usePercentWidth = value;
+            _isSizeDirty = true;
+        }
+    }
 
-    public bool UseHeightWidthRatio { get => _useHeightWidthRatio; set => _useHeightWidthRatio = value; }
+    public bool UseHeightWidthRatio
+    {
+        get => _useHeightWidthRatio;
+        set
+        {
+            if (_useHeightWidthRatio == value)
+                return;
+            _isSizeDirty = true;
+            _useHeightWidthRatio = value;
+        }
+    }
 
-    public float WidthPercent { get => _widthPercent; set => _widthPercent = value; }
-    public float HeightWidthRatio { get => _heightWidthRatio; set => _heightWidthRatio = value; }
+    public float WidthPercent
+    {
+        get => _widthPercent;
+        set
+        {
+            if (_widthPercent == value)
+                return;
+            _widthPercent = value;
+            _isSizeDirty = true;
+        }
+    }
+    public float HeightWidthRatio
+    {
+        get => _heightWidthRatio;
+        set
+        {
+            if (_heightWidthRatio == value)
+                return;
+            _heightWidthRatio = value;
+            _isSizeDirty = true;
+        }
+    }
+    public int PaddingTop { get; set; }
+    public int PaddingSide { get; set; }
     public bool IsLayoutDirty { get => _isLayoutDirty; set => _isLayoutDirty = value; }
     public bool IsChildrenIndexDirty { get => _isChildrenIndexDirty; set => _isChildrenIndexDirty = value; }
     public override int ZIndex
@@ -32,13 +75,14 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
             if (_zIndex != value)
             {
                 _zIndex = value;
-                if (Parent is IContainer container)
+                if (_parent is not null)
                 {
-                    container.IsChildrenIndexDirty = true;
+                    _parent.IsChildrenIndexDirty = true;
                 }
             }
         }
     }
+
 
     private bool _usePercentWidth;
     private bool _useHeightWidthRatio;
@@ -50,34 +94,91 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
     private bool _isLayoutDirty;
     private bool _isChildrenIndexDirty;
     private List<GreyGuiElement> _children = [];
+    private Dictionary<GreyGuiElement, int> _childrenIndexMap = [];
     private List<Point> _childrenPosition = [];
+    private List<int> _drawOrder = [];
 
-
-    public void AppendChildren(GreyGuiElement[] elements)
+    public Panel() { }
+    public Panel(
+        Color colorMask, Color borderColor = default, int borderRadius = default, int borderWidth = default,
+        Vector2 size = default, bool usePercentWidth = default, bool useHeightWidthRatio = default, float widthPercent = default, float heightWidthRatio = default, int paddingTop = default, int paddingSide = default, int zIndex = default, ICollection<GreyGuiElement>? children = null)
     {
-        _children.AddRange(elements);
-        foreach (GreyGuiElement child in elements)
+        ColorMask = colorMask;
+        BorderColor = borderColor;
+        BorderRadius = borderRadius;
+        BorderWidth = borderWidth;
+        _size = size;
+        _usePercentWidth = usePercentWidth;
+        _useHeightWidthRatio = useHeightWidthRatio;
+        _widthPercent = widthPercent;
+        _heightWidthRatio = heightWidthRatio;
+        PaddingTop = paddingTop;
+        PaddingSide = paddingSide;
+        _zIndex = zIndex;
+        if (children != null)
         {
-            child.Parent = this;
-            child.IsSizeDirty = true;
+            AppendChildren(children);
         }
-        _isLayoutDirty = true;
     }
+
+    public void AppendChild(GreyGuiElement child)
+    {
+        child.Parent?.RemoveChild(child);
+        if (_childrenIndexMap.TryAdd(child, _children.Count))
+        {
+            _children.Add(child);
+            child.ChangeParentButParentWillNotKnow(this);
+
+            _isChildrenIndexDirty = true;
+            _isLayoutDirty = true;
+        }
+    }
+
+    public void AppendChildren(ICollection<GreyGuiElement> children)
+    {
+        foreach (GreyGuiElement child in children)
+        {
+            AppendChild(child);
+        }
+    }
+    public void RemoveChild(GreyGuiElement child)
+    {
+        if (_childrenIndexMap.Remove(child))
+        {
+            _children.Remove(child);
+            child.ChangeParentButParentWillNotKnow(null);
+
+            _isChildrenIndexDirty = true;
+            _isLayoutDirty = true;
+        }
+    }
+
+    public void RemoveChildren(ICollection<GreyGuiElement> children)
+    {
+        foreach (GreyGuiElement child in children)
+        {
+            RemoveChild(child);
+        }
+    }
+
 
     public void RemoveAllChildren()
     {
-        _children.Clear();
-        _isLayoutDirty = true;
-    }
-
-    public void RemoveChildren(GreyGuiElement[] elements)
-    {
-        foreach (GreyGuiElement element in elements)
+        foreach (GreyGuiElement child in _children)
         {
-            _children.Remove(element);
+            RemoveChild(child);
         }
         _isLayoutDirty = true;
+        _isChildrenIndexDirty = true;
     }
+
+    public Panel SetChildren(ICollection<GreyGuiElement> children)
+    {
+        RemoveAllChildren();
+        AppendChildren(children);
+        return this;
+    }
+
     public override void ResolveSizeDirty()
     {
         if (_isSizeDirty)
@@ -94,9 +195,9 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
     {
         // As an IPercentElement
         bool sizeChanged = false;
-        if (UsePercentWidth && Parent != null)
+        if (UsePercentWidth && _parent != null)
         {
-            _size.X = ((IContainer)Parent).ContainerSize.X * _widthPercent;
+            _size.X = _parent.ContainerSize.X * _widthPercent;
             sizeChanged = true;
         }
         if (UseHeightWidthRatio)
@@ -104,13 +205,15 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
             _size.Y = _size.X * _heightWidthRatio;
             sizeChanged = true;
         }
-        if (sizeChanged && Parent is IContainer container)
+        if (sizeChanged && _parent != null)
         {
-            container.IsLayoutDirty = true;
+            _parent.IsLayoutDirty = true;
         }
 
         // As an IContainer
-        _containerSize = _size - new Vector2(BorderRadius * 2);
+        _containerSize = _size - new Vector2(BorderRadius * (Constant.SQRT2 - 1) * 2);
+        _containerSize.X -= PaddingSide * 2;
+        _containerSize.Y -= PaddingTop;
         foreach (GreyGuiElement child in _children)
         {
             child.IsSizeDirty = true;
@@ -128,8 +231,8 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
     {
         context.FillRect(
             new Rectangle(position.X, position.Y, (int)Size.X, (int)Size.Y),
-            colorMask,
-            borderColor,
+            ColorMask,
+            BorderColor,
             BorderRadius,
             BorderWidth,
             GreyGui.Pixel,
@@ -140,29 +243,36 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
         {
             // update layout cache
             _childrenPosition.Clear();
-            int x = BorderRadius;
-            float y = BorderRadius;
+            float x = (BorderRadius * (Constant.SQRT2 - 1)) + PaddingSide;
+            float y = BorderRadius * (Constant.SQRT2 - 1) + PaddingTop;
             foreach (GreyGuiElement child in _children)
             {
-                _childrenPosition.Add(new Point(x, (int)y));
+                _childrenPosition.Add(new Point((int)x, (int)y));
                 y += child.Size.Y;
             }
             _isLayoutDirty = false;
         }
         if (_isChildrenIndexDirty)
         {
-            _children.Sort((a, b) => a.ZIndex > b.ZIndex ? 1 : -1);
+            List<GreyGuiElement> sorted = [.. _children];
+            sorted.Sort((a, b) => a.ZIndex > b.ZIndex ? 1 : -1);
+            _drawOrder.Clear();
+            foreach (GreyGuiElement element in sorted)
+            {
+                _drawOrder.Add(_childrenIndexMap[element]);
+            }
             _isChildrenIndexDirty = false;
         }
 
-        for (int i = 0; i < _children.Count; i++)
+        for (int i = 0; i < _drawOrder.Count; i++)
         {
-            GreyGuiElement child = _children[i];
-            Point relativePos = _childrenPosition[i];
+            GreyGuiElement child = _children[_drawOrder[i]];
+            Point relativePos = _childrenPosition[_drawOrder[i]];
 
             child.OnScreenPos = position + relativePos;
 
             child.Draw(child.OnScreenPos, context, screenScissor);
         }
     }
+
 }

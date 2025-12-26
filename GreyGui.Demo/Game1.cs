@@ -34,22 +34,11 @@ public class Game1 : Game
         GreyGui.Initialize(GraphicsDevice);
 
         guiBatch = new GuiBatch(GraphicsDevice);
-        panel = new()
-        {
-            Size = new(100, 100),
-            BorderRadius = 10,
-            colorMask = new Color(36, 94, 103, 255)
-        };
-        Panel childPanel = new()
-        {
-            BorderRadius = 10,
-            UsePercentWidth = true,
-            WidthPercent = .5f,
-            UseHeightWidthRatio = true,
-            HeightWidthRatio = .6f,
-            colorMask = new Color(226, 203, 234, 255)
-        };
-        panel.AppendChildren([childPanel]);
+
+        panel = new Panel(colorMask: Color.Gray, size: new Vector2(100, 100), paddingSide: 5, zIndex: 10).SetChildren([
+            new Panel(colorMask:Color.Yellow, usePercentWidth: true, widthPercent: .6f, useHeightWidthRatio:true, heightWidthRatio:.8f, paddingSide: 5, zIndex: 10),
+        ]);
+        panel.AppendChild(new Panel(colorMask: Color.Green, size: new(200, 200)));
 
 
         // TODO: use this.Content to load your game content here

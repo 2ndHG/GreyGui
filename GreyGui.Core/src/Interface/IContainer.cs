@@ -4,8 +4,10 @@ namespace GreyGui;
 
 public interface IContainer
 {
-    public void AppendChildren(GreyGuiElement[] elements);
-    public void RemoveChildren(GreyGuiElement[] elements);
+    public void AppendChild(GreyGuiElement child);
+    public void AppendChildren(ICollection<GreyGuiElement> children);
+    public void RemoveChild(GreyGuiElement child);
+    public void RemoveChildren(ICollection<GreyGuiElement> children);
     public void RemoveAllChildren();
     public Vector2 ContainerSize { get; }
 

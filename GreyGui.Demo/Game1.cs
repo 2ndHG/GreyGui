@@ -95,7 +95,7 @@ public class Game1 : Game
             }
             return panels;
         }
-        panel = new Panel(colorMask: new(10, 10, 10), borderColor: Color.Gray, size: new Vector2(150, 400), paddingSide: 10, paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Spread, childGap: 15f, rowGap: 6f).SetChildren(
+        panel = new Panel(colorMask: new(10, 10, 10), borderColor: Color.Gray, size: new Vector2(150, 400), paddingSide: 10, paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Right, childGap: 15f, rowGap: 6f).SetChildren(
             PanelGen()
         );
         return panel;

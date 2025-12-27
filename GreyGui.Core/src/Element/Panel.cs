@@ -254,12 +254,12 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
         };
         void InsertRow(float y, float rowElementTotalWidth, float rowHeight, int elementBegin, int elementEnd)
         {
-            float emptySpace = _containerSize.X - rowElementTotalWidth;
+            int gapCount = elementEnd - elementBegin - 1;
+            float emptySpace = _containerSize.X - rowElementTotalWidth - gapCount * _childGap;
             float x = xLayoutMulti * emptySpace + xPadding;
             float childGapWidth;
             if (_layoutMode == PanelLayoutMode.Spread)
             {
-                int gapCount = elementEnd - elementBegin - 1;
                 childGapWidth = gapCount == 0 ? 0 : emptySpace / gapCount;
             }
             else
@@ -289,11 +289,12 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
             Vector2 childSize = child.Size;
             if (totalWidth + gapWidth + childSize.X > _containerSize.X)
             {
+                int count = i - notInsertedIndex;
                 InsertRow(y, totalWidth, rowHeight, notInsertedIndex, i);
                 notInsertedIndex = i;
                 totalWidth = 0;
                 gapWidth = 0;
-                y += rowHeight +_rowGap;
+                y += rowHeight + (count > 0 ? _rowGap : 0);
                 rowHeight = 0;
             }
             totalWidth += childSize.X;

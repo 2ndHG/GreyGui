@@ -213,7 +213,6 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
 
     private void RecalculateSize()
     {
-        // Console.WriteLine("Resolve Size");
         // As an IPercentElement
         bool sizeChanged = false;
         if (UsePercentWidth && _parent != null)
@@ -274,7 +273,6 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
                 x += _children[i].Size.X + childGapWidth;
             }
         }
-        // Console.WriteLine("Recalculate Children Layout");
         // update layout cache
         _childrenPosition.Clear();
         float totalWidth = 0;
@@ -330,7 +328,6 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
         }
         if (_isChildrenIndexDirty)
         {
-            Console.WriteLine("Recalculate Children draw order");
             List<GreyGuiElement> sorted = [.. _children];
             sorted.Sort((a, b) => a.ZIndex > b.ZIndex ? 1 : -1);
             _drawOrder.Clear();

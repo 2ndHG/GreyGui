@@ -11,7 +11,7 @@ public class Game1 : Game
     private GraphicsDeviceManager _graphics;
     private SpriteBatch _spriteBatch;
 
-    private Panel panel;
+    private GreyGuiElement root;
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
 
@@ -36,7 +36,7 @@ public class Game1 : Game
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
-        panel = GeneratePanel1();
+        root = GeneratePanel1();
 
         // TODO: use this.Content to load your game content here
     }
@@ -50,24 +50,24 @@ public class Game1 : Game
         var keyboardState = Keyboard.GetState();
         if (keyboardState.IsKeyDown(Keys.D))
         {
-            panel.Size = panel.Size with { X = panel.Size.X + 2 };
+            root.Size = root.Size with { X = root.Size.X + 3f };
         }
         else if (keyboardState.IsKeyDown(Keys.A))
         {
-            panel.Size = panel.Size with { X = panel.Size.X - 2 };
+            root.Size = root.Size with { X = root.Size.X - 3f };
         }
         if (keyboardState.IsKeyDown(Keys.W))
         {
-            panel.Size = panel.Size with { Y = panel.Size.Y - 2 };
+            root.Size = root.Size with { Y = root.Size.Y - 3f };
         }
         else if (keyboardState.IsKeyDown(Keys.S))
         {
-            panel.Size = panel.Size with { Y = panel.Size.Y + 2 };
+            root.Size = root.Size with { Y = root.Size.Y + 3f };
         }
 
         if (keyboardState.IsKeyDown(Keys.R))
         {
-            panel = GeneratePanelWireFrame();
+            root = GeneratePanelWireFrame();
         }
 
         base.Update(gameTime);
@@ -75,51 +75,60 @@ public class Game1 : Game
 
     protected override void Draw(GameTime gameTime)
     {
+        if (!IsActive)
+            return;
         GraphicsDevice.Clear(new Color(50, 50, 50));
-        Point point = Mouse.GetState().Position;
-        guiBatch.Draw(panel, renderContext, new Point(30, 30));
+        // Point point = Mouse.GetState().Position;
+        guiBatch.Draw(root, renderContext, new Point(30, 30));
         guiBatch.Flush(renderContext);
-        // TODO: Add your drawing code here
+
+        // Measure draw calls
+        // var metrics = GraphicsDevice.Metrics;
+        // Console.WriteLine(metrics.DrawCount);
 
         base.Draw(gameTime);
     }
 
-    private Panel GeneratePanel1()
+    private ListPanel GeneratePanel1()
     {
-        static Panel[] PanelGen()
+        static ListPanel[] PanelGen()
         {
-            Panel[] panels = new Panel[10];
+            ListPanel[] panels = new ListPanel[10];
             for (int i = 0; i < 10; ++i)
             {
-                panels[i] = new Panel(colorMask: new(0 + i * 20, 153 + i * 10, 204 + i * 5), size: new(120 - i * 3, 30), paddingSide: 5, zIndex: 10, borderRadius: 10);
+                panels[i] = new ListPanel(colorMask: new(0 + i * 20, 153 + i * 10, 204 + i * 5), size: new(120 - i * 3, 30), paddingSide: 5, zIndex: 10, borderRadius: 10);
             }
             return panels;
         }
-        panel = new Panel(colorMask: new(10, 10, 10), borderColor: Color.Gray, size: new Vector2(150, 400), paddingSide: 10, paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Right, childGap: 15f, rowGap: 6f).SetChildren(
+        ListPanel panel = new ListPanel(colorMask: new(10, 10, 10), borderColor: Color.Gray, size: new Vector2(150, 400), paddingSide: 10, paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Right, childGap: 15f, rowGap: 6f).SetChildren(
             PanelGen()
         );
         return panel;
     }
-    private Panel GeneratePanelWireFrame()
+    private RowPanel GeneratePanelWireFrame()
     {
-        static Panel[] PanelItemGen()
+        static ListPanel[] PanelItemGen()
         {
-            Panel[] panels = new Panel[10];
+            ListPanel[] panels = new ListPanel[10];
             for (int i = 0; i < 10; ++i)
             {
-                panels[i] = new Panel(colorMask: new(20 + i * 10, 100 + i * 5, 100 + i * 3), size: new(25, 25), paddingSide: 5, zIndex: 10, borderRadius: 10);
+                panels[i] = new ListPanel(colorMask: new(20 + i * 10, 100 + i * 5, 100 + i * 3), size: new(25, 25), paddingSide: 5, borderRadius: 7);
             }
             return panels;
         }
-        Panel panel = new Panel(colorMask: new(10, 10, 10), borderColor: Color.Gray, size: new Vector2(740, 435), paddingSide: 10, paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Spread, rowGap: 6f).SetChildren([
-            new Panel(colorMask: new(80, 80, 80), borderColor: Color.Gray, size: new Vector2(0, 405), usePercentWidth: true,
-            paddingTop:3, paddingSide: 3, widthPercent:.2f, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Spread, childGap: 15f, rowGap: 6f).SetChildren([
-                new Panel(colorMask: new(150 , 230, 255), borderColor: Color.Gray, size: new Vector2(0, 30), usePercentWidth: true, widthPercent:1f, zIndex: 10, borderRadius: 7, layoutMode: PanelLayoutMode.Spread, childGap: 15f, rowGap: 6f),
-                new Panel(colorMask: new(0, 0, 0, 0), usePercentWidth: true,size: new(0, 150), widthPercent:1f, rowGap:3, childGap:3, layoutMode: PanelLayoutMode.Left).SetChildren(PanelItemGen()),
-                new Panel(colorMask: new(50 , 170, 100), borderColor: Color.Gray, size: new Vector2(0, 200), usePercentWidth: true, widthPercent:1f, zIndex: 9, borderRadius: 10, childGap: 15f, rowGap: 6f),
+        RowPanel panel = new RowPanel(colorMask: new(10, 10, 10), borderColor: Color.Gray, size: new Vector2(740, 435), paddingSide: 7, paddingTop: 7, paddingBottom: 7, borderRadius: 10, childGap: 10, layoutMode: PanelLayoutMode.Spread).SetChildren([
+            new ListPanel(colorMask: new(80, 80, 80), borderColor: Color.Gray, size: new Vector2(0, 405), useWidthRatio: true, widthRatio: .2f, useHeightRatio:true, heightRatio:1f, paddingTop: 3, paddingSide: 3,  zIndex: 10, borderRadius: 10,
+
+            layoutMode: PanelLayoutMode.Spread, childGap: 15f, rowGap: 6f).SetChildren([
+                new RowPanel(colorMask: new(150 , 230, 255), borderColor: Color.Gray, size: new Vector2(0, 30), useWidthRatio: true, widthRatio:1f, zIndex: 10, borderRadius: 7, layoutMode: PanelLayoutMode.Spread, childGap: 15f),
+
+                new ListPanel(colorMask: new(40, 40, 40), useWidthRatio: true,size: new(0, 150), widthRatio:1f, borderRadius:7, childGap:3, rowGap:3, layoutMode: PanelLayoutMode.Spread).SetChildren(PanelItemGen()),
+
+                new RowPanel(colorMask: new(50 , 170, 100), borderColor: Color.Gray, size: new Vector2(0, 200), useWidthRatio: true, widthRatio:1f, zIndex: 9, borderRadius: 10, childGap: 15f),
             ]),
 
-            new Panel(colorMask: new(80, 80, 80), borderColor: Color.Gray, size: new Vector2(0, 405), paddingSide: 10, usePercentWidth: true, widthPercent: .79f, paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Spread, childGap: 15f, rowGap: 6f),
+            new RowPanel(colorMask: new(80, 80, 80), borderColor: Color.Gray, size: new Vector2(0, 405), paddingSide: 10, useWidthRatio: true, widthRatio: .4f, useHeightRatio:true, heightRatio:1f,paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Spread, childGap: 15f),
+            new RowPanel(colorMask: Color.DarkGoldenrod, borderColor: Color.Gold, size: new Vector2(0, 405), paddingSide: 10, useWidthRatio: true, widthRatio: .4f, useHeightRatio:true, heightRatio:1f,paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Spread, childGap: 15f),
         ]);
         return panel;
     }

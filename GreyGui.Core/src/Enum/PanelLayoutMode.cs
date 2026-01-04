@@ -2,5 +2,5 @@ namespace GreyGui;
 
 public enum PanelLayoutMode
 {
-    Left, Right, Middle, Spread
+    Left, Right, Center, Spread
 }

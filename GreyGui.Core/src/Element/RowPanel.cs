@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 
 namespace GreyGui;
 
-public class Panel : GreyGuiElement, IContainer, IPercentElement
+public class RowPanel : GreyGuiElement, IContainer, IRatioElement
 {
     public override Vector2 Size
     {
@@ -19,15 +19,26 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
     }
     public Vector2 ContainerSize { get => _containerSize; }
 
-    public bool UsePercentWidth
+    public bool UseWidthRatio
     {
-        get => _usePercentWidth;
+        get => _useWidthRatio;
         set
         {
-            if (_usePercentWidth == value)
+            if (_useWidthRatio == value)
                 return;
-            _usePercentWidth = value;
+            _useWidthRatio = value;
             _isSizeDirty = true;
+        }
+    }
+    public bool UseHeightRatio
+    {
+        get => _useHeightRatio;
+        set
+        {
+            if (value == _useHeightRatio)
+                return;
+            _isSizeDirty = true;
+            _useHeightRatio = value;
         }
     }
 
@@ -43,14 +54,25 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
         }
     }
 
-    public float WidthPercent
+    public float WidthRatio
     {
-        get => _widthPercent;
+        get => _widthRatio;
         set
         {
-            if (_widthPercent == value)
+            if (_widthRatio == value)
                 return;
-            _widthPercent = value;
+            _widthRatio = value;
+            _isSizeDirty = true;
+        }
+    }
+    public float HeightRatio
+    {
+        get => _heightRatio;
+        set
+        {
+            if (_heightRatio == value)
+                return;
+            _heightRatio = value;
             _isSizeDirty = true;
         }
     }
@@ -68,6 +90,17 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
     public int PaddingTop { get; set; }
     public int PaddingBottom { get; set; }
     public int PaddingSide { get; set; }
+    public float ChildGap
+    {
+        get => _childGap;
+        set
+        {
+            if (value == _childGap)
+                return;
+            _childGap = value;
+            _isLayoutDirty = true;
+        }
+    }
     public PanelLayoutMode LayoutMode
     {
         get => _layoutMode;
@@ -97,15 +130,16 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
     }
 
 
-    private bool _usePercentWidth;
+    private bool _useWidthRatio;
+    private bool _useHeightRatio;
     private bool _useHeightWidthRatio;
-    private float _widthPercent;
+    private float _widthRatio;
+    private float _heightRatio;
     private float _heightWidthRatio;
     private Vector2 _size;
     private int _zIndex;
     private PanelLayoutMode _layoutMode;
     private float _childGap;
-    private float _rowGap;
     private Vector2 _containerSize;
     private bool _isLayoutDirty;
     private bool _isChildrenIndexDirty;
@@ -114,26 +148,27 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
     private List<Point> _childrenPosition = [];
     private List<int> _drawOrder = [];
 
-    public Panel() { }
-    public Panel(
+    public RowPanel() { }
+    public RowPanel(
         Color colorMask, Color borderColor = default, int borderRadius = default, int borderWidth = default,
-        Vector2 size = default, bool usePercentWidth = default, bool useHeightWidthRatio = default, float widthPercent = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, PanelLayoutMode layoutMode = default, float childGap = default, float rowGap = default, ICollection<GreyGuiElement>? children = null)
+        Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, PanelLayoutMode layoutMode = default, float childGap = default, ICollection<GreyGuiElement>? children = null)
     {
         ColorMask = colorMask;
         BorderColor = borderColor;
         BorderRadius = borderRadius;
         BorderWidth = borderWidth;
         _size = size;
-        _usePercentWidth = usePercentWidth;
+        _useWidthRatio = useWidthRatio;
+        _useHeightRatio = useHeightRatio;
         _useHeightWidthRatio = useHeightWidthRatio;
-        _widthPercent = widthPercent;
+        _widthRatio = widthRatio;
+        _heightRatio = heightRatio;
         _heightWidthRatio = heightWidthRatio;
         PaddingTop = paddingTop;
         PaddingBottom = paddingBottom;
         PaddingSide = paddingSide;
         LayoutMode = layoutMode;
         _childGap = childGap;
-        _rowGap = rowGap;
         _zIndex = zIndex;
         if (children != null)
         {
@@ -192,7 +227,7 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
         _isChildrenIndexDirty = true;
     }
 
-    public Panel SetChildren(ICollection<GreyGuiElement> children)
+    public RowPanel SetChildren(ICollection<GreyGuiElement> children)
     {
         RemoveAllChildren();
         AppendChildren(children);
@@ -213,14 +248,22 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
 
     private void RecalculateSize()
     {
-        // As an IPercentElement
+        // As an IRatioElement
         bool sizeChanged = false;
-        if (UsePercentWidth && _parent != null)
+        if (UseWidthRatio && _parent != null)
         {
-            _size.X = _parent.ContainerSize.X * _widthPercent;
+            _size.X = _parent.ContainerSize.X * _widthRatio;
             sizeChanged = true;
         }
-        if (UseHeightWidthRatio)
+        if (UseHeightRatio)
+        {
+            if (_parent != null)
+            {
+                _size.Y = _parent.ContainerSize.Y * _heightRatio;
+                sizeChanged = true;
+            }
+        }
+        else if (UseHeightWidthRatio)
         {
             _size.Y = _size.X * _heightWidthRatio;
             sizeChanged = true;
@@ -232,8 +275,8 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
 
         // As an IContainer
         _containerSize = _size - new Vector2(BorderRadius * (Constant.SQRT2 - 1) * 2);
-        _containerSize.X -= PaddingSide * 2;
-        _containerSize.Y -= PaddingTop;
+        _containerSize.X -= PaddingSide * 2 + _childGap * MathF.Max(0, _children.Count - 1);
+        _containerSize.Y -= PaddingTop + PaddingBottom;
         foreach (GreyGuiElement child in _children)
         {
             child.IsSizeDirty = true;
@@ -244,63 +287,32 @@ public class Panel : GreyGuiElement, IContainer, IPercentElement
 
     private void RecalculateLayout()
     {
-        float xPadding = (BorderRadius * (Constant.SQRT2 - 1)) + PaddingSide;
+        float elementTotalWidth = 0f;
+        for (int i = 0; i < _children.Count; ++i)
+        {
+            elementTotalWidth += _children[i].Size.X;
+        }
         float xLayoutMulti = _layoutMode switch
         {
-            PanelLayoutMode.Middle => .5f,
+            PanelLayoutMode.Center => .5f,
             PanelLayoutMode.Right => 1f,
             _ => 0
         };
-        void InsertRow(float y, float rowElementTotalWidth, float rowHeight, int elementBegin, int elementEnd)
-        {
-            int gapCount = elementEnd - elementBegin - 1;
-            float emptySpace = _containerSize.X - rowElementTotalWidth - gapCount * _childGap;
-            float x = xLayoutMulti * emptySpace + xPadding;
-            float childGapWidth;
-            if (_layoutMode == PanelLayoutMode.Spread)
-            {
-                childGapWidth = gapCount == 0 ? 0 : emptySpace / gapCount;
-            }
-            else
-            {
-                childGapWidth = _childGap;
-            }
+        float emptySpace = _containerSize.X - elementTotalWidth;
+        float borderRadiusPad = BorderRadius * (Constant.SQRT2 - 1);
 
+        float x = borderRadiusPad + PaddingSide + emptySpace * xLayoutMulti;
+        float y = borderRadiusPad + PaddingTop;
+        float childGap = (_layoutMode == PanelLayoutMode.Spread && _children.Count > 1) ?
+            emptySpace / (_children.Count - 1) + _childGap
+            : _childGap;
 
-            for (int i = elementBegin; i < elementEnd; ++i)
-            {
-                _childrenPosition.Add(new Point((int)x, (int)y));
-                x += _children[i].Size.X + childGapWidth;
-            }
-        }
-        // update layout cache
+        // update layout cache  
         _childrenPosition.Clear();
-        float totalWidth = 0;
-        float rowHeight = 0;
-        float y = BorderRadius * (Constant.SQRT2 - 1) + PaddingTop;
-
-        int notInsertedIndex = 0;
-        float gapWidth = 0;
         for (int i = 0; i < _children.Count; ++i)
         {
-            GreyGuiElement child = _children[i];
-            Vector2 childSize = child.Size;
-            if (totalWidth + gapWidth + childSize.X > _containerSize.X)
-            {
-                int count = i - notInsertedIndex;
-                InsertRow(y, totalWidth, rowHeight, notInsertedIndex, i);
-                notInsertedIndex = i;
-                totalWidth = 0;
-                gapWidth = 0;
-                y += rowHeight + (count > 0 ? _rowGap : 0);
-                rowHeight = 0;
-            }
-            totalWidth += childSize.X;
-            gapWidth += _childGap;
-            rowHeight = Math.Max(childSize.Y, rowHeight);
-        }
-        {
-            InsertRow(y, totalWidth, rowHeight, notInsertedIndex, _children.Count);
+            _childrenPosition.Add(new Point((int)x, (int)y));
+            x += _children[i].Size.X + childGap;
         }
         _isLayoutDirty = false;
     }

@@ -1,0 +1,3 @@
+[submodule "External/TypographyMsdf"]
+	path = External/TypographyMsdf
+	url = https://github.com/2ndHG/Typography.git

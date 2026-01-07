@@ -6,7 +6,7 @@ namespace GreyGui;
 
 public static class GreyGui
 {
-    public static void Initialize(GraphicsDevice device)
+    public static void Initialize(GraphicsDevice device, int textAtlasWidth = 2048, int textAtlasHeight = 2048)
     {
         Pixel = new Texture2D(device, 1, 1);
         Pixel.SetData([Color.White]);
@@ -25,8 +25,12 @@ public static class GreyGui
         using MemoryStream ms = new();
         stream.CopyTo(ms);
         Shader = new Effect(device, ms.ToArray());
+
+        TextSystem = new TextSystem(device, textAtlasWidth, textAtlasHeight);
     }
 
     public static Texture2D Pixel { get; private set; }
     public static Effect Shader { get; private set; }
+    public static TextSystem? TextSystem { get; private set; }
+    public static string? DefaultFont { get; private set; }
 }

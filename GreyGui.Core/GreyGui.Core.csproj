@@ -11,6 +11,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\External\TypographyMsdf\Typography\Typography.csproj" />
+    <ProjectReference Include="..\External\TypographyMsdf\Typography\Typography.OpenFont.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <EmbeddedResource Include="resource\UI_SDF.mgfx" />
   </ItemGroup>
 </Project>

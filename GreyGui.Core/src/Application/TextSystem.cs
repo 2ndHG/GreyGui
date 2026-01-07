@@ -12,6 +12,7 @@ public class TextSystem
     public float GlyphPixelSize { get; private set; } = 32f;
     public int GlyphPadding { get; private set; } = 4;
     public float GlyphRange { get; private set; } = 2f;
+    public FontAtlas FontAtlas => _fontAtlas;
 
     private GraphicsDevice _graphicDevice;
     private Dictionary<string, FontInfo> _fontInfoMap = [];
@@ -48,12 +49,19 @@ public class TextSystem
 
             MsdfgenResult msdfgenResult = glyph.RenderMSDF(GlyphPixelSize, GlyphRange, GlyphPadding);
             FloatRGBBmp bmp = msdfgenResult.Bmp;
-
-            for (int j = 0; j < bmp.Height; ++j)
+            if (bmp.Width == 0 || bmp.Height == 0)
+            {
+                Console.WriteLine($"Warning: Glyph for character '{chars[i]}' has zero width or height, skipping insertion into font atlas.");
+            }
+            else
             {
                 if (_fontAtlas.TryInsertGlyph(bmp, out Rectangle glyphSrcRect))
                 {
-                    
+                    fontInfo.GlyphInfoMap.TryAdd(c, new GlyphInfo() { srcRect = glyphSrcRect });
+                }
+                else
+                {
+                    throw new Exception("Font atlas is full, cannot insert more glyphs.");
                 }
             }
         }

@@ -25,6 +25,10 @@ public class Game1 : Game
     protected override void Initialize()
     {
         // TODO: Add your initialization logic here
+        _graphics.PreferredBackBufferWidth = 1024;
+        _graphics.PreferredBackBufferHeight = 1024;
+        _graphics.ApplyChanges();
+
 
         base.Initialize();
     }
@@ -37,6 +41,8 @@ public class Game1 : Game
         guiBatch = new GuiBatch(GraphicsDevice);
 
         root = GeneratePanel1();
+        GreyGui.TextSystem.LoadFont("Huninn", "d:/MonoGame/GreyGui/GreyGui.Demo/Content/bin/DesktopGL/Content/jf-openhuninn-2.1.ttf");
+        GreyGui.TextSystem.ReserveChars("Huninn", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ!\"#$%&'()*+./:;<=>?@[]^_`{|}~€£¥¢¤§©®™ªº«»¬±¹²³µ¶·¸º".AsSpan());
 
         // TODO: use this.Content to load your game content here
     }
@@ -67,7 +73,7 @@ public class Game1 : Game
 
         if (keyboardState.IsKeyDown(Keys.R))
         {
-            root = GeneratePanelWireFrame();
+            // root = GeneratePanelWireFrame();
         }
 
         base.Update(gameTime);
@@ -78,9 +84,12 @@ public class Game1 : Game
         if (!IsActive)
             return;
         GraphicsDevice.Clear(new Color(50, 50, 50));
+        _spriteBatch.Begin();
+        _spriteBatch.Draw(GreyGui.TextSystem.FontAtlas.Texture, new Rectangle(0, 0, 1024, 1024), Color.White);
+        _spriteBatch.End();
         // Point point = Mouse.GetState().Position;
-        guiBatch.Draw(root, renderContext, new Point(30, 30));
-        guiBatch.Flush(renderContext);
+        // guiBatch.Draw(root, renderContext, new Point(30, 30));
+        // guiBatch.Flush(renderContext);
 
         // Measure draw calls
         // var metrics = GraphicsDevice.Metrics;

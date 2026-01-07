@@ -11,10 +11,12 @@ public class FontAtlas
         get => _glyphPadding;
         set
         {
-            _x += _glyphPadding - value;
+            _x += value - _glyphPadding;
+            _y += value - _glyphPadding;
             _glyphPadding = value;
         }
     }
+    public Texture2D Texture => _texture;
     private Texture2D _texture;
     private int _x = 0;
     private int _y = 0;
@@ -24,14 +26,15 @@ public class FontAtlas
     {
         _texture = new Texture2D(graphicsDevice, textureWidth, textureHeight);
         Color[] defaultColor = new Color[textureWidth * textureHeight];
+        Array.Fill(defaultColor, Color.Black);
         _texture.SetData(defaultColor);
     }
     public bool TryInsertGlyph(FloatRGBBmp bitmap, out Rectangle srcRect)
     {
         if (_x + bitmap.Width > _texture.Width)
         {
-            _x = 0;
-            _y += _currentHeight;
+            _x = _glyphPadding;
+            _y += _currentHeight + _glyphPadding;
             _currentHeight = 0;
         }
         if (_y + bitmap.Height > _texture.Height)
@@ -42,15 +45,24 @@ public class FontAtlas
         srcRect = new(_x, _y, bitmap.Width, bitmap.Height);
 
         Color[] data = new Color[bitmap.Width * bitmap.Height];
-        for (int i = 0; i < bitmap._buffer.Length; i++)
+        for (int y = 0; y < bitmap.Height; y++)
         {
-            FloatRGB pixel = bitmap._buffer[i];
-            data[i] = new Color(
-                MathHelper.Clamp(pixel.r, 0f, 1f),
-                MathHelper.Clamp(pixel.g, 0f, 1f),
-                MathHelper.Clamp(pixel.b, 0f, 1f),
-                1f
-            );
+            int sourceY = (bitmap.Height - 1) - y;
+
+            for (int x = 0; x < bitmap.Width; x++)
+            {
+                int sourceIdx = x + (sourceY * bitmap.Width);
+                int targetIdx = x + (y * bitmap.Width);
+
+                FloatRGB pixel = bitmap._buffer[sourceIdx];
+
+                data[targetIdx] = new Color(
+                    MathHelper.Clamp(pixel.r, 0f, 1f),
+                    MathHelper.Clamp(pixel.g, 0f, 1f),
+                    MathHelper.Clamp(pixel.b, 0f, 1f),
+                    1f
+                );
+            }
         }
         _texture.SetData(0, srcRect, data, 0, data.Length);
 

@@ -1,6 +1,8 @@
-using GreyGui;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+
+namespace GreyGui;
+
 public class RenderContext
 {
     const int MAX_VERTEX_COUNT = 2048;
@@ -76,11 +78,10 @@ public class RenderContext
 
         Vector4 rectParams = new(dest.Width, dest.Height, borderRadius, borderWidth);
         int vOffset = VertexCount;
-
-        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), color, borderColor, new Vector2(0, 0), new Vector2(0, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), color, borderColor, new Vector2(1, 0), new Vector2(1, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), color, borderColor, new Vector2(1, 1), new Vector2(1, 1), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), color, borderColor, new Vector2(0, 1), new Vector2(0, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), color, borderColor, GreyGui.PixelUV, new Vector2(0, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), color, borderColor, GreyGui.PixelUV, new Vector2(1, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), color, borderColor, GreyGui.PixelUV, new Vector2(1, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), color, borderColor, GreyGui.PixelUV, new Vector2(0, 1), rectParams);
 
         _indices[IndexCount++] = vOffset + 0;
         _indices[IndexCount++] = vOffset + 1;

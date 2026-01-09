@@ -79,8 +79,7 @@ public class Game1 : Game
             string outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "output.png");
             using (FileStream fileStream = File.OpenWrite(outputPath))
             {
-                Texture2D t = GreyGui.TextSystem.FontAtlas.Texture;
-                t.SaveAsPng(fileStream, t.Width, t.Height);
+                GreyGui.Atlas.SaveAsPng(fileStream, GreyGui.Atlas.Width, GreyGui.Atlas.Height);
             }
             Console.WriteLine("Export Atlas Test Succeed");
             exported = true;
@@ -95,10 +94,10 @@ public class Game1 : Game
             return;
         GraphicsDevice.Clear(new Color(50, 50, 50));
         _spriteBatch.Begin();
-        _spriteBatch.Draw(GreyGui.TextSystem.FontAtlas.Texture, new Rectangle(0, 0, 2048, 2048), Color.White);
+        _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 2048, 2048), Color.White);
         _spriteBatch.End();
         // Point point = Mouse.GetState().Position;
-        // guiBatch.Draw(root, renderContext, new Point(30, 30));
+        // guiBatch.Draw(root, renderContext, new Point(30, 500));
         // guiBatch.Flush(renderContext);
 
         // Measure draw calls

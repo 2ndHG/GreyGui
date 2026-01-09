@@ -20,10 +20,10 @@ public class TextSystem
     private Dictionary<string, FontInfo> _fontInfoMap = [];
     private FontAtlas _fontAtlas;
 
-    public TextSystem(GraphicsDevice graphicsDevice, int textAtlasWidth, int textAtlasHeight)
+    public TextSystem(GraphicsDevice graphicsDevice)
     {
         _graphicDevice = graphicsDevice;
-        _fontAtlas = new FontAtlas(_graphicDevice, textAtlasWidth, textAtlasHeight)
+        _fontAtlas = new FontAtlas()
         {
             GlyphPadding = GlyphPadding
         };

@@ -1,8 +1,7 @@
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using Msdfgen;
 
-namespace GreyGui.Core;
+namespace GreyGui;
 
 public class FontAtlas
 {
@@ -11,28 +10,19 @@ public class FontAtlas
         get => _glyphPadding;
         set => _glyphPadding = value;
     }
-    public Texture2D Texture => _texture;
-    private Texture2D _texture;
-    private int _x = 0;
+    private int _x = 1;
     private int _y = 0;
-    private int _currentHeight;
+    private int _currentHeight = 1;
     private int _glyphPadding;
-    public FontAtlas(GraphicsDevice graphicsDevice, int textureWidth, int textureHeight)
-    {
-        _texture = new Texture2D(graphicsDevice, textureWidth, textureHeight);
-        Color[] defaultColor = new Color[textureWidth * textureHeight];
-        Array.Fill(defaultColor, Color.Black);
-        _texture.SetData(defaultColor);
-    }
     public bool TryInsertGlyph(FloatRGBBmp bitmap, out Rectangle srcRect)
     {
-        if (_x + bitmap.Width > _texture.Width)
+        if (_x + bitmap.Width > GreyGui.Atlas.Width)
         {
             _x = 0;
             _y += _currentHeight;
             _currentHeight = 0;
         }
-        if (_y + bitmap.Height > _texture.Height)
+        if (_y + bitmap.Height > GreyGui.Atlas.Height)
         {
             srcRect = Rectangle.Empty;
             return false;
@@ -59,7 +49,7 @@ public class FontAtlas
                 );
             }
         }
-        _texture.SetData(0, srcRect, data, 0, data.Length);
+        GreyGui.Atlas.SetData(0, srcRect, data, 0, data.Length);
 
         // Update _x and _currentHeight for the next insertion
         _x += bitmap.Width;

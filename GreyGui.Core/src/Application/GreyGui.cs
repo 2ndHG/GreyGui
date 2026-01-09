@@ -32,5 +32,4 @@ public static class GreyGui
     public static Texture2D Pixel { get; private set; }
     public static Effect Shader { get; private set; }
     public static TextSystem TextSystem { get; private set; }
-    public static string DefaultFont { get; private set; }
 }

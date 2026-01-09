@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -41,12 +42,13 @@ public class Game1 : Game
         guiBatch = new GuiBatch(GraphicsDevice);
 
         root = GeneratePanel1();
-        GreyGui.TextSystem.LoadFont("Huninn", "d:/MonoGame/GreyGui/GreyGui.Demo/Content/bin/DesktopGL/Content/jf-openhuninn-2.1.ttf");
+        GreyGui.TextSystem.LoadFont("Huninn", "Content/jf-openhuninn-2.1.ttf");
         GreyGui.TextSystem.ReserveChars("Huninn", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ!\"#$%&'()*+./:;<=>?@[]^_`{|}~€£¥¢¤§©®™ªº«»¬±¹²³µ¶·¸º".AsSpan());
 
         // TODO: use this.Content to load your game content here
     }
 
+    bool exported = false;
     protected override void Update(GameTime gameTime)
     {
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
@@ -71,9 +73,17 @@ public class Game1 : Game
             root.Size = root.Size with { Y = root.Size.Y + 3f };
         }
 
-        if (keyboardState.IsKeyDown(Keys.R))
+        if (keyboardState.IsKeyDown(Keys.R) && !exported)
         {
             // root = GeneratePanelWireFrame();
+            string outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "output.png");
+            using (FileStream fileStream = File.OpenWrite(outputPath))
+            {
+                Texture2D t = GreyGui.TextSystem.FontAtlas.Texture;
+                t.SaveAsPng(fileStream, t.Width, t.Height);
+            }
+            Console.WriteLine("Export Atlas Test Succeed");
+            exported = true;
         }
 
         base.Update(gameTime);
@@ -85,7 +95,7 @@ public class Game1 : Game
             return;
         GraphicsDevice.Clear(new Color(50, 50, 50));
         _spriteBatch.Begin();
-        _spriteBatch.Draw(GreyGui.TextSystem.FontAtlas.Texture, new Rectangle(0, 0, 1024, 1024), Color.White);
+        _spriteBatch.Draw(GreyGui.TextSystem.FontAtlas.Texture, new Rectangle(0, 0, 2048, 2048), Color.White);
         _spriteBatch.End();
         // Point point = Mouse.GetState().Position;
         // guiBatch.Draw(root, renderContext, new Point(30, 30));

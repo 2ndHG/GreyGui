@@ -9,12 +9,7 @@ public class FontAtlas
     public int GlyphPadding
     {
         get => _glyphPadding;
-        set
-        {
-            _x += value - _glyphPadding;
-            _y += value - _glyphPadding;
-            _glyphPadding = value;
-        }
+        set => _glyphPadding = value;
     }
     public Texture2D Texture => _texture;
     private Texture2D _texture;
@@ -33,8 +28,8 @@ public class FontAtlas
     {
         if (_x + bitmap.Width > _texture.Width)
         {
-            _x = _glyphPadding;
-            _y += _currentHeight + _glyphPadding;
+            _x = 0;
+            _y += _currentHeight;
             _currentHeight = 0;
         }
         if (_y + bitmap.Height > _texture.Height)
@@ -47,7 +42,7 @@ public class FontAtlas
         Color[] data = new Color[bitmap.Width * bitmap.Height];
         for (int y = 0; y < bitmap.Height; y++)
         {
-            int sourceY = (bitmap.Height - 1) - y;
+            int sourceY = bitmap.Height - 1 - y;
 
             for (int x = 0; x < bitmap.Width; x++)
             {
@@ -67,7 +62,7 @@ public class FontAtlas
         _texture.SetData(0, srcRect, data, 0, data.Length);
 
         // Update _x and _currentHeight for the next insertion
-        _x += bitmap.Width + GlyphPadding;
+        _x += bitmap.Width;
         _currentHeight = Math.Max(bitmap.Height, _currentHeight);
         return true;
     }

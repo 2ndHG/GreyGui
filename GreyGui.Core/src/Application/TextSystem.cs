@@ -4,14 +4,16 @@ using Microsoft.Xna.Framework.Graphics;
 using Msdfgen;
 using Typography;
 using Typography.OpenFont;
+using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace GreyGui;
 
 public class TextSystem
 {
+    public static string DefaultFont { get; private set; }
     public float GlyphPixelSize { get; private set; } = 32f;
     public int GlyphPadding { get; private set; } = 4;
-    public float GlyphRange { get; private set; } = 2f;
+    public float GlyphRange { get; private set; } = 4f;
     public FontAtlas FontAtlas => _fontAtlas;
 
     private GraphicsDevice _graphicDevice;
@@ -38,6 +40,17 @@ public class TextSystem
     {
         _fontInfoMap.TryAdd(fontName, new FontInfo(fontTtfPath));
     }
+    public void SetDefaultFont(string fontName)
+    {
+        if (_fontInfoMap.ContainsKey(fontName))
+        {
+            DefaultFont = fontName;
+        }
+        else
+        {
+            throw new Exception($"No font with font name {fontName} is loaded");
+        }
+    }
     public void ReserveChars(string font, ReadOnlySpan<char> chars)
     {
         FontInfo fontInfo = _fontInfoMap[font];
@@ -45,23 +58,33 @@ public class TextSystem
         for (int i = 0; i < chars.Length; ++i)
         {
             ushort c = chars[i];
-            GlyphWrapper glyph = typefaceWrapper.GetGlyph(c);
+            if (!fontInfo.GlyphInfoMap.ContainsKey(c))
+            {
+                GlyphWrapper glyph = typefaceWrapper.GetGlyph(c);
 
-            MsdfgenResult msdfgenResult = glyph.RenderMSDF(GlyphPixelSize, GlyphRange, GlyphPadding);
-            FloatRGBBmp bmp = msdfgenResult.Bmp;
-            if (bmp.Width == 0 || bmp.Height == 0)
-            {
-                Console.WriteLine($"Warning: Glyph for character '{chars[i]}' has zero width or height, skipping insertion into font atlas.");
-            }
-            else
-            {
-                if (_fontAtlas.TryInsertGlyph(bmp, out Rectangle glyphSrcRect))
+                MsdfgenResult msdfgenResult = glyph.RenderMSDF(GlyphPixelSize, GlyphRange, GlyphPadding);
+                FloatRGBBmp bmp = msdfgenResult.Bmp;
+                if (bmp.Width == 0 || bmp.Height == 0)
                 {
-                    fontInfo.GlyphInfoMap.TryAdd(c, new GlyphInfo() { srcRect = glyphSrcRect });
+                    Console.WriteLine($"Warning: Glyph for character '{chars[i]}' has zero width or height, skipping insertion");
                 }
                 else
                 {
-                    throw new Exception("Font atlas is full, cannot insert more glyphs.");
+                    if (_fontAtlas.TryInsertGlyph(bmp, out Rectangle glyphSrcRect))
+                    {
+                        fontInfo.GlyphInfoMap.TryAdd(c, new GlyphInfo()
+                        {
+                            SrcRect = glyphSrcRect,
+                            AdvanceWidth = glyph.Glyph.OriginalAdvanceWidth,
+                            Offset = new Vector2((float)msdfgenResult.Translation.x, (float)msdfgenResult.Translation.y),
+                            WidthHeightRatio = bmp.Width / (float)bmp.Height,
+                            GlyphRange = GlyphRange
+                        });
+                    }
+                    else
+                    {
+                        throw new Exception("Font atlas is full, cannot insert more glyphs.");
+                    }
                 }
             }
         }

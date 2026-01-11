@@ -10,7 +10,7 @@ public static class GreyGui
     {
         Atlas = new Texture2D(device, atlasWidth, atlasHeight);
         Color[] defaultColor = new Color[atlasWidth * atlasHeight];
-        Array.Fill(defaultColor, Color.Black);
+        Array.Fill(defaultColor, Color.Transparent);
         defaultColor[0] = Color.White;
         Atlas.SetData(defaultColor);
         PixelUV = new Vector2(0.5f / atlasWidth, 0.5f / atlasHeight);
@@ -30,7 +30,7 @@ public static class GreyGui
         stream.CopyTo(ms);
         Shader = new Effect(device, ms.ToArray());
 
-        TextSystem = new TextSystem(device);
+        TextSystem = new TextSystem();
     }
 
     public static Texture2D Atlas { get; private set; }

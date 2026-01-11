@@ -12,7 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\External\TypographyMsdf\Typography\Typography.csproj" />
-    <ProjectReference Include="..\External\TypographyMsdf\Typography\Typography.OpenFont.csproj" />
+    <ProjectReference Include="..\External\TypographyMsdf\Typography.OpenFont\Typography.OpenFont.csproj" />
   </ItemGroup>
 
   <ItemGroup>

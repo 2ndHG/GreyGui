@@ -10,7 +10,7 @@ struct VertexShaderInput
 
 struct VertexShaderOutput
 {
-    float4 Position : SV_POSITION;
+    float4 Position : SV_POSITION; // Normalized Device Coordinates (NDC) 
     float4 Color : TEXCOORD3;
     float4 BorderColor: TEXCOORD4;
     float2 TexCoord : TEXCOORD0;
@@ -20,7 +20,13 @@ struct VertexShaderOutput
 
 float4x4 WorldViewProjection;
 Texture2D Texture;
-sampler TextureSampler = sampler_state { Texture = <Texture>; };
+sampler TextureSampler = sampler_state { Texture = <Texture>; 
+    MinFilter = Linear;
+    MagFilter = Linear;
+    MipFilter = Linear; 
+    AddressU = Clamp; 
+    AddressV = Clamp;
+};
 
 float RoundedRectSDF(float2 p, float2 b, float r)
 {
@@ -48,6 +54,24 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     float2 size = input.RectParams.xy;
     float radius = input.RectParams.z;
     float borderWidth = input.RectParams.w;
+    if (input.RectParams.w < -0.5) 
+    {
+        float glyphRange = input.RectParams.z; // GlyphRange
+
+        float3 msd = tex2D(TextureSampler, input.TexCoord).rgb;
+        float sigDist = max(min(msd.r, msd.g), min(max(msd.r, msd.g), msd.b));
+        
+        float2 msdfUnit = glyphRange / input.RectParams.xy; 
+        float2 screenTexSize = 1.0 / fwidth(input.TexCoord);
+        float screenPxRange = max(0.5 * dot(msdfUnit, screenTexSize), 1.0);
+        
+        float screenPxDistance = screenPxRange * (sigDist - 0.5);
+        float alpha = clamp(screenPxDistance + 0.5, 0.0, 1.0);
+        // float screenPxDistance = (sigDist - 0.5) * dot(fwidth(input.TexCoord), glyphRange / input.RectParams.xy);
+        // float alpha = clamp(screenPxDistance + 0.5, 0.0, 1.0);
+        
+        return input.Color * alpha;
+    }
     
     float2 halfSize = size * 0.5;
     float2 pixelPos = (input.LocalCoord - 0.5) * size;

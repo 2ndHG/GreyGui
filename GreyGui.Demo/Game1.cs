@@ -41,9 +41,9 @@ public class Game1 : Game
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GeneratePanel1();
+        root = new RowPanel(Color.White, size: new(32, 32));
         GreyGui.TextSystem.LoadFont("Huninn", "Content/jf-openhuninn-2.1.ttf");
-        GreyGui.TextSystem.ReserveChars("Huninn", "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿ!\"#$%&'()*+./:;<=>?@[]^_`{|}~€£¥¢¤§©®™ªº«»¬±¹²³µ¶·¸º".AsSpan());
+        GreyGui.TextSystem.ReserveChars("Huninn", "國家園字123".AsSpan());
 
         // TODO: use this.Content to load your game content here
     }
@@ -75,14 +75,14 @@ public class Game1 : Game
 
         if (keyboardState.IsKeyDown(Keys.R) && !exported)
         {
-            // root = GeneratePanelWireFrame();
-            string outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "output.png");
-            using (FileStream fileStream = File.OpenWrite(outputPath))
-            {
-                GreyGui.Atlas.SaveAsPng(fileStream, GreyGui.Atlas.Width, GreyGui.Atlas.Height);
-            }
-            Console.WriteLine("Export Atlas Test Succeed");
-            exported = true;
+            root = GeneratePanelWireFrame();
+            // string outputPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "output.png");
+            // using (FileStream fileStream = File.OpenWrite(outputPath))
+            // {
+            //     GreyGui.Atlas.SaveAsPng(fileStream, GreyGui.Atlas.Width, GreyGui.Atlas.Height);
+            // }
+            // Console.WriteLine("Export Atlas Test Succeed");
+            // exported = true;
         }
 
         base.Update(gameTime);
@@ -97,8 +97,9 @@ public class Game1 : Game
         _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 2048, 2048), Color.White);
         _spriteBatch.End();
         // Point point = Mouse.GetState().Position;
-        // guiBatch.Draw(root, renderContext, new Point(30, 500));
-        // guiBatch.Flush(renderContext);
+        guiBatch.Draw(root, renderContext, new Point(0, 48));
+        renderContext.RenderText(new Point(32, 48), "國家園字123", 128);
+        guiBatch.Flush(renderContext);
 
         // Measure draw calls
         // var metrics = GraphicsDevice.Metrics;
@@ -134,20 +135,7 @@ public class Game1 : Game
             }
             return panels;
         }
-        RowPanel panel = new RowPanel(colorMask: new(10, 10, 10), borderColor: Color.Gray, size: new Vector2(740, 435), paddingSide: 7, paddingTop: 7, paddingBottom: 7, borderRadius: 10, childGap: 10, layoutMode: PanelLayoutMode.Spread).SetChildren([
-            new ListPanel(colorMask: new(80, 80, 80), borderColor: Color.Gray, size: new Vector2(0, 405), useWidthRatio: true, widthRatio: .2f, useHeightRatio:true, heightRatio:1f, paddingTop: 3, paddingSide: 3,  zIndex: 10, borderRadius: 10,
-
-            layoutMode: PanelLayoutMode.Spread, childGap: 15f, rowGap: 6f).SetChildren([
-                new RowPanel(colorMask: new(150 , 230, 255), borderColor: Color.Gray, size: new Vector2(0, 30), useWidthRatio: true, widthRatio:1f, zIndex: 10, borderRadius: 7, layoutMode: PanelLayoutMode.Spread, childGap: 15f),
-
-                new ListPanel(colorMask: new(40, 40, 40), useWidthRatio: true,size: new(0, 150), widthRatio:1f, borderRadius:7, childGap:3, rowGap:3, layoutMode: PanelLayoutMode.Spread).SetChildren(PanelItemGen()),
-
-                new RowPanel(colorMask: new(50 , 170, 100), borderColor: Color.Gray, size: new Vector2(0, 200), useWidthRatio: true, widthRatio:1f, zIndex: 9, borderRadius: 10, childGap: 15f),
-            ]),
-
-            new RowPanel(colorMask: new(80, 80, 80), borderColor: Color.Gray, size: new Vector2(0, 405), paddingSide: 10, useWidthRatio: true, widthRatio: .4f, useHeightRatio:true, heightRatio:1f,paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Spread, childGap: 15f),
-            new RowPanel(colorMask: Color.DarkGoldenrod, borderColor: Color.Gold, size: new Vector2(0, 405), paddingSide: 10, useWidthRatio: true, widthRatio: .4f, useHeightRatio:true, heightRatio:1f,paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Spread, childGap: 15f),
-        ]);
+        RowPanel panel = new RowPanel(colorMask: new(10, 10, 10), borderColor: Color.Gray, size: new Vector2(740, 435), paddingSide: 7, paddingTop: 7, paddingBottom: 7, borderRadius: 10, childGap: 10, layoutMode: PanelLayoutMode.Spread);
         return panel;
     }
 }

@@ -37,13 +37,13 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        GreyGui.Initialize(GraphicsDevice);
+        GreyGui.Initialize(GraphicsDevice, 1024, 1024);
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
         root = new RowPanel(Color.White, size: new(32, 32));
-        GreyGui.TextSystem.LoadFont("Huninn", "Content/jf-openhuninn-2.1.ttf");
-        GreyGui.TextSystem.ReserveChars("Huninn", "國家園字123".AsSpan());
+        GreyGui.TextSystem.LoadFont("Huninn", "Content/NotoSansTC-Regular.ttf");
+        GreyGui.TextSystem.ReserveChars("Huninn", "」的尷尬情況（到底算上一個邊還是下一個邊？）。稍微偏移一點點，就能保證射線乾淨俐落地穿過邊線，而不是擦過頂點。".AsSpan());
 
         // TODO: use this.Content to load your game content here
     }
@@ -94,11 +94,10 @@ public class Game1 : Game
             return;
         GraphicsDevice.Clear(new Color(50, 50, 50));
         _spriteBatch.Begin();
-        _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 2048, 2048), Color.White);
+        _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
         _spriteBatch.End();
         // Point point = Mouse.GetState().Position;
-        guiBatch.Draw(root, renderContext, new Point(0, 48));
-        renderContext.RenderText(new Point(32, 48), "國家園字123", 128);
+        renderContext.RenderText(new(0, 500), "就能保證射線乾淨俐落地穿過邊線，而不是擦過頂點", 160);
         guiBatch.Flush(renderContext);
 
         // Measure draw calls

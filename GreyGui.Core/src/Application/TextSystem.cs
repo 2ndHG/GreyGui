@@ -9,9 +9,9 @@ namespace GreyGui;
 public class TextSystem
 {
     public string DefaultFont { get; private set; } = "";
-    public float GlyphPixelSize { get; private set; } = 64f;
-    public int GlyphPadding { get; private set; } = 16;
-    public float GlyphRange { get; private set; } = 16f;
+    public float GlyphPixelSize { get; private set; } = 48f;
+    public int GlyphPadding { get; private set; } = 8;
+    public float GlyphRange { get; private set; } = 8f;
 
     private Dictionary<string, FontInfo> _fontInfoMap = [];
 

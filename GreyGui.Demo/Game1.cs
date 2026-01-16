@@ -16,6 +16,8 @@ public class Game1 : Game
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
 
+    private string text = "現在開始進行文字渲染家ABCDEabcde";
+
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
@@ -42,8 +44,8 @@ public class Game1 : Game
         guiBatch = new GuiBatch(GraphicsDevice);
 
         root = new RowPanel(Color.White, size: new(32, 32));
-        GreyGui.TextSystem.LoadFont("Huninn", "Content/NotoSansTC-Regular.ttf");
-        GreyGui.TextSystem.ReserveChars("Huninn", "」的尷尬情況（到底算上一個邊還是下一個邊？）。稍微偏移一點點，就能保證射線乾淨俐落地穿過邊線，而不是擦過頂點。".AsSpan());
+        GreyGui.TextSystem.LoadFont("Huninn", "Content/jf-openhuninn-2.1.ttf");
+        GreyGui.TextSystem.ReserveChars("Huninn", text);
 
         // TODO: use this.Content to load your game content here
     }
@@ -97,7 +99,9 @@ public class Game1 : Game
         _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
         _spriteBatch.End();
         // Point point = Mouse.GetState().Position;
-        renderContext.RenderText(new(0, 500), "就能保證射線乾淨俐落地穿過邊線，而不是擦過頂點", 160);
+        renderContext.RenderText(new(0, 500), text, 32);
+        renderContext.RenderText(new(0, 532), text, 48);
+        renderContext.RenderText(new(0, 580), text, 95);
         guiBatch.Flush(renderContext);
 
         // Measure draw calls

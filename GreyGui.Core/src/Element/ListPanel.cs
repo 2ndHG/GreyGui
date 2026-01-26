@@ -365,7 +365,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
             BorderColor,
             BorderRadius,
             BorderWidth,
-            GreyGui.Pixel,
+            GreyGui.Atlas,
             screenScissor
         );
 

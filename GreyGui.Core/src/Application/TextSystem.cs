@@ -9,8 +9,8 @@ public class TextSystem
 {
     public string DefaultFont { get; private set; } = "";
     public float GlyphPixelSize { get; private set; } = 48f;
-    public int GlyphPadding { get; private set; } = 8;
-    public float GlyphRange { get; private set; } = 8f;
+    public int GlyphPadding { get; private set; } = 4;
+    public float GlyphRange { get; private set; } = 4f;
 
     private Dictionary<string, FontInfo> _fontInfoMap = [];
 
@@ -52,81 +52,70 @@ public class TextSystem
     {
         FontInfo fontInfo = _fontInfoMap[font];
         Typeface typeface = fontInfo.Typeface;
-                for (int i = 0; i < chars.Length; ++i)
+        for (int i = 0; i < chars.Length; ++i)
         {
             char c = chars[i];
             SimpleSdfResult result = SimpleSdf.SimpleSdf.GenerateSdfBitmap(typeface, c, GlyphPixelSize, GlyphPadding, GlyphPadding);
+
             if (!fontInfo.GlyphInfoMap.ContainsKey(c))
             {
-                Glyph glyph = typeface.GetGlyph(c);
-
                 if (result.BitmapWidth == 0 || result.BitmapHeight == 0)
                 {
                     Console.WriteLine($"Warning: Glyph for character '{chars[i]}' has zero width or height, skipping insertion");
                 }
                 else
                 {
-                    // if (TryInsertGlyph(result, out Rectangle glyphSrcRect))
-                    // {
-                    //     fontInfo.GlyphInfoMap.TryAdd(c, new GlyphInfo()
-                    //     {
-                    //         SrcRect = glyphSrcRect,
-                    //         AdvanceWidth = glyph.Glyph.OriginalAdvanceWidth,
-                    //         Offset = new Vector2(
-                    //             (float)msdfgenResult.Translation.x, 
-                    //             (float)msdfgenResult.Translation.y + GlyphPixelSize - bmp.Height),
-                    //         WidthHeightRatio = bmp.Width / (float)glyphSrcRect.Height,
-                    //         GlyphRange = GlyphRange
-                    //     });
-                    // }
-                    // else
-                    // {
-                    //     throw new Exception("Font atlas is full, cannot insert more glyphs.");
-                    // }
+                    if (TryInsertGlyph(result, out Rectangle glyphSrcRect))
+                    {
+                        GlyphInfo glyphInfo = new()
+                        {
+                            SrcRect = glyphSrcRect,
+                            AdvanceWidth = result.AdvanceWidth,
+                            Origin = result.Origin,
+                            GlyphRange = result.Range
+                        };
+                        fontInfo.GlyphInfoMap.TryAdd(c, glyphInfo);
+                    }
+                    else
+                    {
+                        throw new Exception("Font atlas is full, cannot insert more glyphs.");
+                    }
                 }
             }
         }
     }
-    // public bool TryInsertGlyph(SimpleSdfResult bitmap, out Rectangle srcRect)
-    // {
-    //     if (_x + bitmap.BitmapWidth > GreyGui.Atlas.Width)
-    //     {
-    //         _x = 0;
-    //         _y += _currentHeight + 1;
-    //         _currentHeight = 0;
-    //     }
-    //     if (_y + bitmap.Height > GreyGui.Atlas.Height)
-    //     {
-    //         srcRect = Rectangle.Empty;
-    //         return false;
-    //     }
-    //     srcRect = new(_x, _y, bitmap.Width, bitmap.Height);
+    public bool TryInsertGlyph(SimpleSdfResult sdfResult, out Rectangle srcRect)
+    {
+        if (_x + sdfResult.BitmapWidth > GreyGui.Atlas.Width)
+        {
+            _x = 0;
+            _y += _currentHeight + 1;
+            _currentHeight = 0;
+        }
+        if (_y + sdfResult.BitmapHeight > GreyGui.Atlas.Height)
+        {
+            srcRect = Rectangle.Empty;
+            return false;
+        }
+        srcRect = new(_x, _y, sdfResult.BitmapWidth, sdfResult.BitmapHeight);
 
-    //     Color[] data = new Color[bitmap.Width * bitmap.Height];
-    //     for (int y = 0; y < bitmap.Height; y++)
-    //     {
-    //         int sourceY = bitmap.Height - 1 - y;
+        Color[] data = new Color[sdfResult.BitmapWidth * sdfResult.BitmapHeight];
+        for (int y = 0; y < sdfResult.BitmapHeight; y++)
+        {
+            for (int x = 0; x < sdfResult.BitmapWidth; x++)
+            {
+                int index = x + (y * sdfResult.BitmapWidth);
 
-    //         for (int x = 0; x < bitmap.Width; x++)
-    //         {
-    //             int sourceIdx = x + (sourceY * bitmap.Width);
-    //             int targetIdx = x + (y * bitmap.Width);
+                byte pixel = (byte)(sdfResult.Bitmap[index] * 255);
 
-    //             FloatRGB pixel = bitmap._buffer[sourceIdx];
+                data[index] = new Color(pixel, pixel, pixel, pixel);
+            }
+        }
+        GreyGui.Atlas.SetData(0, srcRect, data, 0, data.Length);
 
-    //             data[targetIdx] = new Color(
-    //                 MathHelper.Clamp(pixel.r, 0f, 1f),
-    //                 MathHelper.Clamp(pixel.g, 0f, 1f),
-    //                 MathHelper.Clamp(pixel.b, 0f, 1f),
-    //                 1f
-    //             );
-    //         }
-    //     }
-    //     GreyGui.Atlas.SetData(0, srcRect, data, 0, data.Length);
-
-    //     // Update _x and _currentHeight for the next insertion
-    //     _x += bitmap.Width + 1;
-    //     _currentHeight = Math.Max(bitmap.Height, _currentHeight);
-    //     return true;
-    // }
+        // Update _x and _currentHeight for the next insertion
+        _x += sdfResult.BitmapWidth + 1;
+        _currentHeight = Math.Max(sdfResult.BitmapHeight, _currentHeight);
+        return true;
+    }
 }

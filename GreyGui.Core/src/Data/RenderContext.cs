@@ -77,10 +77,10 @@ public class RenderContext
         Vector4 rectParams = new(dest.Width, dest.Height, borderRadius, borderWidth);
         int vOffset = VertexCount;
 
-        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), color, borderColor, new Vector2(0, 0), new Vector2(0, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), color, borderColor, new Vector2(1, 0), new Vector2(1, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), color, borderColor, new Vector2(1, 1), new Vector2(1, 1), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), color, borderColor, new Vector2(0, 1), new Vector2(0, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), color, borderColor, GreyGui.GreyGui.AtlasPixelUv, new Vector2(0, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), color, borderColor, GreyGui.GreyGui.AtlasPixelUv, new Vector2(1, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), color, borderColor, GreyGui.GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), color, borderColor, GreyGui.GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
 
         _indices[IndexCount++] = vOffset + 0;
         _indices[IndexCount++] = vOffset + 1;
@@ -89,6 +89,60 @@ public class RenderContext
         _indices[IndexCount++] = vOffset + 3;
         _indices[IndexCount++] = vOffset + 0;
     }
+
+    public void RenderText(string fontName, string text, Vector2 position, float fontSize, Color color, Rectangle scissor)
+    {
+        float scale = fontSize / GreyGui.GreyGui.TextSystem.GlyphPixelSize;
+        FontInfo fontInfo = GreyGui.GreyGui.TextSystem.GetFontInfo(fontName);
+        Vector2 cursor = position;
+        foreach (char c in text)
+        {
+            EnsureCapacity(4, 6);
+
+            GlyphInfo glyphInfo = fontInfo.GlyphInfoMap[c];
+            DrawBatch lastBatch = Batches[^1];
+
+            if (
+                GreyGui.GreyGui.Atlas != lastBatch.Texture ||
+                scissor != lastBatch.Scissor)
+            {
+                Batches.Add(new DrawBatch
+                {
+                    Texture = GreyGui.GreyGui.Atlas,
+                    Scissor = scissor,
+                    IndexOffset = IndexCount,
+                    IndexCount = 0
+                });
+                lastBatch = Batches[^1];
+            }
+            lastBatch.IndexCount += 6;
+            Batches[^1] = lastBatch;
+            int vOffset = VertexCount;
+
+            Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
+            Rectangle dest = new(cursor.ToPoint(), finalSize.ToPoint());
+            Vector4 rectParams = new(dest.Width, dest.Height, 0, 0);
+
+            float uvLeft = (float)glyphInfo.SrcRect.Left / GreyGui.GreyGui.Atlas.Width;
+            float uvRight = (float)glyphInfo.SrcRect.Right / GreyGui.GreyGui.Atlas.Width;
+            float uvTop = (float)glyphInfo.SrcRect.Top / GreyGui.GreyGui.Atlas.Height;
+            float ubBottom = (float)glyphInfo.SrcRect.Bottom / GreyGui.GreyGui.Atlas.Height;
+
+            SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), color, color, new(uvLeft, uvTop), new(0, 0), rectParams);
+            SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), color, color, new(uvRight, uvTop), new(1, 0), rectParams);
+            SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), color, color, new(uvRight, ubBottom), new(1, 1), rectParams);
+            SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), color, color, new(uvLeft, ubBottom), new(0, 1), rectParams);
+
+            _indices[IndexCount++] = vOffset + 0;
+            _indices[IndexCount++] = vOffset + 1;
+            _indices[IndexCount++] = vOffset + 2;
+            _indices[IndexCount++] = vOffset + 2;
+            _indices[IndexCount++] = vOffset + 3;
+            _indices[IndexCount++] = vOffset + 0;
+            cursor.X += glyphInfo.AdvanceWidth * scale;
+        }
+    }
+
     private void SetVertex(int index, Vector3 pos, Color col, Color borderCol, Vector2 uv, Vector2 local, Vector4 rParams)
     {
         _vertices[index].Position = pos;

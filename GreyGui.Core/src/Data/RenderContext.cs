@@ -120,18 +120,20 @@ public class RenderContext
             int vOffset = VertexCount;
 
             Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
-            Rectangle dest = new(cursor.ToPoint(), finalSize.ToPoint());
-            Vector4 rectParams = new(dest.Width, dest.Height, 0, 0);
+            Vector4 rectParams = new(finalSize.X, finalSize.Y, 0, 0);
+            (float left, float top) = cursor - glyphInfo.Origin * scale;
+            float right = left + finalSize.X;
+            float bottom = top + finalSize.Y;
 
             float uvLeft = (float)glyphInfo.SrcRect.Left / GreyGui.GreyGui.Atlas.Width;
             float uvRight = (float)glyphInfo.SrcRect.Right / GreyGui.GreyGui.Atlas.Width;
             float uvTop = (float)glyphInfo.SrcRect.Top / GreyGui.GreyGui.Atlas.Height;
             float ubBottom = (float)glyphInfo.SrcRect.Bottom / GreyGui.GreyGui.Atlas.Height;
 
-            SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), color, color, new(uvLeft, uvTop), new(0, 0), rectParams);
-            SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), color, color, new(uvRight, uvTop), new(1, 0), rectParams);
-            SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), color, color, new(uvRight, ubBottom), new(1, 1), rectParams);
-            SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), color, color, new(uvLeft, ubBottom), new(0, 1), rectParams);
+            SetVertex(VertexCount++, new Vector3(left, top, 0), color, color, new(uvLeft, uvTop), new(0, 0), rectParams);
+            SetVertex(VertexCount++, new Vector3(right, top, 0), color, color, new(uvRight, uvTop), new(1, 0), rectParams);
+            SetVertex(VertexCount++, new Vector3(right, bottom, 0), color, color, new(uvRight, ubBottom), new(1, 1), rectParams);
+            SetVertex(VertexCount++, new Vector3(left, bottom, 0), color, color, new(uvLeft, ubBottom), new(0, 1), rectParams);
 
             _indices[IndexCount++] = vOffset + 0;
             _indices[IndexCount++] = vOffset + 1;

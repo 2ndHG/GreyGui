@@ -34,7 +34,7 @@ public class Game1 : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         GreyGui.Initialize(GraphicsDevice);
         GreyGui.TextSystem.LoadFont("huninn", "huninn.ttf");
-        GreyGui.TextSystem.ReserveChars("huninn","123456");
+        GreyGui.TextSystem.ReserveChars("huninn","國家123456.");
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
@@ -81,12 +81,12 @@ public class Game1 : Game
             return;
         GraphicsDevice.Clear(new Color(50, 50, 50));
         // Point point = Mouse.GetState().Position;
-        // _spriteBatch.Begin();
-        // _spriteBatch.Draw(GreyGui.Atlas, new Vector2(0, 0), Color.White);
-        // _spriteBatch.End();
+        _spriteBatch.Begin();
+        _spriteBatch.Draw(GreyGui.Atlas, new Vector2(0, 0), Color.White);
+        _spriteBatch.End();
         
         // guiBatch.Draw(root, renderContext, new Point(30, 30));
-        renderContext.RenderText("huninn","123456", new(0, 200), 32, Color.White, GraphicsDevice.Viewport.Bounds);
+        renderContext.RenderText("huninn","國家123456...", new(0, 200), 32, Color.White, GraphicsDevice.Viewport.Bounds);
         guiBatch.Flush(renderContext);
 
         // Measure draw calls

@@ -1,14 +1,13 @@
 using Microsoft.Xna.Framework;
 using SimpleSdf;
 using Typography.OpenFont;
-using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace GreyGui;
 
 public class TextSystem
 {
     public string DefaultFont { get; private set; } = "";
-    public float GlyphPixelSize { get; private set; } = 48f;
+    public float GlyphPixelSize { get; private set; } = 40f;
     public int GlyphPadding { get; private set; } = 4;
     public float GlyphRange { get; private set; } = 4f;
 

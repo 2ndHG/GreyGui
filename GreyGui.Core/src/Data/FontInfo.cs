@@ -11,7 +11,7 @@ public class FontInfo
     {
         using FileStream fileStream = File.OpenRead(ttfPath);
         {
-            Typeface = SimpleSdf.SimpleSdf.TryGetTypeface(ttfPath) ?? throw new Exception($"Cannot load {ttfPath}.");
+            Typeface = SimpleSdf.SimpleSdf.GetTypeface(ttfPath) ?? throw new Exception($"Cannot load {ttfPath}.");
         }
     }
 }

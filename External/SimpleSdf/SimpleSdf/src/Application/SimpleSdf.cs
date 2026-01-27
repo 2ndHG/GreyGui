@@ -5,7 +5,7 @@ namespace SimpleSdf;
 
 public class SimpleSdf
 {
-    public static Typeface? TryGetTypeface(string fontPath)
+    public static Typeface? GetTypeface(string fontPath)
     {
         OpenFontReader fontReader = new();
         using FileStream file = File.OpenRead(fontPath);
@@ -34,7 +34,7 @@ public class SimpleSdf
         float translateY = bounds.YMax * scale + padding;
 
         float originX = translateX;
-        float originY = bitmapHeight - (-bounds.XMin * scale + padding);
+        float originY = bitmapHeight - (-bounds.YMin * scale + padding);
 
         // I thought originalAdvanceWidth shall be at glyph.OriginalAdvanceWidth
         // However, it seems we need to use some GlyphBitmapDataFormatBase class and call their FillGlyphInfo to fill info into the glyph object

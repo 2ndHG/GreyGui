@@ -7,7 +7,7 @@ namespace GreyGui;
 public class TextSystem
 {
     public string DefaultFont { get; private set; } = "";
-    public float GlyphPixelSize { get; private set; } = 40f;
+    public float GlyphPixelSize { get; private set; } = 40;
     public int GlyphPadding { get; private set; } = 4;
     public float GlyphRange { get; private set; } = 4f;
 
@@ -116,5 +116,9 @@ public class TextSystem
         _x += sdfResult.BitmapWidth + 1;
         _currentHeight = Math.Max(sdfResult.BitmapHeight, _currentHeight);
         return true;
+    }
+    public void SetAntiAliasingRange(float value)
+    {
+        GreyGui.Shader.Parameters["antiAliasingRange"].SetValue(value);
     }
 }

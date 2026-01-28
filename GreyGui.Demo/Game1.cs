@@ -15,6 +15,8 @@ public class Game1 : Game
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
 
+    private string testingStr = "ABCDEFG123456";
+
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
@@ -25,7 +27,9 @@ public class Game1 : Game
     protected override void Initialize()
     {
         // TODO: Add your initialization logic here
-
+        _graphics.PreferredBackBufferWidth = 1400;
+        _graphics.PreferredBackBufferHeight = 1000;
+        _graphics.ApplyChanges();
         base.Initialize();
     }
 
@@ -34,7 +38,7 @@ public class Game1 : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         GreyGui.Initialize(GraphicsDevice);
         GreyGui.TextSystem.LoadFont("huninn", "huninn.ttf");
-        GreyGui.TextSystem.ReserveChars("huninn","國家123456.");
+        GreyGui.TextSystem.ReserveChars("huninn", testingStr);
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
@@ -84,9 +88,9 @@ public class Game1 : Game
         _spriteBatch.Begin();
         _spriteBatch.Draw(GreyGui.Atlas, new Vector2(0, 0), Color.White);
         _spriteBatch.End();
-        
+
         // guiBatch.Draw(root, renderContext, new Point(30, 30));
-        renderContext.RenderText("huninn","國家123456...", new(0, 200), 32, Color.White, GraphicsDevice.Viewport.Bounds);
+        renderContext.RenderText("huninn", testingStr, new(0, 200), 90, Color.White, GraphicsDevice.Viewport.Bounds);
         guiBatch.Flush(renderContext);
 
         // Measure draw calls

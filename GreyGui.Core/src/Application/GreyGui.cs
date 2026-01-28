@@ -22,6 +22,7 @@ public static class GreyGui
         using MemoryStream ms = new();
         stream.CopyTo(ms);
         Shader = new Effect(device, ms.ToArray());
+        Shader.Parameters["antiAliasingRange"].SetValue(0.15f);
 
         // Texture and TextSystem
         Atlas = new Texture2D(device, atlasWidth, atlasHeight);

@@ -19,6 +19,7 @@ struct VertexShaderOutput
 };
 
 float4x4 WorldViewProjection;
+float antiAliasingRange = 0.15;
 Texture2D Texture;
 sampler TextureSampler = sampler_state { Texture = <Texture>; };
 
@@ -31,11 +32,11 @@ float RoundedRectSDF(float2 p, float2 b, float r)
 VertexShaderOutput MainVS(VertexShaderInput input)
 {
     VertexShaderOutput output;
-    output.Position = mul(input.Position, WorldViewProjection);
+    output.Position = mul(input.Position, WorldViewProjection); // NDC position (-1 ~ 1)
     output.Color = input.Color;
     output.BorderColor = input.BorderColor;
     output.TexCoord = input.TexCoord;
-    output.LocalCoord = input.LocalCoord;
+    output.LocalCoord = input.LocalCoord;           // 0 ~ 1
     output.RectParams = input.RectParams;
     return output;
 }
@@ -48,6 +49,20 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     float2 size = input.RectParams.xy;
     float radius = input.RectParams.z;
     float borderWidth = input.RectParams.w;
+
+    // SDF Text Mode
+    if(borderWidth < 0) {
+        float distance = tex2D(TextureSampler, input.TexCoord).a;
+    
+        float cutOff = 0.5;
+
+        float alpha = smoothstep(cutOff-antiAliasingRange, cutOff, distance);
+        
+        float4 finalColor = fillColor;
+        finalColor.a *= alpha;
+        
+        return finalColor;
+    }
     
     float2 halfSize = size * 0.5;
     float2 pixelPos = (input.LocalCoord - 0.5) * size;

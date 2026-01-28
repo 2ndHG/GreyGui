@@ -120,7 +120,8 @@ public class RenderContext
             int vOffset = VertexCount;
 
             Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
-            Vector4 rectParams = new(finalSize.X, finalSize.Y, 0, 0);
+            // rectParams.W width -1 tells the shader we are rendering text
+            Vector4 rectParams = new(finalSize.X, finalSize.Y, glyphInfo.GlyphRange, -1); 
             (float left, float top) = cursor - glyphInfo.Origin * scale;
             float right = left + finalSize.X;
             float bottom = top + finalSize.Y;

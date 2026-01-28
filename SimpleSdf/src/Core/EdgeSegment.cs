@@ -4,22 +4,68 @@ namespace SimpleSdf;
 
 public abstract class EdgeSegment
 {
-    public abstract SignedDistance SignedDistance(Vector2 origin);
+    public abstract SignedDistance SignedDistance(Vector2 origin, out float t);
+
+    public abstract Vector2 Point(float t);
+    public abstract Vector2 Direction(float t);
+
     public abstract int ScanlineIntersections(Span<float> x, Span<int> dy, float y);
 }
 
-public class QuadraticSegment : EdgeSegment
+public class LinearSegment(Vector2 P0, Vector2 P1) : EdgeSegment
 {
-    public Vector2 P0;
-    public Vector2 P1;
-    public Vector2 P2;
-    public QuadraticSegment(Vector2 p0, Vector2 p1, Vector2 p2)
+    public override Vector2 Point(float t) => Vector2.Lerp(P0, P1, t);
+    public override Vector2 Direction(float t) => P1 - P0;
+
+    public override int ScanlineIntersections(Span<float> x, Span<int> dy, float y)
     {
-        P0 = p0;
-        P1 = p1;
-        P2 = p2;
+        if ((y >= P0.Y && y < P1.Y) || (y >= P1.Y && y < P0.Y))
+        {
+            float param = (y - P0.Y) / (P1.Y - P0.Y);
+            x[0] = P0.X + (P1.X - P0.X) * param;
+            dy[0] = Math.Sign(P1.Y - P0.Y);
+            return 1;
+        }
+        return 0;
     }
-    public override SignedDistance SignedDistance(Vector2 origin)
+
+    public override SignedDistance SignedDistance(Vector2 origin, out float param)
+    {
+        Vector2 aq = origin - P0;
+        Vector2 ab = P1 - P0;
+        float abLenSq = Vector2.Dot(ab, ab);
+
+        if (abLenSq < 1e-12f)
+        {
+            param = 0;
+            return new SignedDistance(aq.Length(), 1.0f);
+        }
+
+        param = Vector2.Dot(aq, ab) / abLenSq;
+        Vector2 eq = (param > 0.5f) ? P1 - origin : P0 - origin;
+        float endpointDist = eq.Length();
+
+        if (param > 0 && param < 1)
+        {
+            float orthoDist = MathHelper.Cross(aq, ab) / MathF.Sqrt(abLenSq);
+            return new SignedDistance(orthoDist, 0);
+        }
+
+        float cross = MathHelper.Cross(aq, ab);
+        float sign = MathHelper.NonZeroSign(cross);
+        float pseudoDist = MathF.Abs(Vector2.Dot(ab, eq)) / (MathF.Sqrt(abLenSq) * endpointDist);
+
+        return new SignedDistance(sign * endpointDist, pseudoDist);
+    }
+}
+
+public class QuadraticSegment(Vector2 P0, Vector2 P1, Vector2 P2) : EdgeSegment
+{
+    public override Vector2 Point(float t) => Vector2.Lerp(Vector2.Lerp(P0, P1, t), Vector2.Lerp(P1, P2, t), t);
+
+    public override Vector2 Direction(float t) => Vector2.Lerp(P1 - P0, P2 - P1, t);
+
+    public override SignedDistance SignedDistance(Vector2 origin, out float param)
     {
         Vector2 qa = P0 - origin;
         Vector2 ab = P1 - P0;
@@ -35,7 +81,7 @@ public class QuadraticSegment : EdgeSegment
         int solutions = MathHelper.SolveCubic(t, a, b, c, d);
 
         float minDistance = MathHelper.NonZeroSign(MathHelper.Cross(P1 - P0, qa)) * qa.Length();
-        float param = -Vector2.Dot(qa, P1 - P0) / Vector2.Dot(P1 - P0, P1 - P0);
+        param = -Vector2.Dot(qa, P1 - P0) / Vector2.Dot(P1 - P0, P1 - P0);
         if (float.IsNaN(param)) param = 0;
 
         Vector2 epDir = P2 - P1;
@@ -61,18 +107,17 @@ public class QuadraticSegment : EdgeSegment
         }
 
         if (param >= 0 && param <= 1)
-            return new SignedDistance { Distance = minDistance, Dot = 0 };
+            return new SignedDistance(minDistance, 0);
 
         Vector2 dir = (param < 0.5f) ? (P1 - P0) : (P2 - P1);
         Vector2 pointVec = (param < 0.5f) ? qa : (P2 - origin);
         if (dir == Vector2.Zero) dir = Vector2.One;
         if (pointVec == Vector2.Zero) pointVec = Vector2.One;
 
-        return new SignedDistance
-        {
-            Distance = minDistance,
-            Dot = MathF.Abs(Vector2.Dot(Vector2.Normalize(dir), Vector2.Normalize(pointVec)))
-        };
+        return new SignedDistance(
+            minDistance,
+            MathF.Abs(Vector2.Dot(Vector2.Normalize(dir), Vector2.Normalize(pointVec)))
+        );
     }
 
     public override int ScanlineIntersections(Span<float> x, Span<int> dy, float y)
@@ -136,58 +181,5 @@ public class QuadraticSegment : EdgeSegment
             }
         }
         return total;
-    }
-
-}
-
-public class LinearSegment: EdgeSegment
-{
-    public Vector2 P0;
-    public Vector2 P1;
-    public LinearSegment(Vector2 p0, Vector2 p1)
-    {
-        P0 = p0;
-        P1 = p1;
-    }
-    public override int ScanlineIntersections(Span<float> x, Span<int> dy, float y)
-    {
-        if ((y >= P0.Y && y < P1.Y) || (y >= P1.Y && y < P0.Y))
-        {
-            float param = (y - P0.Y) / (P1.Y - P0.Y);
-            x[0] = P0.X + (P1.X - P0.X) * param;
-            dy[0] = Math.Sign(P1.Y - P0.Y);
-            return 1;
-        }
-        return 0;
-    }
-
-    public override SignedDistance SignedDistance(Vector2 origin)
-    {
-        Vector2 aq = origin - P0;
-        Vector2 ab = P1 - P0;
-        float abLenSq = Vector2.Dot(ab, ab);
-        float param;
-
-        if (abLenSq < 1e-12f)
-        {
-            param = 0;
-            return new SignedDistance { Distance = aq.Length(), Dot = 1.0f };
-        }
-
-        param = Vector2.Dot(aq, ab) / abLenSq;
-        Vector2 eq = (param > 0.5f) ? P1 - origin : P0 - origin;
-        float endpointDist = eq.Length();
-
-        if (param > 0 && param < 1)
-        {
-            float orthoDist = MathHelper.Cross(aq, ab) / MathF.Sqrt(abLenSq);
-            return new SignedDistance { Distance = orthoDist, Dot = 0 };
-        }
-
-        float cross = MathHelper.Cross(aq, ab);
-        float sign = MathHelper.NonZeroSign(cross);
-        float pseudoDist = MathF.Abs(Vector2.Dot(ab, eq)) / (MathF.Sqrt(abLenSq) * endpointDist);
-
-        return new SignedDistance { Distance = sign * endpointDist, Dot = pseudoDist };
     }
 }

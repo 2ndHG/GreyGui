@@ -42,7 +42,7 @@ public class Game1 : Game
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GeneratePanel1();
+        root = GenerateText();
 
         // TODO: use this.Content to load your game content here
     }
@@ -89,12 +89,12 @@ public class Game1 : Game
         _spriteBatch.Draw(GreyGui.Atlas, new Vector2(0, 0), Color.White);
         _spriteBatch.End();
 
-        // guiBatch.Draw(root, renderContext, new Point(30, 30));
-        renderContext.RenderText("huninn", testingStr, new(0, 200), 20, Color.White, GraphicsDevice.Viewport.Bounds);
-        renderContext.RenderText("huninn", testingStr, new(0, 230), 30, Color.White, GraphicsDevice.Viewport.Bounds);
-        renderContext.RenderText("huninn", testingStr, new(0, 290), 60, Color.White, GraphicsDevice.Viewport.Bounds);
-        renderContext.RenderText("huninn", testingStr, new(0, 380), 90, Color.White, GraphicsDevice.Viewport.Bounds);
-        renderContext.RenderText("huninn", testingStr, new(0, 530), 150, Color.White, GraphicsDevice.Viewport.Bounds);
+        guiBatch.Draw(root, renderContext, new Point(30, 30));
+        // renderContext.RenderText("huninn", testingStr, new(0, 200), 20, Color.White, GraphicsDevice.Viewport.Bounds);
+        // renderContext.RenderText("huninn", testingStr, new(0, 230), 30, Color.White, GraphicsDevice.Viewport.Bounds);
+        // renderContext.RenderText("huninn", testingStr, new(0, 290), 60, Color.White, GraphicsDevice.Viewport.Bounds);
+        // renderContext.RenderText("huninn", testingStr, new(0, 380), 90, Color.White, GraphicsDevice.Viewport.Bounds);
+        // renderContext.RenderText("huninn", testingStr, new(0, 530), 150, Color.White, GraphicsDevice.Viewport.Bounds);
         guiBatch.Flush(renderContext);
 
         // Measure draw calls
@@ -146,5 +146,10 @@ public class Game1 : Game
             new RowPanel(colorMask: Color.DarkGoldenrod, borderColor: Color.Gold, size: new Vector2(0, 405), paddingSide: 10, useWidthRatio: true, widthRatio: .4f, useHeightRatio:true, heightRatio:1f,paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Spread, childGap: 15f),
         ]);
         return panel;
+    }
+
+    private Text GenerateText()
+    {
+        return new Text() {DisplayText = testingStr, FontSize = 80, ColorMask = Color.PaleGoldenrod};
     }
 }

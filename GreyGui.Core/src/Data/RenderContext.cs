@@ -1,6 +1,7 @@
-using GreyGui;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+
+namespace GreyGui;
 public class RenderContext
 {
     const int MAX_VERTEX_COUNT = 2048;
@@ -77,10 +78,10 @@ public class RenderContext
         Vector4 rectParams = new(dest.Width, dest.Height, borderRadius, borderWidth);
         int vOffset = VertexCount;
 
-        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), color, borderColor, GreyGui.GreyGui.AtlasPixelUv, new Vector2(0, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), color, borderColor, GreyGui.GreyGui.AtlasPixelUv, new Vector2(1, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), color, borderColor, GreyGui.GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), color, borderColor, GreyGui.GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), color, borderColor, GreyGui.AtlasPixelUv, new Vector2(0, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), color, borderColor, GreyGui.AtlasPixelUv, new Vector2(1, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), color, borderColor, GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), color, borderColor, GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
 
         _indices[IndexCount++] = vOffset + 0;
         _indices[IndexCount++] = vOffset + 1;
@@ -92,8 +93,8 @@ public class RenderContext
 
     public void RenderText(string fontName, string text, Vector2 position, float fontSize, Color color, Rectangle scissor)
     {
-        float scale = fontSize / GreyGui.GreyGui.TextSystem.GlyphPixelSize;
-        FontInfo fontInfo = GreyGui.GreyGui.TextSystem.GetFontInfo(fontName);
+        float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(fontName);
         Vector2 cursor = position;
         foreach (char c in text)
         {
@@ -103,12 +104,12 @@ public class RenderContext
             DrawBatch lastBatch = Batches[^1];
 
             if (
-                GreyGui.GreyGui.Atlas != lastBatch.Texture ||
+                GreyGui.Atlas != lastBatch.Texture ||
                 scissor != lastBatch.Scissor)
             {
                 Batches.Add(new DrawBatch
                 {
-                    Texture = GreyGui.GreyGui.Atlas,
+                    Texture = GreyGui.Atlas,
                     Scissor = scissor,
                     IndexOffset = IndexCount,
                     IndexCount = 0
@@ -127,10 +128,10 @@ public class RenderContext
             float right = left + finalSize.X;
             float bottom = top + finalSize.Y;
 
-            float uvLeft = (float)glyphInfo.SrcRect.Left / GreyGui.GreyGui.Atlas.Width;
-            float uvRight = (float)glyphInfo.SrcRect.Right / GreyGui.GreyGui.Atlas.Width;
-            float uvTop = (float)glyphInfo.SrcRect.Top / GreyGui.GreyGui.Atlas.Height;
-            float ubBottom = (float)glyphInfo.SrcRect.Bottom / GreyGui.GreyGui.Atlas.Height;
+            float uvLeft = (float)glyphInfo.SrcRect.Left / GreyGui.Atlas.Width;
+            float uvRight = (float)glyphInfo.SrcRect.Right / GreyGui.Atlas.Width;
+            float uvTop = (float)glyphInfo.SrcRect.Top / GreyGui.Atlas.Height;
+            float ubBottom = (float)glyphInfo.SrcRect.Bottom / GreyGui.Atlas.Height;
 
             SetVertex(VertexCount++, new Vector3(left, top, 0), color, color, new(uvLeft, uvTop), new(0, 0), rectParams);
             SetVertex(VertexCount++, new Vector3(right, top, 0), color, color, new(uvRight, uvTop), new(1, 0), rectParams);

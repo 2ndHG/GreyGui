@@ -15,7 +15,7 @@ public class Game1 : Game
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
 
-    private string testingStr = "ABCDEFG123456";
+    private string testingStr = "TileSet/RoomTiles";
 
     public Game1()
     {
@@ -37,7 +37,7 @@ public class Game1 : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         GreyGui.Initialize(GraphicsDevice);
-        GreyGui.TextSystem.LoadFont("huninn", "huninn.ttf");
+        GreyGui.TextSystem.LoadFont("huninn", "Kanit-Regular.ttf");
         GreyGui.TextSystem.ReserveChars("huninn", testingStr);
 
         guiBatch = new GuiBatch(GraphicsDevice);
@@ -90,7 +90,11 @@ public class Game1 : Game
         _spriteBatch.End();
 
         // guiBatch.Draw(root, renderContext, new Point(30, 30));
-        renderContext.RenderText("huninn", testingStr, new(0, 200), 90, Color.White, GraphicsDevice.Viewport.Bounds);
+        renderContext.RenderText("huninn", testingStr, new(0, 200), 20, Color.White, GraphicsDevice.Viewport.Bounds);
+        renderContext.RenderText("huninn", testingStr, new(0, 230), 30, Color.White, GraphicsDevice.Viewport.Bounds);
+        renderContext.RenderText("huninn", testingStr, new(0, 290), 60, Color.White, GraphicsDevice.Viewport.Bounds);
+        renderContext.RenderText("huninn", testingStr, new(0, 380), 90, Color.White, GraphicsDevice.Viewport.Bounds);
+        renderContext.RenderText("huninn", testingStr, new(0, 530), 150, Color.White, GraphicsDevice.Viewport.Bounds);
         guiBatch.Flush(renderContext);
 
         // Measure draw calls

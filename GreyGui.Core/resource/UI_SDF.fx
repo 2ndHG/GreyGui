@@ -19,7 +19,8 @@ struct VertexShaderOutput
 };
 
 float4x4 WorldViewProjection;
-float antiAliasingRange = 0.15;
+// This means how far the anti-aliasing goes
+float antiAliasingFactor = 5;
 Texture2D Texture;
 sampler TextureSampler = sampler_state { Texture = <Texture>; };
 
@@ -55,8 +56,9 @@ float4 MainPS(VertexShaderOutput input) : COLOR
         float distance = tex2D(TextureSampler, input.TexCoord).a;
     
         float cutOff = 0.5;
+        float antiAliasingDistant = antiAliasingFactor / radius; // radius is font size
 
-        float alpha = smoothstep(cutOff-antiAliasingRange, cutOff, distance);
+        float alpha = smoothstep(cutOff - antiAliasingDistant, cutOff + antiAliasingDistant, distance);
         
         float4 finalColor = fillColor;
         finalColor.a *= alpha;

@@ -1,9 +1,9 @@
 using Microsoft.Xna.Framework;
 namespace GreyGui;
-public record struct GlyphInfo
+public readonly record struct GlyphInfo
 {
-    public Rectangle SrcRect { get; set; }
-    public float AdvanceWidth { get; set; }
-    public Vector2 Origin { get; set; }
-    public float GlyphRange { get; set; }
+    public readonly Rectangle SrcRect { get; init; }
+    public float AdvanceWidth { get; init; }
+    public Vector2 Origin { get; init; }
+    public float GlyphRange { get; init; }
 }

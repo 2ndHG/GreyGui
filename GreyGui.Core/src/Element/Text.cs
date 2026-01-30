@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 
 namespace GreyGui;
@@ -128,7 +129,7 @@ public class Text : GreyGuiElement, IRatioElement
         get => _fontSize;
         set
         {
-            if(_fontSize == value) 
+            if (_fontSize == value)
                 return;
             _fontSize = value;
             _isFontSizeDirty = true;
@@ -148,9 +149,11 @@ public class Text : GreyGuiElement, IRatioElement
     private float _fontSize = 24f;
     private bool _isDisplayTextDirty;
     private bool _isFontSizeDirty;
+    private Vector2 _textPosition;
 
-    private UiVertex[] _drawVertices;
-    private int[] _drawVertexIndex;
+    private UiVertex[] _drawVertices = [];
+    private int[] _drawVertexIndex = [];
+    private List<GlyphInfo> _textGlyphList = [];
 
     private void RecalculateSize()
     {
@@ -184,12 +187,42 @@ public class Text : GreyGuiElement, IRatioElement
     }
     private void ResolveDisplayTextDirty()
     {
-        (_drawVertices, _drawVertexIndex) = UiVertexHelper.GenerateTextVertices(_fontName, _displayText, ColorMask, _fontSize);
+        _textGlyphList.Clear();
+
+        (_drawVertices, _drawVertexIndex) = UiVertexHelper.GenerateTextVertices(_textGlyphList, _textPosition, ColorMask, _fontSize);
         _isDisplayTextDirty = false;
     }
     private void ResolveFontSizeDirty()
     {
-        Span<UiVertex> uiVerticesSpan = new Span<UiVertex>();
+        float scale = _fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        Vector2 cursor = _textPosition;
+        int vertexCount = 0;
+        ReadOnlySpan<GlyphInfo> textGlyphSpan = CollectionsMarshal.AsSpan(_textGlyphList);
+        for (int i = 0; i < textGlyphSpan.Length; i++)
+        {
+            // pursuing ultimate performance, avoiding any value copying
+            ref readonly GlyphInfo glyphInfo = ref textGlyphSpan[i];
+            Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
+            Vector4 rectParams = new(finalSize.X, finalSize.Y, _fontSize, -1);
+
+            (float left, float top) = cursor - glyphInfo.Origin * scale;
+            float right = left + finalSize.X;
+            float bottom = top + finalSize.Y;
+
+            _drawVertices[vertexCount].RectParams = rectParams;
+            _drawVertices[vertexCount++].Position = new(left, top, 0);
+
+            _drawVertices[vertexCount].RectParams = rectParams;
+            _drawVertices[vertexCount++].Position = new(right, top, 0);
+
+            _drawVertices[vertexCount].RectParams = rectParams;
+            _drawVertices[vertexCount++].Position = new(right, bottom, 0);
+
+            _drawVertices[vertexCount].RectParams = rectParams;
+            _drawVertices[vertexCount++].Position = new(left, bottom, 0);
+
+            cursor.X += glyphInfo.AdvanceWidth * scale;
+        }
     }
 
     public override void Draw(Point position, RenderContext renderContext, Rectangle screenScissor)

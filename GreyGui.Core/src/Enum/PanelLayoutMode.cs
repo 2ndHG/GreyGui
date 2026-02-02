@@ -1,6 +1,9 @@
 namespace GreyGui;
 
-public enum PanelLayoutMode
+public enum RowLayoutMode
 {
-    Left, Right, Center, Spread
+    Left,
+    Right,
+    Center,
+    Spread
 }

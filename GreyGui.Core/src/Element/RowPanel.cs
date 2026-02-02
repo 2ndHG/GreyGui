@@ -100,7 +100,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             _isLayoutDirty = true;
         }
     }
-    public PanelLayoutMode LayoutMode
+    public RowLayoutMode LayoutMode
     {
         get => _layoutMode;
         set
@@ -137,7 +137,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     private float _heightWidthRatio;
     private Vector2 _size;
     private int _zIndex;
-    private PanelLayoutMode _layoutMode;
+    private RowLayoutMode _layoutMode;
     private float _childGap;
     private Vector2 _containerSize;
     private bool _isLayoutDirty;
@@ -150,7 +150,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     public RowPanel() { }
     public RowPanel(
         Color colorMask, Color borderColor = default, int borderRadius = default, int borderWidth = default,
-        Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, PanelLayoutMode layoutMode = default, float childGap = default, ICollection<GreyGuiElement>? children = null)
+        Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, float childGap = default, ICollection<GreyGuiElement>? children = null)
     {
         ColorMask = colorMask;
         BorderColor = borderColor;
@@ -293,8 +293,8 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         }
         float xLayoutMulti = _layoutMode switch
         {
-            PanelLayoutMode.Center => .5f,
-            PanelLayoutMode.Right => 1f,
+            RowLayoutMode.Center => .5f,
+            RowLayoutMode.Right => 1f,
             _ => 0
         };
         float emptySpace = _containerSize.X - elementTotalWidth;
@@ -302,7 +302,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
 
         float x = borderRadiusPad + PaddingSide + emptySpace * xLayoutMulti;
         float y = borderRadiusPad + PaddingTop;
-        float childGap = (_layoutMode == PanelLayoutMode.Spread && _children.Count > 1) ?
+        float childGap = (_layoutMode == RowLayoutMode.Spread && _children.Count > 1) ?
             emptySpace / (_children.Count - 1) + _childGap
             : _childGap;
 

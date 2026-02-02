@@ -100,7 +100,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
             _isLayoutDirty = true;
         }
     }
-    public PanelLayoutMode LayoutMode
+    public RowLayoutMode LayoutMode
     {
         get => _layoutMode;
         set
@@ -137,7 +137,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
     private float _heightWidthRatio;
     private Vector2 _size;
     private int _zIndex;
-    private PanelLayoutMode _layoutMode;
+    private RowLayoutMode _layoutMode;
     private float _childGap;
     private float _rowGap;
     private Vector2 _containerSize;
@@ -151,7 +151,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
     public ListPanel() { }
     public ListPanel(
         Color colorMask, Color borderColor = default, int borderRadius = default, int borderWidth = default,
-        Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, PanelLayoutMode layoutMode = default, float childGap = default, float rowGap = default, ICollection<GreyGuiElement>? children = null)
+        Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, float childGap = default, float rowGap = default, ICollection<GreyGuiElement>? children = null)
     {
         ColorMask = colorMask;
         BorderColor = borderColor;
@@ -293,8 +293,8 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         float xPadding = (BorderRadius * (Constant.SQRT2 - 1)) + PaddingSide;
         float xLayoutMulti = _layoutMode switch
         {
-            PanelLayoutMode.Center => .5f,
-            PanelLayoutMode.Right => 1f,
+            RowLayoutMode.Center => .5f,
+            RowLayoutMode.Right => 1f,
             _ => 0
         };
         void InsertRow(float y, float rowElementTotalWidth, float rowHeight, int elementBegin, int elementEnd)
@@ -302,7 +302,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
             int gapCount = elementEnd - elementBegin - 1;
             float emptySpace;
             float childGapWidth;
-            if (_layoutMode == PanelLayoutMode.Spread)
+            if (_layoutMode == RowLayoutMode.Spread)
             {
                 emptySpace = _containerSize.X - rowElementTotalWidth;
                 childGapWidth = gapCount == 0 ? 0 : emptySpace / gapCount;

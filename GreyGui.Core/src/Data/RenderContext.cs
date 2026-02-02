@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -147,8 +148,64 @@ public class RenderContext
             cursor.X += glyphInfo.AdvanceWidth * scale;
         }
     }
+    public void RenderText(List<GlyphInfo> glyphInfos, Vector2 position, float fontSize, Color color, Rectangle scissor)
+    {
+        float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        Vector2 cursor = position;
+        ReadOnlySpan<GlyphInfo> glyphInfoSpan = CollectionsMarshal.AsSpan(glyphInfos);
+        for (int i = 0; i < glyphInfoSpan.Length; ++i)
+        {
+            EnsureCapacity(4, 6);
 
-    private void SetVertex(int index, Vector3 pos, Color col, Color borderCol, Vector2 uv, Vector2 local, Vector4 rParams)
+            GlyphInfo glyphInfo = glyphInfoSpan[i];
+            DrawBatch lastBatch = Batches[^1];
+
+            if (
+                GreyGui.Atlas != lastBatch.Texture ||
+                scissor != lastBatch.Scissor)
+            {
+                Batches.Add(new DrawBatch
+                {
+                    Texture = GreyGui.Atlas,
+                    Scissor = scissor,
+                    IndexOffset = IndexCount,
+                    IndexCount = 0
+                });
+                lastBatch = Batches[^1];
+            }
+            lastBatch.IndexCount += 6;
+            Batches[^1] = lastBatch;
+            int vOffset = VertexCount;
+
+            Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
+            // rectParams.Z = fontSize to tell what the anti-aliasing distant value should be
+            // rectParams.W = -1 tells the shader we are rendering text
+            Vector4 rectParams = new(finalSize.X, finalSize.Y, fontSize, -1); 
+            (float left, float top) = cursor - glyphInfo.Origin * scale;
+            float right = left + finalSize.X;
+            float bottom = top + finalSize.Y;
+
+            float uvLeft = (float)glyphInfo.SrcRect.Left / GreyGui.Atlas.Width;
+            float uvRight = (float)glyphInfo.SrcRect.Right / GreyGui.Atlas.Width;
+            float uvTop = (float)glyphInfo.SrcRect.Top / GreyGui.Atlas.Height;
+            float ubBottom = (float)glyphInfo.SrcRect.Bottom / GreyGui.Atlas.Height;
+
+            SetVertex(VertexCount++, new Vector3(left, top, 0), color, color, new(uvLeft, uvTop), new(0, 0), rectParams);
+            SetVertex(VertexCount++, new Vector3(right, top, 0), color, color, new(uvRight, uvTop), new(1, 0), rectParams);
+            SetVertex(VertexCount++, new Vector3(right, bottom, 0), color, color, new(uvRight, ubBottom), new(1, 1), rectParams);
+            SetVertex(VertexCount++, new Vector3(left, bottom, 0), color, color, new(uvLeft, ubBottom), new(0, 1), rectParams);
+
+            _indices[IndexCount++] = vOffset + 0;
+            _indices[IndexCount++] = vOffset + 1;
+            _indices[IndexCount++] = vOffset + 2;
+            _indices[IndexCount++] = vOffset + 2;
+            _indices[IndexCount++] = vOffset + 3;
+            _indices[IndexCount++] = vOffset + 0;
+            cursor.X += glyphInfo.AdvanceWidth * scale;
+        }
+    }
+
+    public void SetVertex(int index, Vector3 pos, Color col, Color borderCol, Vector2 uv, Vector2 local, Vector4 rParams)
     {
         _vertices[index].Position = pos;
         _vertices[index].Color = col;
@@ -158,7 +215,7 @@ public class RenderContext
         _vertices[index].RectParams = rParams;
     }
 
-    private void EnsureCapacity(int newVertexCount, int newIndexCount)
+    public void EnsureCapacity(int newVertexCount, int newIndexCount)
     {
         if (VertexCount + newVertexCount > _vertices.Length)
         {

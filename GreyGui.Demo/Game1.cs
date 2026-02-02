@@ -12,10 +12,11 @@ public class Game1 : Game
     private SpriteBatch _spriteBatch;
 
     private GreyGuiElement root;
+    private Point _drawPos = new Point(50, 50);
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
 
-    private string testingStr = "TileSet/RoomTiles";
+    private string testingStr = "Scale it as you wish!";
 
     public Game1()
     {
@@ -37,12 +38,12 @@ public class Game1 : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         GreyGui.Initialize(GraphicsDevice);
-        GreyGui.TextSystem.LoadFont("huninn", "Kanit-Regular.ttf");
+        GreyGui.TextSystem.LoadFont("huninn", "huninn.ttf");
         GreyGui.TextSystem.ReserveChars("huninn", testingStr);
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GenerateText();
+        root = GenerateTextPanel();
 
         // TODO: use this.Content to load your game content here
     }
@@ -78,7 +79,6 @@ public class Game1 : Game
 
         base.Update(gameTime);
     }
-
     protected override void Draw(GameTime gameTime)
     {
         if (!IsActive)
@@ -89,7 +89,7 @@ public class Game1 : Game
         _spriteBatch.Draw(GreyGui.Atlas, new Vector2(0, 0), Color.White);
         _spriteBatch.End();
 
-        guiBatch.Draw(root, renderContext, new Point(30, 30));
+        guiBatch.Draw(root, renderContext, _drawPos);
         // renderContext.RenderText("huninn", testingStr, new(0, 200), 20, Color.White, GraphicsDevice.Viewport.Bounds);
         // renderContext.RenderText("huninn", testingStr, new(0, 230), 30, Color.White, GraphicsDevice.Viewport.Bounds);
         // renderContext.RenderText("huninn", testingStr, new(0, 290), 60, Color.White, GraphicsDevice.Viewport.Bounds);
@@ -115,7 +115,7 @@ public class Game1 : Game
             }
             return panels;
         }
-        ListPanel panel = new ListPanel(colorMask: new(10, 10, 10), borderColor: Color.Gray, size: new Vector2(150, 400), paddingSide: 10, paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Right, childGap: 15f, rowGap: 6f).SetChildren(
+        ListPanel panel = new ListPanel(colorMask: new(10, 10, 10), borderColor: Color.Gray, size: new Vector2(150, 400), paddingSide: 10, paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: RowLayoutMode.Right, childGap: 15f, rowGap: 6f).SetChildren(
             PanelGen()
         );
         return panel;
@@ -131,25 +131,29 @@ public class Game1 : Game
             }
             return panels;
         }
-        RowPanel panel = new RowPanel(colorMask: new(10, 10, 10), borderColor: Color.Gray, size: new Vector2(740, 435), paddingSide: 7, paddingTop: 7, paddingBottom: 7, borderRadius: 10, childGap: 10, layoutMode: PanelLayoutMode.Spread).SetChildren([
+        RowPanel panel = new RowPanel(colorMask: new(10, 10, 10), borderColor: Color.Gray, size: new Vector2(740, 435), paddingSide: 7, paddingTop: 7, paddingBottom: 7, borderRadius: 10, childGap: 10, layoutMode: RowLayoutMode.Spread).SetChildren([
             new ListPanel(colorMask: new(80, 80, 80), borderColor: Color.Gray, size: new Vector2(0, 405), useWidthRatio: true, widthRatio: .2f, useHeightRatio:true, heightRatio:1f, paddingTop: 3, paddingSide: 3,  zIndex: 10, borderRadius: 10,
 
-            layoutMode: PanelLayoutMode.Spread, childGap: 15f, rowGap: 6f).SetChildren([
-                new RowPanel(colorMask: new(150 , 230, 255), borderColor: Color.Gray, size: new Vector2(0, 30), useWidthRatio: true, widthRatio:1f, zIndex: 10, borderRadius: 7, layoutMode: PanelLayoutMode.Spread, childGap: 15f),
+            layoutMode: RowLayoutMode.Spread, childGap: 15f, rowGap: 6f).SetChildren([
+                new RowPanel(colorMask: new(150 , 230, 255), borderColor: Color.Gray, size: new Vector2(0, 30), useWidthRatio: true, widthRatio:1f, zIndex: 10, borderRadius: 7, layoutMode: RowLayoutMode.Spread, childGap: 15f),
 
-                new ListPanel(colorMask: new(40, 40, 40), useWidthRatio: true,size: new(0, 150), widthRatio:1f, borderRadius:7, childGap:3, rowGap:3, layoutMode: PanelLayoutMode.Spread).SetChildren(PanelItemGen()),
+                new ListPanel(colorMask: new(40, 40, 40), useWidthRatio: true,size: new(0, 150), widthRatio:1f, borderRadius:7, childGap:3, rowGap:3, layoutMode: RowLayoutMode.Spread).SetChildren(PanelItemGen()),
 
                 new RowPanel(colorMask: new(50 , 170, 100), borderColor: Color.Gray, size: new Vector2(0, 200), useWidthRatio: true, widthRatio:1f, zIndex: 9, borderRadius: 10, childGap: 15f),
             ]),
 
-            new RowPanel(colorMask: new(80, 80, 80), borderColor: Color.Gray, size: new Vector2(0, 405), paddingSide: 10, useWidthRatio: true, widthRatio: .4f, useHeightRatio:true, heightRatio:1f,paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Spread, childGap: 15f),
-            new RowPanel(colorMask: Color.DarkGoldenrod, borderColor: Color.Gold, size: new Vector2(0, 405), paddingSide: 10, useWidthRatio: true, widthRatio: .4f, useHeightRatio:true, heightRatio:1f,paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: PanelLayoutMode.Spread, childGap: 15f),
+            new RowPanel(colorMask: new(80, 80, 80), borderColor: Color.Gray, size: new Vector2(0, 405), paddingSide: 10, useWidthRatio: true, widthRatio: .4f, useHeightRatio:true, heightRatio:1f,paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: RowLayoutMode.Spread, childGap: 15f),
+            new RowPanel(colorMask: Color.DarkGoldenrod, borderColor: Color.Gold, size: new Vector2(0, 405), paddingSide: 10, useWidthRatio: true, widthRatio: .4f, useHeightRatio:true, heightRatio:1f,paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: RowLayoutMode.Spread, childGap: 15f),
         ]);
         return panel;
     }
 
-    private Text GenerateText()
+    private GreyGuiElement GenerateTextPanel()
     {
-        return new Text() {DisplayText = testingStr, FontSize = 80, ColorMask = Color.PaleGoldenrod};
+        ListPanel rowPanel = new ListPanel(colorMask: Color.DarkSeaGreen, size: new(300, 300), layoutMode: RowLayoutMode.Center).SetChildren([
+            // new ListPanel(colorMask: Color.White, size: new(100, 100), layoutMode: RowLayoutMode.Center)
+            new Text(colorMask: Color.PaleGoldenrod, displayText: testingStr, useWidthRatio:true, widthRatio: 1f, fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio)
+        ]);
+        return rowPanel;
     }
 }

@@ -131,8 +131,45 @@ public class Text : GreyGuiElement, IRatioElement
         {
             if (_fontSize == value)
                 return;
+            if (_useAutoTextOffset)
+            {
+                _textOffset = new Vector2(0, value);
+            }
             _fontSize = value;
-            _isFontSizeDirty = true;
+        }
+    }
+    public Vector2 TextOffset
+    {
+        get => _textOffset;
+        set
+        {
+            if (_textOffset == value || _useAutoTextOffset)
+                return;
+            _textOffset = value;
+        }
+    }
+    public bool UseAutoTextOffset
+    {
+        get => _useAutoTextOffset;
+        set
+        {
+            if (_useAutoTextOffset == value)
+                return;
+            _useAutoTextOffset = value;
+            if (_useAutoTextOffset)
+            {
+                TextOffset = new Vector2(0, _fontSize);
+            }
+        }
+    }
+    public float FontSizeScalingBaseline
+    {
+        get => _fontSizeScalingBaseline;
+        set
+        {
+            if (value <= 0)
+                return;
+            _fontSizeScalingBaseline = value;
         }
     }
 
@@ -144,16 +181,49 @@ public class Text : GreyGuiElement, IRatioElement
     private float _widthRatio;
     private float _heightRatio;
     private float _heightWidthRatio;
+    private RowLayoutMode _wordLayoutMode;
     private string _fontName = GreyGui.TextSystem.DefaultFont;
-    private string _displayText = "";
-    private float _fontSize = 24f;
+    private string _displayText;
+    private float _fontSize;
     private bool _isDisplayTextDirty;
-    private bool _isFontSizeDirty;
-    private Vector2 _textPosition;
+    private bool _useAutoTextOffset = true;
+    private Vector2 _textOffset;
+    private FontSizeScalingMode _fontSizeScalingMode;
+    private float _fontSizeScalingBaseline;
 
-    private UiVertex[] _drawVertices = [];
-    private int[] _drawVertexIndex = [];
     private List<GlyphInfo> _textGlyphList = [];
+    public Text(Color colorMask, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, RowLayoutMode wordLayoutMode = RowLayoutMode.Left, string? fontName = null, string displayText = "", float fontSize = 24f, bool useAutoTextOffset = true, Vector2 textOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0)
+    {
+        ColorMask = colorMask;
+        BorderColor = borderColor;
+        _size = size;
+        _useWidthRatio = useWidthRatio;
+        _useHeightRatio = useHeightRatio;
+        _useHeightWidthRatio = useHeightWidthRatio;
+        _widthRatio = widthRatio;
+        _heightRatio = heightRatio;
+        _heightWidthRatio = heightWidthRatio;
+        _zIndex = zIndex;
+        _wordLayoutMode = wordLayoutMode;
+        _fontName = fontName ?? GreyGui.TextSystem.DefaultFont;
+        _displayText = displayText;
+        _fontSize = fontSize;
+        _useAutoTextOffset = useAutoTextOffset;
+        _textOffset = useAutoTextOffset ? new Vector2(0, fontSize) : textOffset;
+        _fontSizeScalingMode = fontSizeScalingMode;
+
+        // priority: user input > FontSizeScalingMode > default
+        _fontSizeScalingBaseline = (fontSizeScalingBaseline, fontSizeScalingMode, size.X, size.Y) switch
+        {
+            ( > 0, _, _, _) => fontSizeScalingBaseline,
+            ( <= 0.1f, FontSizeScalingMode.UseWidthRatio, > 0, _) => size.X,
+            ( <= 0.1f, FontSizeScalingMode.UseHeightRatio, _, > 0) => size.Y,
+            _ => fontSize,
+        };
+
+        _isSizeDirty = true;
+        _isDisplayTextDirty = true;
+    }
 
     private void RecalculateSize()
     {
@@ -188,50 +258,33 @@ public class Text : GreyGuiElement, IRatioElement
     private void ResolveDisplayTextDirty()
     {
         _textGlyphList.Clear();
-
-        (_drawVertices, _drawVertexIndex) = UiVertexHelper.GenerateTextVertices(_textGlyphList, _textPosition, ColorMask, _fontSize);
+        FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
+        foreach (char c in _displayText)
+        {
+            _textGlyphList.Add(fontInfo.GlyphInfoMap[c]);
+        }
         _isDisplayTextDirty = false;
     }
-    private void ResolveFontSizeDirty()
-    {
-        float scale = _fontSize / GreyGui.TextSystem.GlyphPixelSize;
-        Vector2 cursor = _textPosition;
-        int vertexCount = 0;
-        ReadOnlySpan<GlyphInfo> textGlyphSpan = CollectionsMarshal.AsSpan(_textGlyphList);
-        for (int i = 0; i < textGlyphSpan.Length; i++)
-        {
-            // pursuing ultimate performance, avoiding any value copying
-            ref readonly GlyphInfo glyphInfo = ref textGlyphSpan[i];
-            Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
-            Vector4 rectParams = new(finalSize.X, finalSize.Y, _fontSize, -1);
-
-            (float left, float top) = cursor - glyphInfo.Origin * scale;
-            float right = left + finalSize.X;
-            float bottom = top + finalSize.Y;
-
-            _drawVertices[vertexCount].RectParams = rectParams;
-            _drawVertices[vertexCount++].Position = new(left, top, 0);
-
-            _drawVertices[vertexCount].RectParams = rectParams;
-            _drawVertices[vertexCount++].Position = new(right, top, 0);
-
-            _drawVertices[vertexCount].RectParams = rectParams;
-            _drawVertices[vertexCount++].Position = new(right, bottom, 0);
-
-            _drawVertices[vertexCount].RectParams = rectParams;
-            _drawVertices[vertexCount++].Position = new(left, bottom, 0);
-
-            cursor.X += glyphInfo.AdvanceWidth * scale;
-        }
-    }
-
     public override void Draw(Point position, RenderContext renderContext, Rectangle screenScissor)
     {
         if (_isDisplayTextDirty)
         {
             ResolveDisplayTextDirty();
         }
-        renderContext.AddCommand(GreyGui.Atlas, _drawVertices, _drawVertexIndex, screenScissor);
+
+        float sizeX = Math.Max(_size.X, 0);
+        float sizeY = Math.Max(_size.Y, 0);
+        float fontSize = _fontSizeScalingMode switch
+        {
+            FontSizeScalingMode.UseWidthRatio => sizeX / _fontSizeScalingBaseline * _fontSize,
+            FontSizeScalingMode.UseHeightRatio => sizeY / _fontSizeScalingBaseline * _fontSize,
+            _ => _fontSize
+        };
+        if (_useAutoTextOffset)
+        {
+            _textOffset = new Vector2(0, fontSize);
+        }
+        renderContext.RenderText(_textGlyphList, position.ToVector2() + _textOffset, fontSize, ColorMask, screenScissor);
     }
 
     public override void ResolveSizeDirty()

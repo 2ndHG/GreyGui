@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace GreyGui;
+
 public class RenderContext
 {
     const int MAX_VERTEX_COUNT = 2048;
@@ -124,7 +125,7 @@ public class RenderContext
             Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
             // rectParams.Z = fontSize to tell what the anti-aliasing distant value should be
             // rectParams.W = -1 tells the shader we are rendering text
-            Vector4 rectParams = new(finalSize.X, finalSize.Y, fontSize, -1); 
+            Vector4 rectParams = new(finalSize.X, finalSize.Y, fontSize, -1);
             (float left, float top) = cursor - glyphInfo.Origin * scale;
             float right = left + finalSize.X;
             float bottom = top + finalSize.Y;
@@ -148,12 +149,17 @@ public class RenderContext
             cursor.X += glyphInfo.AdvanceWidth * scale;
         }
     }
-    public void RenderText(List<GlyphInfo> glyphInfos, Vector2 position, float fontSize, Color color, Rectangle scissor)
+    public void RenderText(List<GlyphInfo> glyphInfoList, Vector2 position, float fontSize, Color color, Rectangle scissor)
+    {
+        RenderText(CollectionsMarshal.AsSpan(glyphInfoList), 0, glyphInfoList.Count, position, fontSize, color, scissor);
+    }
+    public void RenderText(ReadOnlySpan<GlyphInfo> glyphInfoSpan, int startIndex, int length,
+    Vector2 position, float fontSize, Color color, Rectangle scissor)
     {
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
         Vector2 cursor = position;
-        ReadOnlySpan<GlyphInfo> glyphInfoSpan = CollectionsMarshal.AsSpan(glyphInfos);
-        for (int i = 0; i < glyphInfoSpan.Length; ++i)
+        length += startIndex;
+        for (int i = startIndex; i < length; ++i)
         {
             EnsureCapacity(4, 6);
 
@@ -180,7 +186,7 @@ public class RenderContext
             Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
             // rectParams.Z = fontSize to tell what the anti-aliasing distant value should be
             // rectParams.W = -1 tells the shader we are rendering text
-            Vector4 rectParams = new(finalSize.X, finalSize.Y, fontSize, -1); 
+            Vector4 rectParams = new(finalSize.X, finalSize.Y, fontSize, -1);
             (float left, float top) = cursor - glyphInfo.Origin * scale;
             float right = left + finalSize.X;
             float bottom = top + finalSize.Y;

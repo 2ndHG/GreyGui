@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -16,7 +17,7 @@ public class Game1 : Game
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
 
-    private string testingStr = "Scale it as you wish!";
+    private string testingStr = "我是不會失真的字 :)";
 
     public Game1()
     {
@@ -74,7 +75,7 @@ public class Game1 : Game
 
         if (keyboardState.IsKeyDown(Keys.R))
         {
-            root = GeneratePanelWireFrame();
+            root = GenerateTextPanel();
         }
 
         base.Update(gameTime);
@@ -150,9 +151,9 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateTextPanel()
     {
-        ListPanel rowPanel = new ListPanel(colorMask: Color.DarkSeaGreen, size: new(300, 300), layoutMode: RowLayoutMode.Center).SetChildren([
+        ListPanel rowPanel = new ListPanel(colorMask: Color.MidnightBlue, size: new(400, 300), layoutMode: RowLayoutMode.Left).SetChildren([
             // new ListPanel(colorMask: Color.White, size: new(100, 100), layoutMode: RowLayoutMode.Center)
-            new Text(colorMask: Color.PaleGoldenrod, displayText: testingStr, useWidthRatio:true, widthRatio: 1f, fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio)
+            new Text(colorMask: Color.PaleGoldenrod, size: new (300, 400), displayText: testingStr, useWidthRatio:true, widthRatio: 1f, alignMode: RowLayoutMode.Center, fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio)
         ]);
         return rowPanel;
     }

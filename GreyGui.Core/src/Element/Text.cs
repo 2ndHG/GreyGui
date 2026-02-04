@@ -1,4 +1,3 @@
-using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 
 namespace GreyGui;
@@ -110,7 +109,17 @@ public class Text : GreyGuiElement, IRatioElement
             _isSizeDirty = true;
         }
     }
-
+    public string FontName
+    {
+        get => _fontName;
+        set
+        {
+            if (value == null || _fontName.Equals(value))
+                return;
+            _fontName = value;
+            _isDisplayTextDirty = true;
+        }
+    }
     public string DisplayText
     {
         get => _displayText;
@@ -129,37 +138,15 @@ public class Text : GreyGuiElement, IRatioElement
         get => _fontSize;
         set
         {
-            if (_fontSize == value)
-                return;
-            if (_useAutoTextOffset)
-            {
-                _textOffset = new Vector2(0, value);
-            }
             _fontSize = value;
         }
     }
-    public Vector2 TextOffset
+    public float TextYOffset
     {
-        get => _textOffset;
+        get => _textYOffset;
         set
         {
-            if (_textOffset == value || _useAutoTextOffset)
-                return;
-            _textOffset = value;
-        }
-    }
-    public bool UseAutoTextOffset
-    {
-        get => _useAutoTextOffset;
-        set
-        {
-            if (_useAutoTextOffset == value)
-                return;
-            _useAutoTextOffset = value;
-            if (_useAutoTextOffset)
-            {
-                TextOffset = new Vector2(0, _fontSize);
-            }
+            _textYOffset = value;
         }
     }
     public float FontSizeScalingBaseline
@@ -167,8 +154,6 @@ public class Text : GreyGuiElement, IRatioElement
         get => _fontSizeScalingBaseline;
         set
         {
-            if (value <= 0)
-                return;
             _fontSizeScalingBaseline = value;
         }
     }
@@ -181,18 +166,20 @@ public class Text : GreyGuiElement, IRatioElement
     private float _widthRatio;
     private float _heightRatio;
     private float _heightWidthRatio;
-    private RowLayoutMode _wordLayoutMode;
+    private RowLayoutMode _alignMode;
     private string _fontName = GreyGui.TextSystem.DefaultFont;
     private string _displayText;
     private float _fontSize;
     private bool _isDisplayTextDirty;
-    private bool _useAutoTextOffset = true;
-    private Vector2 _textOffset;
+    private float _textYOffset;
     private FontSizeScalingMode _fontSizeScalingMode;
     private float _fontSizeScalingBaseline;
+    private float _textTotalWidth;
 
     private List<GlyphInfo> _textGlyphList = [];
-    public Text(Color colorMask, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, RowLayoutMode wordLayoutMode = RowLayoutMode.Left, string? fontName = null, string displayText = "", float fontSize = 24f, bool useAutoTextOffset = true, Vector2 textOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0)
+    private List<TextSegment> _textSegments = [];
+
+    public Text(Color colorMask, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, RowLayoutMode alignMode = RowLayoutMode.Left, string? fontName = null, string displayText = "", float fontSize = 24f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0)
     {
         ColorMask = colorMask;
         BorderColor = borderColor;
@@ -204,12 +191,11 @@ public class Text : GreyGuiElement, IRatioElement
         _heightRatio = heightRatio;
         _heightWidthRatio = heightWidthRatio;
         _zIndex = zIndex;
-        _wordLayoutMode = wordLayoutMode;
+        _alignMode = alignMode;
         _fontName = fontName ?? GreyGui.TextSystem.DefaultFont;
         _displayText = displayText;
         _fontSize = fontSize;
-        _useAutoTextOffset = useAutoTextOffset;
-        _textOffset = useAutoTextOffset ? new Vector2(0, fontSize) : textOffset;
+        _textYOffset = textYOffset;
         _fontSizeScalingMode = fontSizeScalingMode;
 
         // priority: user input > FontSizeScalingMode > default
@@ -255,14 +241,46 @@ public class Text : GreyGuiElement, IRatioElement
         }
         _isSizeDirty = false;
     }
+
+    private void ParseTextSpaceAsNotWord()
+    {
+        FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
+        float spaceAdvanceWidth = fontInfo.GlyphInfoMap[' '].AdvanceWidth;
+        TextSegment textSegment = new();
+        _textTotalWidth = 0;
+        for (int i = 0; i < _displayText.Length; ++i)
+        {
+            if (_displayText[i] == ' ')
+            {
+                _textTotalWidth += spaceAdvanceWidth;
+                if (textSegment.glyphInfoList.Count > 0)
+                {
+                    textSegment.segmentAdvanceWidth += spaceAdvanceWidth;
+                    _textSegments.Add(textSegment);
+                    textSegment = new();
+                }
+                else
+                {
+                    _textSegments[^1].segmentAdvanceWidth += spaceAdvanceWidth;
+                }
+            }
+            else
+            {
+                GlyphInfo glyphInfo = fontInfo.GlyphInfoMap[_displayText[i]];
+                _textTotalWidth += glyphInfo.AdvanceWidth;
+                textSegment.segmentWidth += glyphInfo.AdvanceWidth;
+                textSegment.segmentAdvanceWidth += glyphInfo.AdvanceWidth;
+                textSegment.glyphInfoList.Add(glyphInfo);
+            }
+        }
+        if (textSegment.glyphInfoList.Count > 0)
+        {
+            _textSegments.Add(textSegment);
+        }
+    }
     private void ResolveDisplayTextDirty()
     {
-        _textGlyphList.Clear();
-        FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
-        foreach (char c in _displayText)
-        {
-            _textGlyphList.Add(fontInfo.GlyphInfoMap[c]);
-        }
+        ParseTextSpaceAsNotWord();
         _isDisplayTextDirty = false;
     }
     public override void Draw(Point position, RenderContext renderContext, Rectangle screenScissor)
@@ -272,19 +290,28 @@ public class Text : GreyGuiElement, IRatioElement
             ResolveDisplayTextDirty();
         }
 
-        float sizeX = Math.Max(_size.X, 0);
-        float sizeY = Math.Max(_size.Y, 0);
         float fontSize = _fontSizeScalingMode switch
         {
-            FontSizeScalingMode.UseWidthRatio => sizeX / _fontSizeScalingBaseline * _fontSize,
-            FontSizeScalingMode.UseHeightRatio => sizeY / _fontSizeScalingBaseline * _fontSize,
+            FontSizeScalingMode.UseWidthRatio => _size.X / _fontSizeScalingBaseline * _fontSize,
+            FontSizeScalingMode.UseHeightRatio => _size.Y / _fontSizeScalingBaseline * _fontSize,
             _ => _fontSize
         };
-        if (_useAutoTextOffset)
+        fontSize = Math.Abs(fontSize);
+        Vector2 cursorPosition = position.ToVector2();
+        cursorPosition.Y += fontSize + _textYOffset;
+
+        float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        cursorPosition.X += _alignMode switch
         {
-            _textOffset = new Vector2(0, fontSize);
+            RowLayoutMode.Center => (_size.X - _textTotalWidth * scale) / 2,
+            RowLayoutMode.Right => _size.X - _textTotalWidth * scale,
+            _ => 0
+        };
+        foreach (TextSegment segment in _textSegments)
+        {
+            renderContext.RenderText(segment.glyphInfoList, cursorPosition, fontSize, ColorMask, screenScissor);
+            cursorPosition.X += segment.segmentAdvanceWidth * scale;
         }
-        renderContext.RenderText(_textGlyphList, position.ToVector2() + _textOffset, fontSize, ColorMask, screenScissor);
     }
 
     public override void ResolveSizeDirty()
@@ -298,5 +325,12 @@ public class Text : GreyGuiElement, IRatioElement
     public override void Update()
     {
 
+    }
+
+    private class TextSegment
+    {
+        public List<GlyphInfo> glyphInfoList = [];
+        public float segmentWidth;
+        public float segmentAdvanceWidth;
     }
 }

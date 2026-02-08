@@ -30,6 +30,9 @@ public class GuiBatch
 
     public void Flush(RenderContext context)
     {
+        // Check if there are generated SDF bitmaps that haven't be drawn to the atlas
+        GreyGui.TextSystem.SetGeneratedSdfBitmapToAtlas();
+
         if (context.Batches.Count == 0)
         {
             return;

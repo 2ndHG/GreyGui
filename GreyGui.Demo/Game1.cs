@@ -10,11 +10,11 @@ public class Game1 : Game
     private SpriteBatch _spriteBatch;
 
     private GreyGuiElement root;
-    private Point _drawPos = new Point(50, 50);
+    private Point _drawPos = new Point(50,300);
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
 
-    private string testingStr = "";
+    private string testingStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
     public Game1()
     {
@@ -37,11 +37,10 @@ public class Game1 : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         GreyGui.Initialize(GraphicsDevice);
         GreyGui.TextSystem.LoadFont("huninn", "huninn.ttf");
-        GreyGui.TextSystem.ReserveChars("huninn", testingStr);
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GeneratePanel1();
+        root = GenerateTextPanel();
 
         // TODO: use this.Content to load your game content here
     }
@@ -84,15 +83,10 @@ public class Game1 : Game
         GraphicsDevice.Clear(new Color(50, 50, 50));
         // Point point = Mouse.GetState().Position;
         _spriteBatch.Begin();
-        _spriteBatch.Draw(GreyGui.Atlas, new Vector2(0, 0), Color.White);
+        _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
         _spriteBatch.End();
 
         guiBatch.Draw(root, renderContext, _drawPos);
-        // renderContext.RenderText("huninn", testingStr, new(0, 200), 20, Color.White, GraphicsDevice.Viewport.Bounds);
-        // renderContext.RenderText("huninn", testingStr, new(0, 230), 30, Color.White, GraphicsDevice.Viewport.Bounds);
-        // renderContext.RenderText("huninn", testingStr, new(0, 290), 60, Color.White, GraphicsDevice.Viewport.Bounds);
-        // renderContext.RenderText("huninn", testingStr, new(0, 380), 90, Color.White, GraphicsDevice.Viewport.Bounds);
-        // renderContext.RenderText("huninn", testingStr, new(0, 530), 150, Color.White, GraphicsDevice.Viewport.Bounds);
         guiBatch.Flush(renderContext);
 
         // Measure draw calls
@@ -148,9 +142,9 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateTextPanel()
     {
-        ListPanel rowPanel = new ListPanel(colorMask: Color.Black, size: new(400, 300), layoutMode: RowLayoutMode.Left).SetChildren([
+        ListPanel rowPanel = new ListPanel(colorMask: Color.Transparent, size: new(400, 300), layoutMode: RowLayoutMode.Left).SetChildren([
             // new ListPanel(colorMask: Color.White, size: new(100, 100), layoutMode: RowLayoutMode.Center)
-            new Text(colorMask: Color.PaleGoldenrod, size: new (300, 100), displayText: "abc de", useWidthRatio:true, widthRatio: 1f, alignMode: RowLayoutMode.Center),
+            new Text(colorMask: Color.PaleGoldenrod, size: new (300, 32), displayText: "dsaj;lJHpJLJLhfUYRTDMNBJKfbnvVUIWEHLUHDKJSH", useWidthRatio:true, widthRatio: 1f, alignMode: RowLayoutMode.Left)
         ]);
         return rowPanel;
     }

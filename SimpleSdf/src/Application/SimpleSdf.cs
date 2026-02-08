@@ -41,7 +41,8 @@ public class SimpleSdf
         float advanceWidth = typeface.GetHAdvanceWidthFromGlyphIndex(glyphIndex) * scale;
 
         Shape shape = new(glyph);
-        float[] sdfData = SdfGenerator.Generate(shape,
+        float[] sdfData = SdfGenerator.Generate(
+            shape,
             bitmapWidth,
             bitmapHeight,
             scale,
@@ -53,4 +54,26 @@ public class SimpleSdf
         return new SimpleSdfResult() { Bitmap = sdfData, BitmapWidth = bitmapWidth, BitmapHeight = bitmapHeight, FontSize = fontSize, Origin = new Vector2(originX, originY), Range = range, AdvanceWidth = advanceWidth };
     }
 
+    public static SdfRenderInfo GetSdfRenderInfo(Typeface typeface, char c, float fontSize, int padding, float range)
+    {
+        int unitsPerEm = typeface.UnitsPerEm;
+        ushort glyphIndex = typeface.GetGlyphIndex(c);
+        Glyph glyph = typeface.GetGlyph(glyphIndex);
+
+        Bounds bounds = glyph.Bounds;
+
+        float scale = fontSize / unitsPerEm;
+
+        float contentW = (bounds.XMax - bounds.XMin) * scale;
+        float contentH = (bounds.YMax - bounds.YMin) * scale;
+
+        int bitmapWidth = (int)Math.Ceiling(contentW) + padding * 2;
+        int bitmapHeight = (int)Math.Ceiling(contentH) + padding * 2;
+
+        float originX =  -bounds.XMin * scale + padding;
+        float originY = bitmapHeight - (-bounds.YMin * scale + padding);
+
+        float advanceWidth = typeface.GetHAdvanceWidthFromGlyphIndex(glyphIndex) * scale;
+        return new SdfRenderInfo() { BitmapWidth = bitmapWidth, BitmapHeight = bitmapHeight, FontSize = fontSize, Origin = new Vector2(originX, originY), Range = range, AdvanceWidth = advanceWidth};
+    }
 }

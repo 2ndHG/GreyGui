@@ -10,6 +10,7 @@ public class TextSystem
     public float GlyphPixelSize { get; private set; } = 40;
     public int GlyphPadding { get; private set; } = 4;
     public float GlyphRange { get; private set; } = 4f;
+    public float DefaultFontSize {get; set;} = 24;
 
     private Dictionary<string, FontInfo> _fontInfoMap = [];
 
@@ -26,7 +27,10 @@ public class TextSystem
     }
     public void LoadFont(string fontName, string fontTtfPath)
     {
-        _fontInfoMap.TryAdd(fontName, new FontInfo(fontTtfPath));
+        if(_fontInfoMap.TryAdd(fontName, new FontInfo(fontTtfPath)))
+        {
+            ReserveChars(fontName, [' ']);
+        }
         if (DefaultFont.Length == 0)
         {
             DefaultFont = fontName;
@@ -47,9 +51,9 @@ public class TextSystem
     {
         return _fontInfoMap[fontName];
     }
-    public void ReserveChars(string font, ReadOnlySpan<char> chars)
+    public void ReserveChars(string fontName, ReadOnlySpan<char> chars)
     {
-        FontInfo fontInfo = _fontInfoMap[font];
+        FontInfo fontInfo = _fontInfoMap[fontName];
         Typeface typeface = fontInfo.Typeface;
         for (int i = 0; i < chars.Length; ++i)
         {

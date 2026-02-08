@@ -1,7 +1,4 @@
-﻿using System;
-using System.Diagnostics;
-using System.Linq;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -17,7 +14,7 @@ public class Game1 : Game
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
 
-    private string testingStr = "我是不會失真的字 :)";
+    private string testingStr = "";
 
     public Game1()
     {
@@ -44,7 +41,7 @@ public class Game1 : Game
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GenerateTextPanel();
+        root = GeneratePanel1();
 
         // TODO: use this.Content to load your game content here
     }
@@ -151,9 +148,9 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateTextPanel()
     {
-        ListPanel rowPanel = new ListPanel(colorMask: Color.MidnightBlue, size: new(400, 300), layoutMode: RowLayoutMode.Left).SetChildren([
+        ListPanel rowPanel = new ListPanel(colorMask: Color.Black, size: new(400, 300), layoutMode: RowLayoutMode.Left).SetChildren([
             // new ListPanel(colorMask: Color.White, size: new(100, 100), layoutMode: RowLayoutMode.Center)
-            new Text(colorMask: Color.PaleGoldenrod, size: new (300, 400), displayText: testingStr, useWidthRatio:true, widthRatio: 1f, alignMode: RowLayoutMode.Center, fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio)
+            new Text(colorMask: Color.PaleGoldenrod, size: new (300, 100), displayText: "abc de", useWidthRatio:true, widthRatio: 1f, alignMode: RowLayoutMode.Center),
         ]);
         return rowPanel;
     }

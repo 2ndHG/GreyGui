@@ -114,7 +114,7 @@ public class Text : GreyGuiElement, IRatioElement
         get => _fontName;
         set
         {
-            if (value == null || _fontName.Equals(value))
+            if (value == null || _fontName == value)
                 return;
             _fontName = value;
             _isDisplayTextDirty = true;
@@ -176,10 +176,9 @@ public class Text : GreyGuiElement, IRatioElement
     private float _fontSizeScalingBaseline;
     private float _textTotalWidth;
 
-    private List<GlyphInfo> _textGlyphList = [];
     private List<TextSegment> _textSegments = [];
 
-    public Text(Color colorMask, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, RowLayoutMode alignMode = RowLayoutMode.Left, string? fontName = null, string displayText = "", float fontSize = 24f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0)
+    public Text(Color colorMask, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, RowLayoutMode alignMode = RowLayoutMode.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0)
     {
         ColorMask = colorMask;
         BorderColor = borderColor;
@@ -194,6 +193,7 @@ public class Text : GreyGuiElement, IRatioElement
         _alignMode = alignMode;
         _fontName = fontName ?? GreyGui.TextSystem.DefaultFont;
         _displayText = displayText;
+        fontSize = fontSize < 0 ? GreyGui.TextSystem.DefaultFontSize : fontSize;
         _fontSize = fontSize;
         _textYOffset = textYOffset;
         _fontSizeScalingMode = fontSizeScalingMode;
@@ -280,6 +280,7 @@ public class Text : GreyGuiElement, IRatioElement
     }
     private void ResolveDisplayTextDirty()
     {
+        GreyGui.TextSystem.ReserveChars(_fontName, DisplayText);
         ParseTextSpaceAsNotWord();
         _isDisplayTextDirty = false;
     }

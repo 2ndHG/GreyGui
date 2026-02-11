@@ -13,6 +13,7 @@ public class TextSystem
     public int GlyphPadding { get; private set; } = 4;
     public float GlyphRange { get; private set; } = 4f;
     public float DefaultFontSize { get; set; } = 24;
+    public int MaxReservingCharCount { get; set; } = 2048;
 
     private Dictionary<string, FontInfo> _fontInfoMap = [];
 
@@ -20,10 +21,11 @@ public class TextSystem
     private int _y = 0;
     private int _currentHeight = 1;
 
-    // Multi-thread SDF bitmap genration
+    // Multi-thread SDF bitmap generation
     private ConcurrentQueue<(Rectangle destRect, Typeface typeface, char c)> _reservedChars = [];
     private ConcurrentQueue<(Rectangle destRect, float[] bitmap)> _sdfResultProductBuffer = [];
     private volatile bool _isGeneratingSdf = false;
+    private readonly object syncRoot = new();
     private ArrayPool<Color> _colorDataArrayPool = ArrayPool<Color>.Shared;
 
 
@@ -63,9 +65,10 @@ public class TextSystem
     {
         FontInfo fontInfo = _fontInfoMap[fontName];
         Typeface typeface = fontInfo.Typeface;
+        bool reservedAny = false;
         foreach (char c in chars)
         {
-            if (!fontInfo.GlyphInfoMap.ContainsKey(c))
+            if (_reservedChars.Count < MaxReservingCharCount && !fontInfo.GlyphInfoMap.ContainsKey(c))
             {
                 SdfRenderInfo sdfRenderInfo = SimpleSdf.SimpleSdf.GetSdfRenderInfo(typeface, c, GlyphPixelSize, GlyphPadding, GlyphRange);
                 if (TryPutGlyphPlaceholder(sdfRenderInfo, out Rectangle glyphSrcRect))
@@ -81,7 +84,18 @@ public class TextSystem
 
                     // add c to reserved queue, then the SDF bitmap will be generated in a seperate thread
                     _reservedChars.Enqueue((glyphSrcRect, typeface, c));
-                    GenerateSdfResultInSideThread();
+                    reservedAny = true;
+                }
+            }
+        }
+
+        if (reservedAny && !_isGeneratingSdf)
+        {
+            lock (syncRoot)
+            {
+                if (!_isGeneratingSdf)
+                {
+                    StartGenerateSdfResultInSideThread();
                 }
             }
         }
@@ -109,55 +123,25 @@ public class TextSystem
     }
 
 
-    public void GenerateSdfResultInSideThread()
-    {
-        if (_isGeneratingSdf)
-        {
-            return;
-        }
-        _isGeneratingSdf = true;
-        Task.Run(() =>
-        {
-            Console.WriteLine("Start generate Sdf");
-            bool isGeneratingLocal = _isGeneratingSdf;
-            while (_isGeneratingSdf)
-            {
-                if (_reservedChars.TryDequeue(out (Rectangle destRect, Typeface typeface, char c) request))
-                {
-                    SimpleSdfResult result = SimpleSdf.SimpleSdf.GenerateSdfBitmap(request.typeface, request.c, GlyphPixelSize, GlyphPadding, GlyphPadding);
-                    _sdfResultProductBuffer.Enqueue((request.destRect, result.Bitmap));
-
-                    Thread.Sleep(1);
-                }
-                else
-                {
-                    _isGeneratingSdf = false;
-                }
-            }
-        });
-    }
     public void SetGeneratedSdfBitmapToAtlas()
     {
-        while (!_sdfResultProductBuffer.IsEmpty)
+        while (_sdfResultProductBuffer.TryDequeue(out (Rectangle destRect, float[] bitmap) result))
         {
-            if (_sdfResultProductBuffer.TryDequeue(out (Rectangle destRect, float[] bitmap) result))
+            Rectangle destRect = result.destRect;
+            Color[] data = _colorDataArrayPool.Rent(destRect.Width * destRect.Height);
+            for (int y = 0; y < destRect.Height; y++)
             {
-                Rectangle destRect = result.destRect;
-                Color[] data = _colorDataArrayPool.Rent(destRect.Width * destRect.Height);
-                for (int y = 0; y < destRect.Height; y++)
+                for (int x = 0; x < destRect.Width; x++)
                 {
-                    for (int x = 0; x < destRect.Width; x++)
-                    {
-                        int index = x + (y * destRect.Width);
+                    int index = x + (y * destRect.Width);
 
-                        byte pixel = (byte)(result.bitmap[index] * 255);
+                    byte pixel = (byte)(result.bitmap[index] * 255);
 
-                        data[index] = new Color(pixel, pixel, pixel, pixel);
-                    }
+                    data[index] = new Color(pixel, pixel, pixel, pixel);
                 }
-                GreyGui.Atlas.SetData(0, result.destRect, data, 0, destRect.Width * destRect.Height);
-                _colorDataArrayPool.Return(data);
             }
+            GreyGui.Atlas.SetData(0, result.destRect, data, 0, destRect.Width * destRect.Height);
+            _colorDataArrayPool.Return(data);
         }
     }
 
@@ -240,5 +224,45 @@ public class TextSystem
     public void SetAntiAliasingRange(float value)
     {
         GreyGui.Shader.Parameters["antiAliasingRange"].SetValue(value);
+    }
+
+    private void StartGenerateSdfResultInSideThread()
+    {
+        _isGeneratingSdf = true;
+        Task.Run(() =>
+        {
+            try
+            {
+                // Console.WriteLine("Start generate Sdf");
+                while (_isGeneratingSdf)
+                {
+                    // Console.WriteLine($"Remaining bitmap to generate: {_reservedChars.Count}");
+                    if (_reservedChars.TryDequeue(out (Rectangle destRect, Typeface typeface, char c) request))
+                    {
+                        SimpleSdfResult result = SimpleSdf.SimpleSdf.GenerateSdfBitmap(request.typeface, request.c, GlyphPixelSize, GlyphPadding, GlyphPadding);
+                        _sdfResultProductBuffer.Enqueue((request.destRect, result.Bitmap));
+
+                        Thread.Sleep(1);
+                    }
+                    else
+                    {
+                        lock (syncRoot)
+                        {
+                            if (_reservedChars.IsEmpty)
+                            {
+                                _isGeneratingSdf = false;
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error occurs when generating sdf bitmap: {e.Message}");
+                Console.WriteLine("Sdf bitmap generation ends with an exception.");
+                lock (syncRoot) { _isGeneratingSdf = false; }
+            }
+
+        });
     }
 }

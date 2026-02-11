@@ -10,11 +10,11 @@ public class Game1 : Game
     private SpriteBatch _spriteBatch;
 
     private GreyGuiElement root;
-    private Point _drawPos = new Point(50,300);
+    private Point _drawPos = new Point(50, 300);
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
 
-    private string testingStr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    private bool oneTimeTicket = true;
 
     public Game1()
     {
@@ -69,9 +69,11 @@ public class Game1 : Game
             root.Size = root.Size with { Y = root.Size.Y + 3f };
         }
 
-        if (keyboardState.IsKeyDown(Keys.R))
+        if (oneTimeTicket && keyboardState.IsKeyDown(Keys.R))
         {
-            root = GenerateTextPanel();
+            oneTimeTicket = false;
+            GreyGui.TextSystem.ReserveChars("huninn", "\" !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
+            // root = GenerateTextPanel();
         }
 
         base.Update(gameTime);
@@ -143,8 +145,8 @@ public class Game1 : Game
     private GreyGuiElement GenerateTextPanel()
     {
         ListPanel rowPanel = new ListPanel(colorMask: Color.Transparent, size: new(400, 300), layoutMode: RowLayoutMode.Left).SetChildren([
-            // new ListPanel(colorMask: Color.White, size: new(100, 100), layoutMode: RowLayoutMode.Center)
-            new Text(colorMask: Color.PaleGoldenrod, size: new (300, 32), displayText: "dsaj;lJHpJLJLhfUYRTDMNBJKfbnvVUIWEHLUHDKJSH", useWidthRatio:true, widthRatio: 1f, alignMode: RowLayoutMode.Left)
+            new Text(colorMask: Color.PaleGoldenrod, size: new (300, 24), displayText: "dsaj;lJHpJLJLhfUYRTDMNBJKfbnvVUIWEHLUHDKJSH", useWidthRatio:true, widthRatio: 1f, alignMode: RowLayoutMode.Left, textYOffset: -8),
+            new ListPanel(Color.Orange, useWidthRatio: true, widthRatio: 0.5f, size: new(0, 24))
         ]);
         return rowPanel;
     }

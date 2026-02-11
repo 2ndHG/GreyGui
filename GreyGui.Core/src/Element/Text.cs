@@ -175,6 +175,7 @@ public class Text : GreyGuiElement, IRatioElement
     private FontSizeScalingMode _fontSizeScalingMode;
     private float _fontSizeScalingBaseline;
     private float _textTotalWidth;
+    private float _totalNoSpaceWidth;
 
     private List<TextSegment> _textSegments = [];
 
@@ -245,36 +246,46 @@ public class Text : GreyGuiElement, IRatioElement
     private void ParseTextSpaceAsNotWord()
     {
         FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
-        float spaceAdvanceWidth = fontInfo.GlyphInfoMap[' '].AdvanceWidth;
+        GlyphInfo spaceInfo = fontInfo.GlyphInfoMap[' '];
+        float spaceAdvanceWidth = spaceInfo.AdvanceWidth;
+
         TextSegment textSegment = new();
+        bool prevIsSpace = false;
+        int backspacesOfThisSegment = 0;
         _textTotalWidth = 0;
+        _totalNoSpaceWidth = 0;
         for (int i = 0; i < _displayText.Length; ++i)
         {
             if (_displayText[i] == ' ')
             {
-                _textTotalWidth += spaceAdvanceWidth;
-                if (textSegment.glyphInfoList.Count > 0)
-                {
-                    textSegment.segmentAdvanceWidth += spaceAdvanceWidth;
-                    _textSegments.Add(textSegment);
-                    textSegment = new();
-                }
-                else
-                {
-                    _textSegments[^1].segmentAdvanceWidth += spaceAdvanceWidth;
-                }
+                ++backspacesOfThisSegment;
+                prevIsSpace = true;
             }
             else
             {
+                if (prevIsSpace)
+                {
+                    float backspaceWidth = spaceAdvanceWidth * backspacesOfThisSegment;
+                    textSegment.widthWithSpace = textSegment.widthWithoutSpace + backspaceWidth;
+                    _textTotalWidth += textSegment.widthWithSpace;
+                    _totalNoSpaceWidth += textSegment.widthWithoutSpace;
+                    _textSegments.Add(textSegment);
+
+                    textSegment = new();
+                    backspacesOfThisSegment = 0;
+                }
                 GlyphInfo glyphInfo = fontInfo.GlyphInfoMap[_displayText[i]];
-                _textTotalWidth += glyphInfo.AdvanceWidth;
-                textSegment.segmentWidth += glyphInfo.AdvanceWidth;
-                textSegment.segmentAdvanceWidth += glyphInfo.AdvanceWidth;
+                textSegment.widthWithoutSpace += glyphInfo.AdvanceWidth;
                 textSegment.glyphInfoList.Add(glyphInfo);
+                prevIsSpace = false;
             }
         }
-        if (textSegment.glyphInfoList.Count > 0)
+        // Add the last segment
         {
+            float backspaceWidth = spaceAdvanceWidth * backspacesOfThisSegment;
+            textSegment.widthWithSpace = textSegment.widthWithoutSpace + backspaceWidth;
+            _textTotalWidth += textSegment.widthWithSpace;
+            _totalNoSpaceWidth += textSegment.widthWithoutSpace;
             _textSegments.Add(textSegment);
         }
     }
@@ -308,10 +319,12 @@ public class Text : GreyGuiElement, IRatioElement
             RowLayoutMode.Right => _size.X - _textTotalWidth * scale,
             _ => 0
         };
+        float gapWidth = (_size.X - _totalNoSpaceWidth * scale) / Math.Max(1, _textSegments.Count - 1);
         foreach (TextSegment segment in _textSegments)
         {
             renderContext.RenderText(segment.glyphInfoList, cursorPosition, fontSize, ColorMask, screenScissor);
-            cursorPosition.X += segment.segmentAdvanceWidth * scale;
+            cursorPosition.X += _alignMode != RowLayoutMode.Spread ?
+                (segment.widthWithSpace * scale) : gapWidth+ (segment.widthWithoutSpace * scale);
         }
     }
 
@@ -331,7 +344,7 @@ public class Text : GreyGuiElement, IRatioElement
     private class TextSegment
     {
         public List<GlyphInfo> glyphInfoList = [];
-        public float segmentWidth;
-        public float segmentAdvanceWidth;
+        public float widthWithoutSpace;
+        public float widthWithSpace;
     }
 }

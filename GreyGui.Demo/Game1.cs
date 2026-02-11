@@ -145,8 +145,9 @@ public class Game1 : Game
     private GreyGuiElement GenerateTextPanel()
     {
         ListPanel rowPanel = new ListPanel(colorMask: Color.Transparent, size: new(400, 300), layoutMode: RowLayoutMode.Left).SetChildren([
-            new Text(colorMask: Color.PaleGoldenrod, size: new (300, 24), displayText: "dsaj;lJHpJLJLhfUYRTDMNBJKfbnvVUIWEHLUHDKJSH", useWidthRatio:true, widthRatio: 1f, alignMode: RowLayoutMode.Left, textYOffset: -8),
-            new ListPanel(Color.Orange, useWidthRatio: true, widthRatio: 0.5f, size: new(0, 24))
+            new Text(colorMask: Color.PaleGoldenrod, size: new (300, 24), displayText: " s video    B", useWidthRatio:true, widthRatio: 1f, alignMode: RowLayoutMode.Spread, textYOffset: -6),
+            new ListPanel(Color.Khaki, useWidthRatio: true, widthRatio: 1f, size: new(0, 24)),
+            // new Text(colorMask: Color.PaleGoldenrod, size: new (300, 24), displayText: "SomeText", useWidthRatio:true, widthRatio: .5f, alignMode: RowLayoutMode.Left, textYOffset: -8),
         ]);
         return rowPanel;
     }

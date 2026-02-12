@@ -10,7 +10,7 @@ public class Game1 : Game
     private SpriteBatch _spriteBatch;
 
     private GreyGuiElement root;
-    private Point _drawPos = new Point(50, 300);
+    private Point _drawPos = new Point(550, 300);
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
 
@@ -144,9 +144,9 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateTextPanel()
     {
-        ListPanel rowPanel = new ListPanel(colorMask: Color.Transparent, size: new(400, 300), layoutMode: RowLayoutMode.Left).SetChildren([
-            new Text(colorMask: Color.PaleGoldenrod, size: new (300, 24), displayText: " s video    B", useWidthRatio:true, widthRatio: 1f, alignMode: RowLayoutMode.Spread, textYOffset: -6),
+        ListPanel rowPanel = new ListPanel(colorMask: Color.Transparent, size: new(200, 150), layoutMode: RowLayoutMode.Left).SetChildren([
             new ListPanel(Color.Khaki, useWidthRatio: true, widthRatio: 1f, size: new(0, 24)),
+            new Text(colorMask: Color.PaleGoldenrod, size: new (200, 24), displayText: "a bb ccc  DDDD  eeeee ffffff ggggggg", useWidthRatio:true, widthRatio: 1f, alignMode: RowLayoutMode.Right, textYOffset: -6),
             // new Text(colorMask: Color.PaleGoldenrod, size: new (300, 24), displayText: "SomeText", useWidthRatio:true, widthRatio: .5f, alignMode: RowLayoutMode.Left, textYOffset: -8),
         ]);
         return rowPanel;

@@ -174,10 +174,12 @@ public class Text : GreyGuiElement, IRatioElement
     private float _textYOffset;
     private FontSizeScalingMode _fontSizeScalingMode;
     private float _fontSizeScalingBaseline;
+
+    // Layout
+    private readonly List<TextSegment> _textSegments = [];
     private float _textTotalWidth;
     private float _totalNoSpaceWidth;
-
-    private List<TextSegment> _textSegments = [];
+    private float _spaceAdvanceWidth;
 
     public Text(Color colorMask, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, RowLayoutMode alignMode = RowLayoutMode.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0)
     {
@@ -248,6 +250,7 @@ public class Text : GreyGuiElement, IRatioElement
         FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
         GlyphInfo spaceInfo = fontInfo.GlyphInfoMap[' '];
         float spaceAdvanceWidth = spaceInfo.AdvanceWidth;
+        _spaceAdvanceWidth = spaceAdvanceWidth;
 
         TextSegment textSegment = new();
         bool prevIsSpace = false;
@@ -339,6 +342,38 @@ public class Text : GreyGuiElement, IRatioElement
     public override void Update()
     {
 
+    }
+    private void EndLineDraw(Vector2 positionInVector, Vector2 offset, float fontSize, float scale, RenderContext renderContext, Rectangle screenScissor)
+    {
+
+        int start = 0;
+        float rowWidth = 0;
+        for (int i = 0; i < _textSegments.Count; ++i)
+        {
+            TextSegment segment = _textSegments[i];
+            if (offset.X + segment.widthWithoutSpace * scale > _size.X)
+            {
+                offset.X = _alignMode switch
+                {
+                    RowLayoutMode.Center => (_size.X - _textTotalWidth * scale) / 2,
+                    RowLayoutMode.Right => _size.X - _textTotalWidth * scale,
+                    _ => 0
+                };
+                float gapWidth = (_size.X - _totalNoSpaceWidth * scale) / Math.Max(1, _textSegments.Count - 1);
+                while (start < i)
+                {
+                    TextSegment drawingSegment = _textSegments[start];
+                    renderContext.RenderText(drawingSegment.glyphInfoList, positionInVector + offset, fontSize, ColorMask, screenScissor);
+                    offset.X += _alignMode != RowLayoutMode.Spread ?
+                        (drawingSegment.widthWithSpace * scale)
+                        : gapWidth + (drawingSegment.widthWithoutSpace * scale);
+                    ++start;
+                }
+                offset.X = 0;
+                offset.Y += fontSize;
+            }
+            rowWidth += (_alignMode == RowLayoutMode.Spread ? segment.widthWithoutSpace + _spaceAdvanceWidth : segment.widthWithSpace) * scale;
+        }
     }
 
     private class TextSegment

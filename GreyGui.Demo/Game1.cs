@@ -40,11 +40,10 @@ public class Game1 : Game
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GenerateTextPanel();
+        root = GenerateTextPanel(RowLayoutMode.Spread);
 
         // TODO: use this.Content to load your game content here
     }
-
     protected override void Update(GameTime gameTime)
     {
         if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
@@ -74,6 +73,22 @@ public class Game1 : Game
             oneTimeTicket = false;
             GreyGui.TextSystem.ReserveChars("huninn", "\" !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
             // root = GenerateTextPanel();
+        }
+        if (keyboardState.IsKeyDown(Keys.D1))
+        {
+            root = GenerateTextPanel(RowLayoutMode.Left);
+        }
+        else if (keyboardState.IsKeyDown(Keys.D2))
+        {
+            root = GenerateTextPanel(RowLayoutMode.Center);
+        }
+        else if (keyboardState.IsKeyDown(Keys.D3))
+        {
+            root = GenerateTextPanel(RowLayoutMode.Right);
+        }
+        else if (keyboardState.IsKeyDown(Keys.D4))
+        {
+            root = GenerateTextPanel(RowLayoutMode.Spread);
         }
 
         base.Update(gameTime);
@@ -142,11 +157,11 @@ public class Game1 : Game
         return panel;
     }
 
-    private GreyGuiElement GenerateTextPanel()
+    private GreyGuiElement GenerateTextPanel(RowLayoutMode alignMode)
     {
-        ListPanel rowPanel = new ListPanel(colorMask: Color.Transparent, size: new(200, 150), layoutMode: RowLayoutMode.Left).SetChildren([
+        ListPanel rowPanel = new ListPanel(colorMask: Color.Transparent, size: new(400, 150), layoutMode: RowLayoutMode.Left).SetChildren([
             new ListPanel(Color.Khaki, useWidthRatio: true, widthRatio: 1f, size: new(0, 24)),
-            new Text(colorMask: Color.PaleGoldenrod, size: new (200, 24), displayText: "a bb ccc  DDDD  eeeee ffffff ggggggg", useWidthRatio:true, widthRatio: 1f, alignMode: RowLayoutMode.Right, textYOffset: -6),
+            new Text(colorMask: Color.PaleGoldenrod, size: new (200, 24), displayText: "I have an apple that is not really an orange, but its color is orange and it tastes like a watermelon, watermelons are red so they look like apples too.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6),
             // new Text(colorMask: Color.PaleGoldenrod, size: new (300, 24), displayText: "SomeText", useWidthRatio:true, widthRatio: .5f, alignMode: RowLayoutMode.Left, textYOffset: -8),
         ]);
         return rowPanel;

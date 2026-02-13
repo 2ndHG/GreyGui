@@ -72,6 +72,7 @@ public class Game1 : Game
         {
             oneTimeTicket = false;
             GreyGui.TextSystem.ReserveChars("huninn", "\" !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
+            ((Text)root).DisplayText = "aaaa bbb ccccc ddddd eeeee ffffff ggggg hhhhhh";
             // root = GenerateTextPanel();
         }
         if (keyboardState.IsKeyDown(Keys.D1))
@@ -159,11 +160,11 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateTextPanel(RowLayoutMode alignMode)
     {
-        ListPanel rowPanel = new ListPanel(colorMask: Color.Transparent, size: new(400, 150), layoutMode: RowLayoutMode.Left).SetChildren([
-            new ListPanel(Color.Khaki, useWidthRatio: true, widthRatio: 1f, size: new(0, 24)),
-            new Text(colorMask: Color.PaleGoldenrod, size: new (200, 24), displayText: "I have an apple that is not really an orange, but its color is orange and it tastes like a watermelon, watermelons are red so they look like apples too.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6),
-            // new Text(colorMask: Color.PaleGoldenrod, size: new (300, 24), displayText: "SomeText", useWidthRatio:true, widthRatio: .5f, alignMode: RowLayoutMode.Left, textYOffset: -8),
-        ]);
-        return rowPanel;
+        // ListPanel rowPanel = new ListPanel(colorMask: Color.Transparent, size: new(400, 150), layoutMode: RowLayoutMode.Left).SetChildren([
+        //     new ListPanel(Color.Khaki, useWidthRatio: true, widthRatio: 1f, size: new(0, 24)),
+        //     new Text(colorMask: Color.PaleGoldenrod, size: new (200, 24), displayText: "I have an apple that is not really an orange, but its color is orange and it tastes like a watermelon, watermelons are red so they look like apples too.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6),
+        //     // new Text(colorMask: Color.PaleGoldenrod, size: new (300, 24), displayText: "SomeText", useWidthRatio:true, widthRatio: .5f, alignMode: RowLayoutMode.Left, textYOffset: -8),
+        // ]);
+        return new Text(colorMask: Color.PaleGoldenrod, size: new (400, 24), displayText: "I have an apple that is not really an orange, but its color is orange and it tastes like a watermelon, watermelons are red so they look like apples too.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, autoEndLine:true);
     }
 }

@@ -10,7 +10,7 @@ public class Game1 : Game
     private SpriteBatch _spriteBatch;
 
     private GreyGuiElement root;
-    private Point _drawPos = new Point(550, 300);
+    private Point _drawPos = new Point(50, 200);
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
 
@@ -26,8 +26,8 @@ public class Game1 : Game
     protected override void Initialize()
     {
         // TODO: Add your initialization logic here
-        _graphics.PreferredBackBufferWidth = 1400;
-        _graphics.PreferredBackBufferHeight = 1000;
+        _graphics.PreferredBackBufferWidth = 1300;
+        _graphics.PreferredBackBufferHeight = 800;
         _graphics.ApplyChanges();
         base.Initialize();
     }
@@ -40,7 +40,7 @@ public class Game1 : Game
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GenerateTextPanel(RowLayoutMode.Spread);
+        root = GenerateText2();
 
         // TODO: use this.Content to load your game content here
     }
@@ -53,19 +53,23 @@ public class Game1 : Game
         var keyboardState = Keyboard.GetState();
         if (keyboardState.IsKeyDown(Keys.D))
         {
-            root.Size = root.Size with { X = root.Size.X + 3f };
+            _drawPos.X -= 1;
+            root.Size = root.Size with { X = root.Size.X + 2f };
         }
         else if (keyboardState.IsKeyDown(Keys.A))
         {
-            root.Size = root.Size with { X = root.Size.X - 3f };
+            _drawPos.X += 1;
+            root.Size = root.Size with { X = root.Size.X - 2f };
         }
         if (keyboardState.IsKeyDown(Keys.W))
         {
-            root.Size = root.Size with { Y = root.Size.Y - 3f };
+            _drawPos.Y += 1;
+            root.Size = root.Size with { Y = root.Size.Y - 2f };
         }
         else if (keyboardState.IsKeyDown(Keys.S))
         {
-            root.Size = root.Size with { Y = root.Size.Y + 3f };
+            _drawPos.Y -= 1;
+            root.Size = root.Size with { Y = root.Size.Y + 2f };
         }
 
         if (oneTimeTicket && keyboardState.IsKeyDown(Keys.R))
@@ -77,18 +81,22 @@ public class Game1 : Game
         }
         if (keyboardState.IsKeyDown(Keys.D1))
         {
+            _drawPos = new Point(50, 200);
             root = GenerateTextPanel(RowLayoutMode.Left);
         }
         else if (keyboardState.IsKeyDown(Keys.D2))
         {
+            _drawPos = new Point(50, 200);
             root = GenerateTextPanel(RowLayoutMode.Center);
         }
         else if (keyboardState.IsKeyDown(Keys.D3))
         {
+            _drawPos = new Point(50, 200);
             root = GenerateTextPanel(RowLayoutMode.Right);
         }
         else if (keyboardState.IsKeyDown(Keys.D4))
         {
+            _drawPos = new Point(50, 200);
             root = GenerateTextPanel(RowLayoutMode.Spread);
         }
 
@@ -100,9 +108,9 @@ public class Game1 : Game
             return;
         GraphicsDevice.Clear(new Color(50, 50, 50));
         // Point point = Mouse.GetState().Position;
-        _spriteBatch.Begin();
-        _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
-        _spriteBatch.End();
+        // _spriteBatch.Begin();
+        // _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
+        // _spriteBatch.End();
 
         guiBatch.Draw(root, renderContext, _drawPos);
         guiBatch.Flush(renderContext);
@@ -160,11 +168,20 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateTextPanel(RowLayoutMode alignMode)
     {
-        // ListPanel rowPanel = new ListPanel(colorMask: Color.Transparent, size: new(400, 150), layoutMode: RowLayoutMode.Left).SetChildren([
-        //     new ListPanel(Color.Khaki, useWidthRatio: true, widthRatio: 1f, size: new(0, 24)),
-        //     new Text(colorMask: Color.PaleGoldenrod, size: new (200, 24), displayText: "I have an apple that is not really an orange, but its color is orange and it tastes like a watermelon, watermelons are red so they look like apples too.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6),
-        //     // new Text(colorMask: Color.PaleGoldenrod, size: new (300, 24), displayText: "SomeText", useWidthRatio:true, widthRatio: .5f, alignMode: RowLayoutMode.Left, textYOffset: -8),
-        // ]);
-        return new Text(colorMask: Color.PaleGoldenrod, size: new (400, 24), displayText: "I have an apple that is not really an orange, but its color is orange and it tastes like a watermelon, watermelons are red so they look like apples too.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, autoEndLine:true);
+        ListPanel rowPanel = new ListPanel(colorMask: Color.Black, size: new(1200, 400), layoutMode: RowLayoutMode.Left, paddingTop: 10, paddingSide: 10, borderRadius: 10, rowGap: 10).SetChildren([
+            new ListPanel(Color.White, useWidthRatio: true, widthRatio: 1f, size: new(0, 24)),
+            new Text(colorMask: Color.PaleGoldenrod, size: new (800, 24), displayText: "This text section uses width as the font size scaling factor, and also takes the height of displaying text as its height.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, autoEndLine: true, useTextHeight: true, fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio),
+            new Text(colorMask: new Color(107, 182, 232), size: new (200, 40), fontSize: 40, displayText: "This text section uses height as the font size scaling factor.", useWidthRatio: true, widthRatio: 1f, alignMode: RowLayoutMode.Left, textYOffset: -6, fontSizeScalingMode: FontSizeScalingMode.UseHeightRatio, useHeightRatio: true, heightRatio: .05f),
+
+            new Text(colorMask: new (180, 115, 250), size: new (200, 24), displayText: "This text section's font size doesn't scale with its width or height, so you can see auto-endline happening.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, autoEndLine: true, useTextHeight: true),
+
+            new Text(colorMask: new (215, 252, 167), size: new (200, 24), displayText: "This section uses parent height to only scale height but not the font size.", useWidthRatio:true, widthRatio: 1f, alignMode: RowLayoutMode.Left, textYOffset: -6, useHeightRatio: true, heightRatio: .15f),
+            new Text(colorMask: new (167, 252, 245), displayText:"Final line with fixed rendering settings.",textYOffset: -6, size:new (1,1))
+        ]);
+        return rowPanel;
+    }
+    private GreyGuiElement GenerateText2()
+    {
+        return new Text(colorMask: Color.PaleGoldenrod);
     }
 }

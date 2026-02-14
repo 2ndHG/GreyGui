@@ -70,6 +70,19 @@ public class Text : GreyGuiElement, IRatioElement
             _isSizeDirty = true;
         }
     }
+    public bool UseTextHeight
+    {
+        get => _useTextHeight;
+        set
+        {
+            if (_useTextHeight == value)
+            {
+                return;
+            }
+            _useTextHeight = value;
+            _isSizeDirty = true;
+        }
+    }
 
     public float WidthRatio
     {
@@ -118,6 +131,7 @@ public class Text : GreyGuiElement, IRatioElement
                 return;
             _fontName = value;
             _isDisplayTextDirty = true;
+            _isSizeDirty = _autoEndLine;
         }
     }
     public string DisplayText
@@ -131,6 +145,7 @@ public class Text : GreyGuiElement, IRatioElement
             }
             _displayText = value;
             _isDisplayTextDirty = true;
+            _isSizeDirty = _autoEndLine;
         }
     }
     public float FontSize
@@ -157,12 +172,26 @@ public class Text : GreyGuiElement, IRatioElement
             _fontSizeScalingBaseline = value;
         }
     }
+    public bool AutoEndLine
+    {
+        get => _autoEndLine;
+        set
+        {
+            if(_autoEndLine == value)
+            {
+                return ;
+            }
+            _autoEndLine = value;
+            IsSizeDirty = true;
+        }
+    }
 
     private Vector2 _size;
     private int _zIndex;
     private bool _useWidthRatio;
     private bool _useHeightRatio;
     private bool _useHeightWidthRatio;
+    private bool _useTextHeight;
     private float _widthRatio;
     private float _heightRatio;
     private float _heightWidthRatio;
@@ -180,7 +209,7 @@ public class Text : GreyGuiElement, IRatioElement
     private int _textSegmentCount = 1;
     private bool _autoEndLine;
 
-    public Text(Color colorMask, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, RowLayoutMode alignMode = RowLayoutMode.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default)
+    public Text(Color colorMask, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, bool useTextHeight = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, RowLayoutMode alignMode = RowLayoutMode.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default)
     {
         ColorMask = colorMask;
         BorderColor = borderColor;
@@ -188,6 +217,7 @@ public class Text : GreyGuiElement, IRatioElement
         _useWidthRatio = useWidthRatio;
         _useHeightRatio = useHeightRatio;
         _useHeightWidthRatio = useHeightWidthRatio;
+        _useTextHeight = useTextHeight;
         _widthRatio = widthRatio;
         _heightRatio = heightRatio;
         _heightWidthRatio = heightWidthRatio;
@@ -214,6 +244,44 @@ public class Text : GreyGuiElement, IRatioElement
         _isDisplayTextDirty = true;
     }
 
+    private int CalculateRowCount()
+    {
+        if (!_autoEndLine)
+        {
+            return 1;
+        }
+
+        float fontSize = _fontSizeScalingMode switch
+        {
+            FontSizeScalingMode.UseWidthRatio => _size.X / _fontSizeScalingBaseline * _fontSize,
+            FontSizeScalingMode.UseHeightRatio => _size.Y / _fontSizeScalingBaseline * _fontSize,
+            _ => _fontSize
+        };
+        fontSize = Math.Abs(fontSize);
+        float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        float maxRowSpace = _autoEndLine ? _size.X : float.MaxValue;
+        float widthSum = _textSegments[0].widthWithSpace * scale;
+        float widthSumWithoutSpace = 0;
+        int rowCount = 0;
+        for (int i = 1; i < _textSegmentCount; ++i)
+        {
+            TextSegment currentSegment = _textSegments[i];
+            // the row is full, we must draw the row before the current segment comes in
+            if (widthSum + currentSegment.widthWithoutSpace * scale > maxRowSpace)
+            {
+                ++rowCount;
+                widthSum = 0;
+            }
+
+            // Add the segment in the row
+            widthSum += currentSegment.widthWithSpace * scale;
+            widthSumWithoutSpace += currentSegment.widthWithoutSpace * scale;
+        }
+        ++rowCount;
+
+        return rowCount;
+    }
+
     private void RecalculateSize()
     {
         // As an IRatioElement
@@ -237,14 +305,30 @@ public class Text : GreyGuiElement, IRatioElement
             _size.Y = _size.X * _heightWidthRatio;
             sizeChanged = true;
         }
+        else if (UseTextHeight)
+        {
+            if (_isDisplayTextDirty)
+            {
+                ResolveDisplayTextDirty();
+            }
+            float fontSize = _fontSizeScalingMode switch
+            {
+                FontSizeScalingMode.UseWidthRatio => _size.X / _fontSizeScalingBaseline * _fontSize,
+                _ => _fontSize
+            };
+            fontSize = Math.Abs(fontSize);
+            _size.Y = CalculateRowCount() * fontSize;
+
+            sizeChanged = true;
+        }
 
         if (sizeChanged && _parent is not null)
         {
             _parent.IsLayoutDirty = true;
         }
+
         _isSizeDirty = false;
     }
-
     private void ParseTextSpaceAsNotWord()
     {
         TextSegment GetOrCreateSegment(int index)
@@ -313,6 +397,7 @@ public class Text : GreyGuiElement, IRatioElement
     {
         GreyGui.TextSystem.ReserveChars(_fontName, DisplayText);
         ParseTextSpaceAsNotWord();
+
         _isDisplayTextDirty = false;
     }
     public override void Draw(Point pos, RenderContext renderContext, Rectangle screenScissor)
@@ -333,7 +418,7 @@ public class Text : GreyGuiElement, IRatioElement
         position.Y += fontSize + _textYOffset;
 
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
-        float maxRowSpace =_autoEndLine? _size.X: float.MaxValue;
+        float maxRowSpace = _autoEndLine ? _size.X : float.MaxValue;
         float widthSum = _textSegments[0].widthWithSpace * scale;
         float widthSumWithoutSpace = 0;
         float prevSegmentSpaceWidth = _textSegments[0].spaceWidth * scale;
@@ -353,7 +438,7 @@ public class Text : GreyGuiElement, IRatioElement
                     RowLayoutMode.Right => maxRowSpace - widthSum + prevSegmentSpaceWidth,
                     _ => 0
                 };
-                float justifyGap =_alignMode == RowLayoutMode.Spread ? (maxRowSpace - widthSum + prevSegmentSpaceWidth) / (i - undrewLastIndex - 1):0;
+                float justifyGap = _alignMode == RowLayoutMode.Spread ? (maxRowSpace - widthSum + prevSegmentSpaceWidth) / (i - undrewLastIndex - 1) : 0;
 
                 for (; undrewLastIndex < i; ++undrewLastIndex)
                 {
@@ -365,7 +450,8 @@ public class Text : GreyGuiElement, IRatioElement
                 offset.X = 0;
                 offset.Y += fontSize;
             }
-            // calculate what segments can be put into this row
+
+            // Add the segment in the row
             widthSum += currentSegment.widthWithSpace * scale;
             widthSumWithoutSpace += currentSegment.widthWithoutSpace * scale;
             prevSegmentSpaceWidth = _textSegments[i].spaceWidth * scale;

@@ -13,6 +13,7 @@ public class Game1 : Game
     private Point _drawPos = new Point(50, 200);
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
+    private Text rootText;
 
     private bool oneTimeTicket = true;
 
@@ -74,9 +75,13 @@ public class Game1 : Game
 
         if (oneTimeTicket && keyboardState.IsKeyDown(Keys.R))
         {
-            oneTimeTicket = false;
-            GreyGui.TextSystem.ReserveChars("huninn", "\" !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
-            ((Text)root).DisplayText = "aaaa bbb ccccc ddddd eeeee ffffff ggggg hhhhhh";
+            // oneTimeTicket = false;
+            // GreyGui.TextSystem.ReserveChars("huninn", "\" !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
+            rootText.FontSize = 24;
+            rootText.AlignMode = RowLayoutMode.Center;
+            rootText.AutoEndLine = false;
+            rootText.DisplayText="Good morning";
+            rootText.WidthRatio = .5f;
             // root = GenerateTextPanel();
         }
         if (keyboardState.IsKeyDown(Keys.D1))
@@ -168,20 +173,25 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateTextPanel(RowLayoutMode alignMode)
     {
+        rootText = new Text(colorMask: Color.PaleGoldenrod, size: new (800, 24), displayText: "This text section uses width as the font size scaling factor, and also takes the height of displaying text as its height.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, autoEndLine: true, useTextHeight: true, fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio);
+
+
         ListPanel rowPanel = new ListPanel(colorMask: Color.Black, size: new(1200, 400), layoutMode: RowLayoutMode.Left, paddingTop: 10, paddingSide: 10, borderRadius: 10, rowGap: 10).SetChildren([
             new ListPanel(Color.White, useWidthRatio: true, widthRatio: 1f, size: new(0, 24)),
-            new Text(colorMask: Color.PaleGoldenrod, size: new (800, 24), displayText: "This text section uses width as the font size scaling factor, and also takes the height of displaying text as its height.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, autoEndLine: true, useTextHeight: true, fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio),
-            new Text(colorMask: new Color(107, 182, 232), size: new (200, 40), fontSize: 40, displayText: "This text section uses height as the font size scaling factor.", useWidthRatio: true, widthRatio: 1f, alignMode: RowLayoutMode.Left, textYOffset: -6, fontSizeScalingMode: FontSizeScalingMode.UseHeightRatio, useHeightRatio: true, heightRatio: .05f),
+            
+            rootText,
+
+            new Text(colorMask: new Color(107, 182, 232), size: new (200, 40), fontSize: 40, displayText: "This text section uses height as the font size scaling factor.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, fontSizeScalingMode: FontSizeScalingMode.UseHeightRatio, useHeightRatio: true, heightRatio: .05f),
 
             new Text(colorMask: new (180, 115, 250), size: new (200, 24), displayText: "This text section's font size doesn't scale with its width or height, so you can see auto-endline happening.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, autoEndLine: true, useTextHeight: true),
 
-            new Text(colorMask: new (215, 252, 167), size: new (200, 24), displayText: "This section uses parent height to only scale height but not the font size.", useWidthRatio:true, widthRatio: 1f, alignMode: RowLayoutMode.Left, textYOffset: -6, useHeightRatio: true, heightRatio: .15f),
+            new Text(colorMask: new (215, 252, 167), size: new (200, 24), displayText: "This section uses parent height to only scale height but not the font size.", useWidthRatio:true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, useHeightRatio: true, heightRatio: .15f),
             new Text(colorMask: new (167, 252, 245), displayText:"Final line with fixed rendering settings.",textYOffset: -6, size:new (1,1))
         ]);
         return rowPanel;
     }
     private GreyGuiElement GenerateText2()
     {
-        return new Text(colorMask: Color.PaleGoldenrod);
+        return new Text(colorMask: Color.PaleGoldenrod, size: new (1000, 100));
     }
 }

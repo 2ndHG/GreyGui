@@ -16,6 +16,7 @@ public class TextSystem
     public int MaxReservingCharCount { get; set; } = 2048;
 
     private Dictionary<string, FontInfo> _fontInfoMap = [];
+    public List<GlyphInfo> GlyphInfoList {get; private init; }= [];
 
     private int _x = 1;
     private int _y = 0;
@@ -68,9 +69,11 @@ public class TextSystem
         bool reservedAny = false;
         foreach (char c in chars)
         {
-            if (_reservedChars.Count < MaxReservingCharCount && !fontInfo.GlyphInfoMap.ContainsKey(c))
+            if (_reservedChars.Count < MaxReservingCharCount && !fontInfo.GlyphInfoIndexMap.ContainsKey(c))
             {
                 SdfRenderInfo sdfRenderInfo = SimpleSdf.SimpleSdf.GetSdfRenderInfo(typeface, c, GlyphPixelSize, GlyphPadding, GlyphRange);
+
+                // Because the actual bitmap will be generated asynchronously later, TryPutGlyphPlaceholder reserves the demanding space on the GreyGui.Atlas. 
                 if (TryPutGlyphPlaceholder(sdfRenderInfo, out Rectangle glyphSrcRect))
                 {
                     GlyphInfo glyphInfo = new()
@@ -80,9 +83,12 @@ public class TextSystem
                         Origin = sdfRenderInfo.Origin,
                         GlyphRange = sdfRenderInfo.Range
                     };
-                    fontInfo.GlyphInfoMap.TryAdd(c, glyphInfo);
 
-                    // add c to reserved queue, then the SDF bitmap will be generated in a seperate thread
+                    // record the index
+                    fontInfo.GlyphInfoIndexMap[c] = GlyphInfoList.Count;
+                    GlyphInfoList.Add(glyphInfo);
+
+                    // add c to reservation queue, then the SDF bitmap will be generated in a separated thread
                     _reservedChars.Enqueue((glyphSrcRect, typeface, c));
                     reservedAny = true;
                 }

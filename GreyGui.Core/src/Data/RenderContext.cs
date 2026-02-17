@@ -93,16 +93,26 @@ public class RenderContext
         _indices[IndexCount++] = vOffset + 0;
     }
 
-    public void RenderText(string fontName, string text, Vector2 position, float fontSize, Color color, Rectangle scissor)
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <param name="indices">List of rendering characters indices in GreyGui.TextSystem.GlyphInfoList</param>
+    /// <param name="startIndex">Starting index of indices</param>
+    /// <param name="length">Length</param>
+    /// <param name="position"></param>
+    /// <param name="fontSize"></param>
+    /// <param name="color"></param>
+    /// <param name="scissor"></param>
+    public void RenderTextUsingCharIndices(List<int> indices, int startIndex, int length, Vector2 position, float fontSize, Color color, Rectangle scissor)
     {
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
-        FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(fontName);
         Vector2 cursor = position;
-        foreach (char c in text)
+        length += startIndex;
+        for (int i = startIndex; i < length; ++i)
         {
             EnsureCapacity(4, 6);
 
-            GlyphInfo glyphInfo = fontInfo.GlyphInfoMap[c];
+            GlyphInfo glyphInfo = GreyGui.TextSystem.GlyphInfoList[indices[i]];
             DrawBatch lastBatch = Batches[^1];
 
             if (
@@ -153,8 +163,7 @@ public class RenderContext
     {
         RenderText(CollectionsMarshal.AsSpan(glyphInfoList), 0, glyphInfoList.Count, position, fontSize, color, scissor);
     }
-    public void RenderText(ReadOnlySpan<GlyphInfo> glyphInfoSpan, int startIndex, int length,
-    Vector2 position, float fontSize, Color color, Rectangle scissor)
+    public void RenderText(ReadOnlySpan<GlyphInfo> glyphInfoSpan, int startIndex, int length, Vector2 position, float fontSize, Color color, Rectangle scissor)
     {
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
         Vector2 cursor = position;
@@ -209,6 +218,7 @@ public class RenderContext
             _indices[IndexCount++] = vOffset + 0;
             cursor.X += glyphInfo.AdvanceWidth * scale;
         }
+    
     }
 
     public void SetVertex(int index, Vector3 pos, Color col, Color borderCol, Vector2 uv, Vector2 local, Vector4 rParams)

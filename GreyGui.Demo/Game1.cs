@@ -108,9 +108,9 @@ public class Game1 : Game
             return;
         GraphicsDevice.Clear(new Color(50, 50, 50));
         // Point point = Mouse.GetState().Position;
-        // _spriteBatch.Begin();
-        // _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
-        // _spriteBatch.End();
+        _spriteBatch.Begin();
+        _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
+        _spriteBatch.End();
 
         guiBatch.Draw(root, renderContext, _drawPos);
         guiBatch.Flush(renderContext);

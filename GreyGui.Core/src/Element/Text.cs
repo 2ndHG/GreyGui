@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 
 namespace GreyGui;
@@ -177,9 +178,9 @@ public class Text : GreyGuiElement, IRatioElement
         get => _autoEndLine;
         set
         {
-            if(_autoEndLine == value)
+            if (_autoEndLine == value)
             {
-                return ;
+                return;
             }
             _autoEndLine = value;
             IsSizeDirty = true;
@@ -208,6 +209,7 @@ public class Text : GreyGuiElement, IRatioElement
     private readonly List<TextSegment> _textSegments = [];
     private int _textSegmentCount = 1;
     private bool _autoEndLine;
+    private readonly List<int> _displayTextCharIndices = [];
 
     public Text(Color colorMask, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, bool useTextHeight = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, RowLayoutMode alignMode = RowLayoutMode.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default)
     {
@@ -230,7 +232,7 @@ public class Text : GreyGuiElement, IRatioElement
         _textYOffset = textYOffset;
         _fontSizeScalingMode = fontSizeScalingMode;
 
-        // priority: user input > FontSizeScalingMode > default
+        // adoption priority: user input > FontSizeScalingMode > default
         _fontSizeScalingBaseline = (fontSizeScalingBaseline, fontSizeScalingMode, size.X, size.Y) switch
         {
             ( > 0, _, _, _) => fontSizeScalingBaseline,
@@ -329,7 +331,8 @@ public class Text : GreyGuiElement, IRatioElement
 
         _isSizeDirty = false;
     }
-    private void ParseTextSpaceAsNotWord()
+
+    private void ParseText_InProgress()
     {
         TextSegment GetOrCreateSegment(int index)
         {
@@ -346,22 +349,27 @@ public class Text : GreyGuiElement, IRatioElement
         }
         void ResetTextSegment(TextSegment textSegment)
         {
-            textSegment.glyphInfoList.Clear();
             textSegment.spaceWidth = textSegment.widthWithoutSpace = textSegment.widthWithSpace = 0;
         }
+
         FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
         GlyphInfo spaceInfo = fontInfo.GlyphInfoMap[' '];
         float spaceAdvanceWidth = spaceInfo.AdvanceWidth;
 
+        _displayTextCharIndices.Clear();
         _textSegmentCount = 0;
         TextSegment textSegment = GetOrCreateSegment(0);
         ResetTextSegment(textSegment);
+        textSegment.startIndex = 0;
 
         bool prevIsSpace = false;
         int backspacesOfThisSegment = 0;
         for (int i = 0; i < _displayText.Length; ++i)
         {
-            if (_displayText[i] == ' ')
+            char c = _displayText[i];
+            int charIndex = fontInfo.GetCharIndex(c);
+            _displayTextCharIndices.Add(charIndex);
+            if (c == ' ')
             {
                 ++backspacesOfThisSegment;
                 prevIsSpace = true;
@@ -373,15 +381,16 @@ public class Text : GreyGuiElement, IRatioElement
                     float backspaceWidth = spaceAdvanceWidth * backspacesOfThisSegment;
                     textSegment.widthWithSpace = textSegment.widthWithoutSpace + backspaceWidth;
                     textSegment.spaceWidth = backspaceWidth;
-                    _textSegmentCount++;
+                    _textSegmentCount++; // Add back
 
                     textSegment = GetOrCreateSegment(_textSegmentCount);
+                    textSegment.startIndex = i;
                     ResetTextSegment(textSegment);
                     backspacesOfThisSegment = 0;
                 }
-                GlyphInfo glyphInfo = fontInfo.GlyphInfoMap[_displayText[i]];
+                GlyphInfo glyphInfo = GreyGui.TextSystem.GlyphInfoList[charIndex];
                 textSegment.widthWithoutSpace += glyphInfo.AdvanceWidth;
-                textSegment.glyphInfoList.Add(glyphInfo);
+                textSegment.length++;
                 prevIsSpace = false;
             }
         }
@@ -393,10 +402,11 @@ public class Text : GreyGuiElement, IRatioElement
             _textSegmentCount++;
         }
     }
+
     private void ResolveDisplayTextDirty()
     {
         GreyGui.TextSystem.ReserveChars(_fontName, DisplayText);
-        ParseTextSpaceAsNotWord();
+        ParseText_InProgress();
 
         _isDisplayTextDirty = false;
     }
@@ -443,7 +453,7 @@ public class Text : GreyGuiElement, IRatioElement
                 for (; undrewLastIndex < i; ++undrewLastIndex)
                 {
                     TextSegment drawingSegment = _textSegments[undrewLastIndex];
-                    renderContext.RenderText(_textSegments[undrewLastIndex].glyphInfoList, position + offset, fontSize, ColorMask, screenScissor);
+                    renderContext.RenderTextUsingCharIndices(_displayTextCharIndices, drawingSegment.startIndex, drawingSegment.length, position + offset, fontSize, ColorMask, screenScissor);
                     offset.X += (drawingSegment.widthWithoutSpace + drawingSegment.spaceWidth) * scale + justifyGap;
                 }
                 widthSum = 0;
@@ -469,7 +479,7 @@ public class Text : GreyGuiElement, IRatioElement
             for (; undrewLastIndex < _textSegmentCount; ++undrewLastIndex)
             {
                 TextSegment drawingSegment = _textSegments[undrewLastIndex];
-                renderContext.RenderText(_textSegments[undrewLastIndex].glyphInfoList, position + offset, fontSize, ColorMask, screenScissor);
+                renderContext.RenderTextUsingCharIndices(_displayTextCharIndices, drawingSegment.startIndex, drawingSegment.length, position + offset, fontSize, ColorMask, screenScissor);
                 offset.X += (drawingSegment.widthWithoutSpace + drawingSegment.spaceWidth) * scale;
             }
         }
@@ -490,7 +500,8 @@ public class Text : GreyGuiElement, IRatioElement
 
     private class TextSegment
     {
-        public List<GlyphInfo> glyphInfoList = [];
+        public int startIndex;
+        public int length;
         public float widthWithoutSpace;
         public float widthWithSpace;
         public float spaceWidth;

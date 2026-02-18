@@ -79,7 +79,7 @@ public class Game1 : Game
             // GreyGui.TextSystem.ReserveChars("huninn", "\" !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
             rootText.FontSize = 48;
             rootText.FontSizeScalingMode = FontSizeScalingMode.None;
-            rootText.DisplayText="中 文字測試， 使用『這些』換行規則， 參雜 abc的中文字. 是否 可以做到correctly endline?  I wonder...";
+            rootText.DisplayText="中文字測試，中文字測試，中文字測試，中文字測試，中文字測試，中文字測試。";
             // root = GenerateTextPanel();
         }
         if (keyboardState.IsKeyDown(Keys.D1))
@@ -179,12 +179,12 @@ public class Game1 : Game
             
             rootText,
 
-            // new Text(colorMask: new Color(107, 182, 232), size: new (200, 40), fontSize: 40, displayText: "This text section uses height as the font size scaling factor.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, fontSizeScalingMode: FontSizeScalingMode.UseHeightRatio, useHeightRatio: true, heightRatio: .05f),
+            new Text(colorMask: new Color(107, 182, 232), size: new (200, 40), fontSize: 40, displayText: "This text section uses height as the font size scaling factor.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, fontSizeScalingMode: FontSizeScalingMode.UseHeightRatio, useHeightRatio: true, heightRatio: .05f),
 
-            // new Text(colorMask: new (180, 115, 250), size: new (200, 24), displayText: "This text section's font size doesn't scale with its width or height, so you can see auto-endline happening.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, autoEndLine: true, useTextHeight: true),
+            new Text(colorMask: new (180, 115, 250), size: new (200, 24), displayText: "This text section's font size doesn't scale with its width or height, so you can see auto-endline happening.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, autoEndLine: true, useTextHeight: true),
 
-            // new Text(colorMask: new (215, 252, 167), size: new (200, 24), displayText: "This section uses parent height to only scale height but not the font size.", useWidthRatio:true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, useHeightRatio: true, heightRatio: .15f),
-            // new Text(colorMask: new (167, 252, 245), displayText:"Final line with fixed rendering settings.",textYOffset: -6, size:new (1,1))
+            new Text(colorMask: new (215, 252, 167), size: new (200, 24), displayText: "This section uses parent height to only scale height but not the font size.", useWidthRatio:true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, useHeightRatio: true, heightRatio: .15f),
+            new Text(colorMask: new (167, 252, 245), displayText:"Final line with fixed rendering settings.",textYOffset: -6, size:new (1,1))
         ]);
         return rowPanel;
     }

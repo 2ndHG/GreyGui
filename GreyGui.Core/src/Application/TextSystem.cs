@@ -85,7 +85,7 @@ public class TextSystem
                     };
 
                     // record the index
-                    fontInfo.GlyphInfoIndexMap[c] = GlyphInfoList.Count;
+                    fontInfo.GlyphInfoIndexMap[c] = (ushort)GlyphInfoList.Count;
                     GlyphInfoList.Add(glyphInfo);
 
                     // add c to reservation queue, then the SDF bitmap will be generated in a separated thread

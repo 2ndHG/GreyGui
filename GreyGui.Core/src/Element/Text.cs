@@ -311,7 +311,7 @@ public class Text : GreyGuiElement, IRatioElement
         float maxRowSpace = _autoEndLine ? _size.X : float.MaxValue;
         float widthSum = _textSegments[0].WidthWithSpace * scale;
         float widthSumWithoutSpace = 0;
-        float prevSegmentSpaceWidth = _textSegments[0].spaceWidth * scale;
+        float prevSegmentSpaceWidth = _textSegments[0].pendingSpaceWidth * scale;
         int undrewLastIndex = 0;
         int rowCount = 0;
         Vector2 offset = new(0, 0);
@@ -319,7 +319,7 @@ public class Text : GreyGuiElement, IRatioElement
         {
             TextSegment currentSegment = _textSegments[i];
             // the row is full, we must draw the row before the current segment comes in
-            if (widthSum + currentSegment.widthWithoutSpace * scale > maxRowSpace)
+            if (widthSum + currentSegment.width * scale > maxRowSpace)
             {
                 offset.X = _alignMode switch
                 {
@@ -334,7 +334,7 @@ public class Text : GreyGuiElement, IRatioElement
                     _segmentOffsetCache.Add(offset);
 
                     TextSegment drawingSegment = _textSegments[undrewLastIndex];
-                    offset.X += (drawingSegment.widthWithoutSpace + drawingSegment.spaceWidth) * scale + justifyGap;
+                    offset.X += (drawingSegment.width + drawingSegment.pendingSpaceWidth) * scale + justifyGap;
                 }
                 offset.X = 0;
                 offset.Y += fontSize;
@@ -344,7 +344,8 @@ public class Text : GreyGuiElement, IRatioElement
 
             // Add the segment in the row
             widthSum += currentSegment.WidthWithSpace * scale;
-            widthSumWithoutSpace += currentSegment.widthWithoutSpace * scale;
+            widthSumWithoutSpace += currentSegment.width * scale;
+            prevSegmentSpaceWidth = currentSegment.pendingSpaceWidth * scale;
         }
         {
             // the last row
@@ -361,7 +362,7 @@ public class Text : GreyGuiElement, IRatioElement
                 _segmentOffsetCache.Add(offset);
 
                 TextSegment drawingSegment = _textSegments[undrewLastIndex];
-                offset.X += (drawingSegment.widthWithoutSpace + drawingSegment.spaceWidth) * scale;
+                offset.X += (drawingSegment.width + drawingSegment.pendingSpaceWidth) * scale;
             }
             ++rowCount;
         }
@@ -431,7 +432,6 @@ public class Text : GreyGuiElement, IRatioElement
 
         _isSizeDirty = false;
     }
-
     private void ParseText()
     {
         TextSegment GetOrCreateSegment(int index)
@@ -440,69 +440,83 @@ public class Text : GreyGuiElement, IRatioElement
             {
                 return _textSegments[index];
             }
-            else
-            {
-                TextSegment segment = new();
-                _textSegments.Add(segment);
-                return segment;
-            }
+            TextSegment segment = new();
+            _textSegments.Add(segment);
+            return segment;
         }
-        void ResetTextSegment(TextSegment textSegment)
+
+        void ResetTextSegment(TextSegment segment, int startIndex)
         {
-            textSegment.spaceWidth
-            = textSegment.widthWithoutSpace
-            = textSegment.startIndex
-            = textSegment.length
-            = 0;
+            segment.pendingSpaceWidth = segment.width = 0;
+            segment.startIndex = startIndex;
+            segment.length = 0;
         }
 
         FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
-        GlyphInfo spaceInfo = fontInfo.GlyphInfoMap[' '];
-        float spaceAdvanceWidth = spaceInfo.AdvanceWidth;
+        float spaceAdvanceWidth = fontInfo.GlyphInfoMap.TryGetValue(' ', out var spaceGlyphInfo) ?
+            spaceGlyphInfo.AdvanceWidth :
+            GreyGui.TextSystem.GlyphPixelSize / 4; // Normally this default setting should not be used
 
         _displayTextCharIndices.Clear();
         _textSegmentCount = 0;
-        TextSegment textSegment = GetOrCreateSegment(0);
-        ResetTextSegment(textSegment);
-        textSegment.startIndex = 0;
 
-        bool prevIsSpace = false;
-        int backspacesOfThisSegment = 0;
-        for (int i = 0; i < _displayText.Length; ++i)
+        if (string.IsNullOrEmpty(_displayText)) return;
+
+        TextSegment currentSegment = GetOrCreateSegment(0);
+        ResetTextSegment(currentSegment, 0);
+
+        int pendingSpaces = 0;
+
+        for (int i = 0; i < _displayText.Length; i++)
         {
             char c = _displayText[i];
             int charIndex = fontInfo.GetCharIndex(c);
             _displayTextCharIndices.Add(charIndex);
+            float charWidth = GreyGui.TextSystem.GlyphInfoList[charIndex].AdvanceWidth;
+
             if (c == ' ')
             {
-                ++backspacesOfThisSegment;
-                prevIsSpace = true;
+                pendingSpaces++;
+                continue;
             }
-            else
-            {
-                if (prevIsSpace)
-                {
-                    float backspaceWidth = spaceAdvanceWidth * backspacesOfThisSegment;
-                    textSegment.spaceWidth = backspaceWidth;
-                    _textSegmentCount++; // Add back
 
-                    textSegment = GetOrCreateSegment(_textSegmentCount);
-                    ResetTextSegment(textSegment);
-                    textSegment.startIndex = i;
-                    backspacesOfThisSegment = 0;
+            // c is not a space
+            bool shouldSplit = false;
+
+            if (currentSegment.length > 0)
+            {
+                char prevC = _displayText[i - 1];
+
+                if (pendingSpaces > 0)
+                {
+                    shouldSplit = true;
                 }
-                GlyphInfo glyphInfo = GreyGui.TextSystem.GlyphInfoList[charIndex];
-                textSegment.widthWithoutSpace += glyphInfo.AdvanceWidth;
-                textSegment.length++;
-                prevIsSpace = false;
+                else if (TextHelper.IsCjk(c) || TextHelper.IsCjk(prevC))
+                {
+                    if (!TextHelper.IsLineStartForbidden(c) && !TextHelper.IsLineEndForbidden(prevC))
+                    {
+                        shouldSplit = true;
+                    }
+                }
             }
+
+            if (shouldSplit)
+            {
+                currentSegment.pendingSpaceWidth = spaceAdvanceWidth * pendingSpaces;
+                _textSegmentCount++;
+
+                currentSegment = GetOrCreateSegment(_textSegmentCount);
+                ResetTextSegment(currentSegment, i);
+                pendingSpaces = 0;
+            }
+
+            currentSegment.width += charWidth;
+            currentSegment.length++;
         }
-        // Add the last segment
-        {
-            float backspaceWidth = spaceAdvanceWidth * backspacesOfThisSegment;
-            textSegment.spaceWidth = backspaceWidth;
-            _textSegmentCount++;
-        }
+
+        // the remaining segment
+        currentSegment.pendingSpaceWidth = spaceAdvanceWidth * pendingSpaces;
+        _textSegmentCount++;
 
         _isLayoutDirty = true;
     }
@@ -557,10 +571,101 @@ public class Text : GreyGuiElement, IRatioElement
 
     private class TextSegment
     {
-        public float WidthWithSpace => widthWithoutSpace + spaceWidth;
+        public float WidthWithSpace => width + pendingSpaceWidth;
         public int startIndex;
         public int length;
-        public float widthWithoutSpace;
-        public float spaceWidth;
+        public float width;
+        public float pendingSpaceWidth;
     }
+
+    // for reference purpose, delete when done refactoring
+    private void ParseText_Legacy()
+    {
+        TextSegment GetOrCreateSegment(int index)
+        {
+            if (index < _textSegments.Count)
+            {
+                return _textSegments[index];
+            }
+            TextSegment segment = new();
+            _textSegments.Add(segment);
+            return segment;
+        }
+
+        void ResetTextSegment(TextSegment segment, int startIndex)
+        {
+            segment.pendingSpaceWidth = segment.width = 0;
+            segment.startIndex = startIndex;
+            segment.length = 0;
+        }
+
+        FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
+        float spaceAdvanceWidth = fontInfo.GlyphInfoMap.TryGetValue(' ', out var spaceGlyphInfo) ?
+            spaceGlyphInfo.AdvanceWidth :
+            GreyGui.TextSystem.GlyphPixelSize / 4; // Normally this default setting should not be used
+
+        _displayTextCharIndices.Clear();
+        _textSegmentCount = 0;
+
+        if (string.IsNullOrEmpty(_displayText)) return;
+
+        TextSegment currentSegment = GetOrCreateSegment(0);
+        ResetTextSegment(currentSegment, 0);
+
+        int pendingSpaces = 0;
+
+        for (int i = 0; i < _displayText.Length; i++)
+        {
+            char c = _displayText[i];
+            int charIndex = fontInfo.GetCharIndex(c);
+            _displayTextCharIndices.Add(charIndex);
+            float charWidth = GreyGui.TextSystem.GlyphInfoList[charIndex].AdvanceWidth;
+
+            if (c == ' ')
+            {
+                pendingSpaces++;
+                continue;
+            }
+
+            // c is not a space
+            bool shouldSplit = false;
+
+            if (currentSegment.length > 0)
+            {
+                char prevC = _displayText[i - 1];
+
+                if (pendingSpaces > 0)
+                {
+                    shouldSplit = true;
+                }
+                else if (TextHelper.IsCjk(c) || TextHelper.IsCjk(prevC))
+                {
+                    if (!TextHelper.IsLineStartForbidden(c) && !TextHelper.IsLineEndForbidden(prevC))
+                    {
+                        shouldSplit = true;
+                    }
+                }
+            }
+
+            if (shouldSplit)
+            {
+                currentSegment.pendingSpaceWidth = spaceAdvanceWidth * pendingSpaces;
+                _textSegmentCount++;
+
+                currentSegment = GetOrCreateSegment(_textSegmentCount);
+                ResetTextSegment(currentSegment, i);
+                pendingSpaces = 0;
+            }
+
+            currentSegment.width += charWidth;
+            currentSegment.length++;
+        }
+
+        // the remaining segment
+        currentSegment.pendingSpaceWidth = spaceAdvanceWidth * pendingSpaces;
+        _textSegmentCount++;
+
+        _isLayoutDirty = true;
+    }
+
 }

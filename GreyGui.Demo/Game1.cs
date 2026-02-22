@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -14,6 +15,7 @@ public class Game1 : Game
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
     private Text rootText;
+    private Button experimentingButton;
 
     private bool oneTimeTicket = true;
 
@@ -41,7 +43,7 @@ public class Game1 : Game
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GenerateText2();
+        root = GenerateButtonPanel();
 
         // TODO: use this.Content to load your game content here
     }
@@ -79,29 +81,30 @@ public class Game1 : Game
             // GreyGui.TextSystem.ReserveChars("huninn", "\" !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
             rootText.FontSize = 48;
             rootText.FontSizeScalingMode = FontSizeScalingMode.None;
-            rootText.DisplayText="中文字測試，中文字測試，中文字測試，中文字測試，中文字測試，中文字測試。";
+            rootText.DisplayText = "中文字測試，中文字測試，中文字測試，中文字測試，中文字測試，中文字測試。";
             // root = GenerateTextPanel();
         }
         if (keyboardState.IsKeyDown(Keys.D1))
         {
             _drawPos = new Point(50, 200);
-            root = GenerateTextPanel(RowLayoutMode.Left);
+            experimentingButton.State = GreyGuiButtonState.Normal;
         }
         else if (keyboardState.IsKeyDown(Keys.D2))
         {
             _drawPos = new Point(50, 200);
-            root = GenerateTextPanel(RowLayoutMode.Center);
+            experimentingButton.State = GreyGuiButtonState.Hovered;
         }
         else if (keyboardState.IsKeyDown(Keys.D3))
         {
             _drawPos = new Point(50, 200);
-            root = GenerateTextPanel(RowLayoutMode.Right);
+            experimentingButton.State = GreyGuiButtonState.Active;
         }
         else if (keyboardState.IsKeyDown(Keys.D4))
         {
             _drawPos = new Point(50, 200);
-            root = GenerateTextPanel(RowLayoutMode.Spread);
+            experimentingButton.State = GreyGuiButtonState.Selected;
         }
+        root.IsMouseOver(Mouse.GetState().Position);
 
         base.Update(gameTime);
     }
@@ -171,12 +174,12 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateTextPanel(RowLayoutMode alignMode)
     {
-        rootText = new Text(colorMask: Color.PaleGoldenrod, size: new (800, 24), displayText: "aaaaa   ccccc aaaaa  ccccc  aaaaa   ccccc aaaaa ccccc aaaaa", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, autoEndLine: true, useTextHeight: true, fontSize: 32);
+        rootText = new Text(colorMask: Color.PaleGoldenrod, size: new(800, 24), displayText: "aaaaa   ccccc aaaaa  ccccc  aaaaa   ccccc aaaaa ccccc aaaaa", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, autoEndLine: true, useTextHeight: true, fontSize: 32);
 
 
         ListPanel rowPanel = new ListPanel(colorMask: Color.Black, size: new(1200, 400), layoutMode: RowLayoutMode.Left, paddingTop: 10, paddingSide: 10, borderRadius: 10, rowGap: 10).SetChildren([
             new ListPanel(Color.White, useWidthRatio: true, widthRatio: 1f, size: new(0, 24)),
-            
+
             rootText,
 
             new Text(colorMask: new Color(107, 182, 232), size: new (200, 40), fontSize: 40, displayText: "This text section uses height as the font size scaling factor.", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, fontSizeScalingMode: FontSizeScalingMode.UseHeightRatio, useHeightRatio: true, heightRatio: .05f),
@@ -190,6 +193,47 @@ public class Game1 : Game
     }
     private GreyGuiElement GenerateText2()
     {
-        return new Text(colorMask: Color.PaleGoldenrod, size: new (1000, 100));
+        return new Text(colorMask: Color.PaleGoldenrod, size: new(1000, 100));
+    }
+
+    private GreyGuiElement GenerateButtonPanel()
+    {
+        float timer = 0f;
+        Action<Button, Point, RenderContext, Rectangle> buttonDrawMethod = (button, position, renderContext, scissor) =>
+        {
+            button.OnScreenPos = position;
+            timer = (button.State, timer) switch
+            {
+                (GreyGuiButtonState.Hovered, < 1) => timer + .033f,
+                (GreyGuiButtonState.Hovered, >= 1) => 1,
+                (GreyGuiButtonState.Normal, > 0) => timer - .033f,
+                (GreyGuiButtonState.Normal, <= 0) => 0,
+                _ => 0
+            };
+            Color c = button.ColorMask * (0.3f * timer + 1f);
+            Vector2 minify = new(timer * 100);
+            button.Padding = (int)(timer * 50);
+            foreach (GreyGuiElement child in button.Children)
+            {
+                child.IsSizeDirty = true;
+            }
+            renderContext.FillRect(
+                new Rectangle(position + (minify / 2).ToPoint(), (button.Size - minify).ToPoint()),
+                new Color(c, button.ColorMask.A),
+                button.BorderColor,
+                button.BorderRadius,
+                button.BorderWidth,
+                GreyGui.Atlas,
+                scissor
+            );
+        };
+        experimentingButton = new Button() { ColorMask = Color.DarkGoldenrod, UseWidthRatio = true, WidthRatio = .5f, UseHeightWidthRatio = true, HeightWidthRatio = .5f, BorderRadius = 15, DrawMethod = buttonDrawMethod };
+
+        rootText = new Text(Color.White, fontSize: 32, widthRatio: 1, useWidthRatio: true, displayText: "Button Text", textYOffset: -10, fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: RowLayoutMode.Center);
+        experimentingButton.AppendChild(rootText);
+
+        return new ListPanel(colorMask: new(20, 20, 20), size: new(500, 200), borderRadius: 15, borderColor: Color.White, borderWidth: 0).SetChildren([
+            experimentingButton
+        ]);
     }
 }

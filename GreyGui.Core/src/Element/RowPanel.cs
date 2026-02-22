@@ -112,7 +112,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         }
     }
     public bool IsLayoutDirty { get => _isLayoutDirty; set => _isLayoutDirty = value; }
-    public bool IsChildrenIndexDirty { get => _isChildrenIndexDirty; set => _isChildrenIndexDirty = value; }
+    public bool IsChildrenZIndexDirty { get => _isChildrenZIndexDirty; set => _isChildrenZIndexDirty = value; }
     public override int ZIndex
     {
         get => _zIndex; set
@@ -122,7 +122,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
                 _zIndex = value;
                 if (_parent is not null)
                 {
-                    _parent.IsChildrenIndexDirty = true;
+                    _parent.IsChildrenZIndexDirty = true;
                 }
             }
         }
@@ -141,9 +141,8 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     private float _childGap;
     private Vector2 _containerSize;
     private bool _isLayoutDirty;
-    private bool _isChildrenIndexDirty;
+    private bool _isChildrenZIndexDirty;
     private List<GreyGuiElement> _children = [];
-    private Dictionary<GreyGuiElement, int> _childrenIndexMap = [];
     private List<Point> _childrenPosition = [];
     private List<int> _drawOrder = [];
 
@@ -178,14 +177,11 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     public void AppendChild(GreyGuiElement child)
     {
         child.Parent?.RemoveChild(child);
-        if (_childrenIndexMap.TryAdd(child, _children.Count))
-        {
-            _children.Add(child);
-            child.ChangeParentButParentWillNotKnow(this);
+        _children.Add(child);
+        child.ChangeParentButParentWillNotKnow(this);
 
-            _isChildrenIndexDirty = true;
-            _isLayoutDirty = true;
-        }
+        _isChildrenZIndexDirty = true;
+        _isLayoutDirty = true;
     }
 
     public void AppendChildren(ICollection<GreyGuiElement> children)
@@ -197,14 +193,12 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     }
     public void RemoveChild(GreyGuiElement child)
     {
-        if (_childrenIndexMap.Remove(child))
-        {
-            _children.Remove(child);
-            child.ChangeParentButParentWillNotKnow(null);
 
-            _isChildrenIndexDirty = true;
-            _isLayoutDirty = true;
-        }
+        _children.Remove(child);
+        child.ChangeParentButParentWillNotKnow(null);
+
+        _isChildrenZIndexDirty = true;
+        _isLayoutDirty = true;
     }
 
     public void RemoveChildren(ICollection<GreyGuiElement> children)
@@ -223,7 +217,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             RemoveChild(child);
         }
         _isLayoutDirty = true;
-        _isChildrenIndexDirty = true;
+        _isChildrenZIndexDirty = true;
     }
 
     public RowPanel SetChildren(ICollection<GreyGuiElement> children)
@@ -238,10 +232,6 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         if (_isSizeDirty)
         {
             RecalculateSize();
-        }
-        foreach (GreyGuiElement child in _children)
-        {
-            child.ResolveSizeDirty();
         }
     }
 
@@ -332,31 +322,38 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             GreyGui.Atlas,
             screenScissor
         );
-
+    }
+    public void DrawChildren(Point position, RenderContext context, Rectangle screenScissor)
+    {
+        foreach (GreyGuiElement child in _children)
+        {
+            child.ResolveSizeDirty();
+        }
         if (_isLayoutDirty)
         {
             RecalculateLayout();
         }
-        if (_isChildrenIndexDirty)
+        if (_isChildrenZIndexDirty)
         {
-            List<GreyGuiElement> sorted = [.. _children];
-            sorted.Sort((a, b) => a.ZIndex > b.ZIndex ? 1 : -1);
+            // Sort the index using children's ZIndex, so the low-ZIndex-elements' indices in _children will be put in the front of _drawOrder, therefore be drew first later on
             _drawOrder.Clear();
-            foreach (GreyGuiElement element in sorted)
+            for (int i = 0; i < _children.Count; ++i)
             {
-                _drawOrder.Add(_childrenIndexMap[element]);
+                _drawOrder.Add(i);
             }
-            _isChildrenIndexDirty = false;
+            _drawOrder.Sort((a, b) => _children[a].ZIndex.CompareTo(_children[b].ZIndex));
+            _isChildrenZIndexDirty = false;
         }
 
+        // DFS Draw children
         for (int i = 0; i < _drawOrder.Count; i++)
         {
-            GreyGuiElement child = _children[_drawOrder[i]];
-            Point relativePos = _childrenPosition[_drawOrder[i]];
-
-            child.OnScreenPos = position + relativePos;
-
-            child.Draw(child.OnScreenPos, context, screenScissor);
+            int drawOrder = _drawOrder[i];
+            _children[drawOrder].Draw(position + _childrenPosition[drawOrder], context, screenScissor);
+            if(_children[drawOrder] is IContainer container)
+            {
+                container.DrawChildren(position + _childrenPosition[drawOrder], context, screenScissor);
+            }
         }
     }
 }

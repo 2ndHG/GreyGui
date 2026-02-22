@@ -12,6 +12,9 @@ public abstract class GreyGuiElement
     public int BorderWidth { get; set; }
     public IContainer? Parent { get => _parent; }
     public abstract Vector2 Size { get; set; }
+    /// <summary>
+    /// Smaller draw first
+    /// </summary>
     public abstract int ZIndex { get; set; }
     public virtual bool IsSizeDirty { get => _isSizeDirty; set => _isSizeDirty = value; }
 
@@ -22,7 +25,7 @@ public abstract class GreyGuiElement
     public abstract void ResolveSizeDirty();
     public abstract void Draw(Point position, RenderContext renderContext, Rectangle screenScissor);
 
-    protected virtual bool IsMouseOver(Point mousePosition)
+    public virtual bool IsMouseOver(Point mousePosition)
     {
         return false;
     }

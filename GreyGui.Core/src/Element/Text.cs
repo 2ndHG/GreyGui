@@ -26,7 +26,7 @@ public class Text : GreyGuiElement, IRatioElement
 
             if (Parent is not null)
             {
-                Parent.IsChildrenIndexDirty = true;
+                Parent.IsChildrenZIndexDirty = true;
             }
             _zIndex = value;
 

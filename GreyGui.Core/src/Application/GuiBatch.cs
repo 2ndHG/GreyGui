@@ -22,10 +22,13 @@ public class GuiBatch
 
     public void Draw(GreyGuiElement root, RenderContext context, Point position)
     {
-        root.ResolveSizeDirty();
-
         Rectangle screenScissor = _device.Viewport.Bounds;
+        root.ResolveSizeDirty();
         root.Draw(position, context, screenScissor);
+        if(root is IContainer container)
+        {
+            container.DrawChildren(position, context, screenScissor);
+        }
     }
 
     public void Flush(RenderContext context)

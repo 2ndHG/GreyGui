@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 
 namespace GreyGui;
 
@@ -280,7 +281,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         _isLayoutDirty = _isLayoutDirty || sizeChanged;
     }
 
-    private void RecalculateLayout()
+    private void ResolveLayoutDirty()
     {
         float xPadding = (BorderRadius * (Constant.SQRT2 - 1)) + PaddingSide;
         float xLayoutMulti = _layoutMode switch
@@ -371,7 +372,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         }
         if (_isLayoutDirty)
         {
-            RecalculateLayout();
+            ResolveLayoutDirty();
         }
         if (_isChildrenZIndexDirty)
         {
@@ -396,13 +397,13 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         }
     }
 
-    public override bool IsMouseOver(Point mousePosition)
+    public override bool HandleMouseEvent(ref MouseState mouseState)
     {
         for(int i = 0; i< _drawOrder.Count; ++i)
         {
-            if(_children[i].IsMouseOver(mousePosition))
+            if(_children[i].HandleMouseEvent(ref mouseState))
                 return true;
         }
-        return new Rectangle(OnScreenPos, _size.ToPoint()).Contains(mousePosition);
+        return new Rectangle(OnScreenPos, _size.ToPoint()).Contains(mouseState.Position);
     }
 }

@@ -1,5 +1,6 @@
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 
 namespace GreyGui;
 
@@ -32,7 +33,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     }
 
 
-    public Vector2 ContainerSize { get => _containerSize - new Vector2(Padding*2); }
+    public Vector2 ContainerSize { get => _containerSize - new Vector2(PaddingSide * 2, PaddingVertical * 2); }
 
     public bool UseWidthRatio
     {
@@ -102,10 +103,13 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         }
     }
 
-    public int Padding { get; set; }
+    public int PaddingVertical { get; set; }
+    public int PaddingSide { get; set; }
     public bool IsLayoutDirty { get => _isLayoutDirty; set => _isLayoutDirty = value; }
     public bool IsChildrenZIndexDirty { get => _isChildrenZIndexDirty; set => _isChildrenZIndexDirty = value; }
 
+    public int HoveredFrame { get; set; }
+    public int ActiveFrame { get; set; }
     public ReadOnlySpan<GreyGuiElement> Children => CollectionsMarshal.AsSpan(_children);
     public Action<Button, Point, RenderContext, Rectangle> DrawMethod { get; set; }
 
@@ -124,7 +128,10 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     private List<Point> _childrenPosition = [];
     private List<int> _drawOrder = [];
     // Button special
-    public GreyGuiButtonState State { get => _state; set => _state = value; }
+    public GreyGuiButtonState State
+    {
+        get => _state;
+    }
 
 
 
@@ -210,6 +217,15 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
 
     public override void Update()
     {
+        _state = GreyGuiButtonState.Normal;
+        if (GreyGuiUpdate.FrameId == HoveredFrame)
+        {
+            _state |= GreyGuiButtonState.Hovered;
+        }
+        if (GreyGuiUpdate.FrameId == ActiveFrame)
+        {
+            _state |= GreyGuiButtonState.Active;
+        }
     }
 
     public override void Draw(Point position, RenderContext renderContext, Rectangle screenScissor)
@@ -217,11 +233,19 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         DrawMethod.Invoke(this, position, renderContext, screenScissor);
     }
 
-    public override bool IsMouseOver(Point mousePosition)
+    public override bool HandleMouseEvent(ref MouseState mouseState)
     {
-        bool result = new Rectangle(OnScreenPos, _size.ToPoint()).Contains(mousePosition);
-        _state = result ? GreyGuiButtonState.Hovered : GreyGuiButtonState.Normal;
-        return new Rectangle(OnScreenPos, _size.ToPoint()).Contains(mousePosition);
+        bool result = new Rectangle(OnScreenPos, _size.ToPoint()).Contains(mouseState.Position);
+        if (result)
+        {
+            HoveredFrame = GreyGuiUpdate.FrameId;
+            if (mouseState.LeftButton == ButtonState.Pressed && ActiveFrame != HoveredFrame)
+            {
+                ActiveFrame = GreyGuiUpdate.FrameId;
+            }
+        }
+
+        return result;
     }
 
     public void DrawChildren(Point selfPosition, RenderContext context, Rectangle screenScissor)
@@ -232,8 +256,9 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         }
         GreyGuiElement child = _children[0];
         child.ResolveSizeDirty();
-        Point childPosition = selfPosition + new Point(Padding, Padding) + ((ContainerSize - child.Size) / 2).ToPoint();
+        Point childPosition = selfPosition + new Point(PaddingSide, PaddingVertical) + ((ContainerSize - child.Size) / 2).ToPoint();
 
+        // context.FillRect(new(childPosition, new(50, 50)), Color.Blue, Color.Blue, 0, 0, GreyGui.Atlas, screenScissor);
         child.Draw(childPosition, context, screenScissor);
         if (child is IContainer container)
         {

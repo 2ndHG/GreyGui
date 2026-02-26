@@ -84,27 +84,9 @@ public class Game1 : Game
             rootText.DisplayText = "中文字測試，中文字測試，中文字測試，中文字測試，中文字測試，中文字測試。";
             // root = GenerateTextPanel();
         }
-        if (keyboardState.IsKeyDown(Keys.D1))
-        {
-            _drawPos = new Point(50, 200);
-            experimentingButton.State = GreyGuiButtonState.Normal;
-        }
-        else if (keyboardState.IsKeyDown(Keys.D2))
-        {
-            _drawPos = new Point(50, 200);
-            experimentingButton.State = GreyGuiButtonState.Hovered;
-        }
-        else if (keyboardState.IsKeyDown(Keys.D3))
-        {
-            _drawPos = new Point(50, 200);
-            experimentingButton.State = GreyGuiButtonState.Active;
-        }
-        else if (keyboardState.IsKeyDown(Keys.D4))
-        {
-            _drawPos = new Point(50, 200);
-            experimentingButton.State = GreyGuiButtonState.Selected;
-        }
-        root.IsMouseOver(Mouse.GetState().Position);
+
+        GreyGuiUpdate.StartFrame();
+        GreyGuiUpdate.HandleMouseEvent(Mouse.GetState(), root);
 
         base.Update(gameTime);
     }
@@ -198,27 +180,47 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateButtonPanel()
     {
+
+        return new ListPanel(colorMask: new(20, 20, 20), size: new(500, 135), borderRadius: 15, borderColor: Color.White, borderWidth: 0).SetChildren([
+            GenerateButton(),
+            // GenerateButton(),
+        ]);
+    }
+    private Button GenerateButton()
+    {
         float timer = 0f;
         Action<Button, Point, RenderContext, Rectangle> buttonDrawMethod = (button, position, renderContext, scissor) =>
         {
+            Console.WriteLine(button.State);
             button.OnScreenPos = position;
             timer = (button.State, timer) switch
             {
-                (GreyGuiButtonState.Hovered, < 1) => timer + .033f,
+                (GreyGuiButtonState.Hovered, < 1) => timer + .1f,
                 (GreyGuiButtonState.Hovered, >= 1) => 1,
-                (GreyGuiButtonState.Normal, > 0) => timer - .033f,
+                (GreyGuiButtonState.Normal, > 0) => timer - .1f,
                 (GreyGuiButtonState.Normal, <= 0) => 0,
                 _ => 0
             };
+            if (button.State == GreyGuiButtonState.Normal)
+            {
+                button.ZIndex = 0;
+            }
+            else
+            {
+                button.ZIndex = 1;
+            }
             Color c = button.ColorMask * (0.3f * timer + 1f);
-            Vector2 minify = new(timer * 100);
-            button.Padding = (int)(timer * 50);
+            Vector2 minify = new(timer * -30, timer * -15);
+            button.PaddingSide = (int)(timer * -15);
+            button.PaddingVertical = (int)(timer * -7.5f);
             foreach (GreyGuiElement child in button.Children)
             {
                 child.IsSizeDirty = true;
             }
+            Vector2 size = button.Size - minify;
+            size.Round();
             renderContext.FillRect(
-                new Rectangle(position + (minify / 2).ToPoint(), (button.Size - minify).ToPoint()),
+                new Rectangle(position + (minify / 2).ToPoint(), size.ToPoint()),
                 new Color(c, button.ColorMask.A),
                 button.BorderColor,
                 button.BorderRadius,
@@ -227,13 +229,11 @@ public class Game1 : Game
                 scissor
             );
         };
-        experimentingButton = new Button() { ColorMask = Color.DarkGoldenrod, UseWidthRatio = true, WidthRatio = .5f, UseHeightWidthRatio = true, HeightWidthRatio = .5f, BorderRadius = 15, DrawMethod = buttonDrawMethod };
+        Text buttonText = new Text(Color.White, fontSize: 32, widthRatio: 1, useWidthRatio: true, displayText: "Button Text", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: RowLayoutMode.Center, useTextHeight: true);
 
-        rootText = new Text(Color.White, fontSize: 32, widthRatio: 1, useWidthRatio: true, displayText: "Button Text", textYOffset: -10, fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: RowLayoutMode.Center);
-        experimentingButton.AppendChild(rootText);
+        Button resultButton = new () { ColorMask = Color.DarkGreen, UseWidthRatio = true, WidthRatio = .5f, UseHeightWidthRatio = true, HeightWidthRatio = .5f, BorderRadius = 15, DrawMethod = buttonDrawMethod };
+        resultButton.AppendChild(buttonText);
 
-        return new ListPanel(colorMask: new(20, 20, 20), size: new(500, 200), borderRadius: 15, borderColor: Color.White, borderWidth: 0).SetChildren([
-            experimentingButton
-        ]);
+        return resultButton;
     }
 }

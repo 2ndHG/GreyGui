@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 
 namespace GreyGui;
 
@@ -25,7 +26,7 @@ public abstract class GreyGuiElement
     public abstract void ResolveSizeDirty();
     public abstract void Draw(Point position, RenderContext renderContext, Rectangle screenScissor);
 
-    public virtual bool IsMouseOver(Point mousePosition)
+    public virtual bool HandleMouseEvent(ref MouseState mouseState)
     {
         return false;
     }

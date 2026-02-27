@@ -56,18 +56,18 @@ public class RenderContext
         IndexCount += indices.Length;
     }
 
-    public void FillRect(Rectangle dest, Color color, Color borderColor, float borderRadius, float borderWidth, Texture2D texture, Rectangle scissor)
+    public void FillRect(Rectangle dest, Color color, Color borderColor, float borderRadius, float borderWidth, Rectangle scissor)
     {
         EnsureCapacity(4, 6);
 
         DrawBatch lastBatch = Batches[^1];
         if (
-            texture != lastBatch.Texture ||
+            GreyGui.Atlas != lastBatch.Texture ||
             scissor != lastBatch.Scissor)
         {
             Batches.Add(new DrawBatch
             {
-                Texture = texture,
+                Texture = GreyGui.Atlas,
                 Scissor = scissor,
                 IndexOffset = IndexCount,
                 IndexCount = 0
@@ -91,6 +91,11 @@ public class RenderContext
         _indices[IndexCount++] = vOffset + 2;
         _indices[IndexCount++] = vOffset + 3;
         _indices[IndexCount++] = vOffset + 0;
+    }
+
+    public void RenderImage(Texture2D texture, Rectangle destRect, Rectangle srcRect, Color color, Color borderColor, float borderRadius, float borderWidth, Rectangle scissor)
+    {
+
     }
 
     /// <summary>
@@ -218,7 +223,7 @@ public class RenderContext
             _indices[IndexCount++] = vOffset + 0;
             cursor.X += glyphInfo.AdvanceWidth * scale;
         }
-    
+
     }
 
     public void SetVertex(int index, Vector3 pos, Color col, Color borderCol, Vector2 uv, Vector2 local, Vector4 rParams)

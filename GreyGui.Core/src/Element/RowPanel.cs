@@ -319,7 +319,6 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             BorderColor,
             BorderRadius,
             BorderWidth,
-            GreyGui.Atlas,
             screenScissor
         );
     }

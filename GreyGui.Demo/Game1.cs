@@ -219,7 +219,6 @@ public class Game1 : Game
                 button.BorderColor,
                 button.BorderRadius,
                 button.BorderWidth,
-                GreyGui.Atlas,
                 scissor
             );
         };

@@ -301,7 +301,6 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
             borderColor,
             button.BorderRadius,
             button.BorderWidth,
-            GreyGui.Atlas,
             screenScissor
         );
     }

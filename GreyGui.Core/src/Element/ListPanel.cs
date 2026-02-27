@@ -361,7 +361,6 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
             BorderColor,
             BorderRadius,
             BorderWidth,
-            GreyGui.Atlas,
             screenScissor
         );
         OnScreenPos = position;

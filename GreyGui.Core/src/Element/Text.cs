@@ -326,7 +326,7 @@ public class Text : GreyGuiElement, IRatioElement
                     RowLayoutMode.Right => maxRowSpace - widthSum + prevSegmentSpaceWidth,
                     _ => 0
                 };
-                float justifyGap = _alignMode == RowLayoutMode.Spread ? (maxRowSpace - widthSum + prevSegmentSpaceWidth) / (i - undrewLastIndex - 1) : 0;
+                float justifyGap = _alignMode == RowLayoutMode.Justify ? (maxRowSpace - widthSum + prevSegmentSpaceWidth) / (i - undrewLastIndex - 1) : 0;
 
                 for (; undrewLastIndex < i; ++undrewLastIndex)
                 {

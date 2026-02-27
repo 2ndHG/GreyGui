@@ -25,10 +25,13 @@ public abstract class GreyGuiElement
     public abstract void Update();
     public abstract void ResolveSizeDirty();
     public abstract void Draw(Point position, RenderContext renderContext, Rectangle screenScissor);
-
-    public virtual bool HandleMouseEvent(ref MouseState mouseState)
+    public virtual GreyGuiElement? GetMouseHandler()
     {
-        return false;
+        return null;
+    }
+
+    public virtual void HandleMouseEvent()
+    {
     }
 
     public void ChangeParentButParentWillNotKnow(IContainer? newParentValue)

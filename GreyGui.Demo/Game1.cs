@@ -85,8 +85,8 @@ public class Game1 : Game
             // root = GenerateTextPanel();
         }
 
-        GreyGuiUpdate.StartFrame();
-        GreyGuiUpdate.HandleMouseEvent(Mouse.GetState(), root);
+        GuiUpdate.StartFrame(Mouse.GetState(), Keyboard.GetState());
+        GuiUpdate.Update(root);
 
         base.Update(gameTime);
     }
@@ -137,19 +137,19 @@ public class Game1 : Game
             }
             return panels;
         }
-        RowPanel panel = new RowPanel(colorMask: new(10, 10, 10), borderColor: Color.Gray, size: new Vector2(740, 435), paddingSide: 7, paddingTop: 7, paddingBottom: 7, borderRadius: 10, childGap: 10, layoutMode: RowLayoutMode.Spread).SetChildren([
+        RowPanel panel = new RowPanel(colorMask: new(10, 10, 10), borderColor: Color.Gray, size: new Vector2(740, 435), paddingSide: 7, paddingTop: 7, paddingBottom: 7, borderRadius: 10, childGap: 10, layoutMode: RowLayoutMode.Justify).SetChildren([
             new ListPanel(colorMask: new(80, 80, 80), borderColor: Color.Gray, size: new Vector2(0, 405), useWidthRatio: true, widthRatio: .2f, useHeightRatio:true, heightRatio:1f, paddingTop: 3, paddingSide: 3,  zIndex: 10, borderRadius: 10,
 
-            layoutMode: RowLayoutMode.Spread, childGap: 15f, rowGap: 6f).SetChildren([
-                new RowPanel(colorMask: new(150 , 230, 255), borderColor: Color.Gray, size: new Vector2(0, 30), useWidthRatio: true, widthRatio:1f, zIndex: 10, borderRadius: 7, layoutMode: RowLayoutMode.Spread, childGap: 15f),
+            layoutMode: RowLayoutMode.Justify, childGap: 15f, rowGap: 6f).SetChildren([
+                new RowPanel(colorMask: new(150 , 230, 255), borderColor: Color.Gray, size: new Vector2(0, 30), useWidthRatio: true, widthRatio:1f, zIndex: 10, borderRadius: 7, layoutMode: RowLayoutMode.Justify, childGap: 15f),
 
-                new ListPanel(colorMask: new(40, 40, 40), useWidthRatio: true,size: new(0, 150), widthRatio:1f, borderRadius:7, childGap:3, rowGap:3, layoutMode: RowLayoutMode.Spread).SetChildren(PanelItemGen()),
+                new ListPanel(colorMask: new(40, 40, 40), useWidthRatio: true,size: new(0, 150), widthRatio:1f, borderRadius:7, childGap:3, rowGap:3, layoutMode: RowLayoutMode.Justify).SetChildren(PanelItemGen()),
 
                 new RowPanel(colorMask: new(50 , 170, 100), borderColor: Color.Gray, size: new Vector2(0, 200), useWidthRatio: true, widthRatio:1f, zIndex: 9, borderRadius: 10, childGap: 15f),
             ]),
 
-            new RowPanel(colorMask: new(80, 80, 80), borderColor: Color.Gray, size: new Vector2(0, 405), paddingSide: 10, useWidthRatio: true, widthRatio: .4f, useHeightRatio:true, heightRatio:1f,paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: RowLayoutMode.Spread, childGap: 15f),
-            new RowPanel(colorMask: Color.DarkGoldenrod, borderColor: Color.Gold, size: new Vector2(0, 405), paddingSide: 10, useWidthRatio: true, widthRatio: .4f, useHeightRatio:true, heightRatio:1f,paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: RowLayoutMode.Spread, childGap: 15f),
+            new RowPanel(colorMask: new(80, 80, 80), borderColor: Color.Gray, size: new Vector2(0, 405), paddingSide: 10, useWidthRatio: true, widthRatio: .4f, useHeightRatio:true, heightRatio:1f,paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: RowLayoutMode.Justify, childGap: 15f),
+            new RowPanel(colorMask: Color.DarkGoldenrod, borderColor: Color.Gold, size: new Vector2(0, 405), paddingSide: 10, useWidthRatio: true, widthRatio: .4f, useHeightRatio:true, heightRatio:1f,paddingTop: 10, zIndex: 10, borderRadius: 10, layoutMode: RowLayoutMode.Justify, childGap: 15f),
         ]);
         return panel;
     }
@@ -183,7 +183,7 @@ public class Game1 : Game
 
         return new ListPanel(colorMask: new(20, 20, 20), size: new(500, 135), borderRadius: 15, borderColor: Color.White, borderWidth: 0).SetChildren([
             GenerateButton(),
-            // GenerateButton(),
+            GenerateButton(),
         ]);
     }
     private Button GenerateButton()
@@ -191,24 +191,18 @@ public class Game1 : Game
         float timer = 0f;
         Action<Button, Point, RenderContext, Rectangle> buttonDrawMethod = (button, position, renderContext, scissor) =>
         {
-            Console.WriteLine(button.State);
             button.OnScreenPos = position;
             timer = (button.State, timer) switch
             {
+                (GreyGuiButtonState.Hovered | GreyGuiButtonState.Active, _) => -.3f,
                 (GreyGuiButtonState.Hovered, < 1) => timer + .1f,
                 (GreyGuiButtonState.Hovered, >= 1) => 1,
                 (GreyGuiButtonState.Normal, > 0) => timer - .1f,
                 (GreyGuiButtonState.Normal, <= 0) => 0,
                 _ => 0
             };
-            if (button.State == GreyGuiButtonState.Normal)
-            {
-                button.ZIndex = 0;
-            }
-            else
-            {
-                button.ZIndex = 1;
-            }
+            button.ZIndex = (button.State == GreyGuiButtonState.Normal) ? 0 : 1;
+
             Color c = button.ColorMask * (0.3f * timer + 1f);
             Vector2 minify = new(timer * -30, timer * -15);
             button.PaddingSide = (int)(timer * -15);
@@ -229,10 +223,14 @@ public class Game1 : Game
                 scissor
             );
         };
-        Text buttonText = new Text(Color.White, fontSize: 32, widthRatio: 1, useWidthRatio: true, displayText: "Button Text", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: RowLayoutMode.Center, useTextHeight: true);
+        Text buttonText = new Text(Color.White, fontSize: 32, widthRatio: 1, useWidthRatio: true, displayText: "0", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: RowLayoutMode.Center, useTextHeight: true);
 
-        Button resultButton = new () { ColorMask = Color.DarkGreen, UseWidthRatio = true, WidthRatio = .5f, UseHeightWidthRatio = true, HeightWidthRatio = .5f, BorderRadius = 15, DrawMethod = buttonDrawMethod };
+        Button resultButton = new() { ColorMask = Color.DarkGreen, UseWidthRatio = true, WidthRatio = .5f, UseHeightWidthRatio = true, HeightWidthRatio = .5f, BorderRadius = 15, DrawMethod = buttonDrawMethod };
         resultButton.AppendChild(buttonText);
+        resultButton.OnLeftClicked+= () =>
+        {
+            buttonText.DisplayText = (int.Parse(buttonText.DisplayText) + 1 ).ToString();   
+        };
 
         return resultButton;
     }

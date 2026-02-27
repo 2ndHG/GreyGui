@@ -107,37 +107,35 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     public int PaddingSide { get; set; }
     public bool IsLayoutDirty { get => _isLayoutDirty; set => _isLayoutDirty = value; }
     public bool IsChildrenZIndexDirty { get => _isChildrenZIndexDirty; set => _isChildrenZIndexDirty = value; }
-
-    public int HoveredFrame { get; set; }
-    public int ActiveFrame { get; set; }
     public ReadOnlySpan<GreyGuiElement> Children => CollectionsMarshal.AsSpan(_children);
     public Action<Button, Point, RenderContext, Rectangle> DrawMethod { get; set; }
+    public GreyGuiButtonState State => _state;
+    public event Action OnLeftClicked;
+    public event Action OnRightClicked;
 
-    private bool _useWidthRatio;
-    private bool _useHeightRatio;
-    private bool _useHeightWidthRatio;
-    private float _widthRatio;
-    private float _heightRatio;
-    private float _heightWidthRatio;
-    private Vector2 _size;
-    private int _zIndex;
-    private Vector2 _containerSize;
-    private bool _isLayoutDirty;
-    private bool _isChildrenZIndexDirty;
-    private List<GreyGuiElement> _children = [];
-    private List<Point> _childrenPosition = [];
-    private List<int> _drawOrder = [];
+
+    protected bool _useWidthRatio;
+    protected bool _useHeightRatio;
+    protected bool _useHeightWidthRatio;
+    protected float _widthRatio;
+    protected float _heightRatio;
+    protected float _heightWidthRatio;
+    protected Vector2 _size;
+    protected int _zIndex;
+    protected Vector2 _containerSize;
+    protected bool _isLayoutDirty;
+    protected bool _isChildrenZIndexDirty;
+    protected List<GreyGuiElement> _children = [];
+    protected List<Point> _childrenPosition = [];
+    protected List<int> _drawOrder = [];
+    protected int _hoveredFrame;
+    protected int _holdingFrames;
+    protected int _pressedFrame;
+
+
+
     // Button special
-    public GreyGuiButtonState State
-    {
-        get => _state;
-    }
-
-
-
-    private GreyGuiButtonState _state = GreyGuiButtonState.Normal;
-
-
+    protected GreyGuiButtonState _state = GreyGuiButtonState.Normal;
 
     public Button()
     {
@@ -218,13 +216,17 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     public override void Update()
     {
         _state = GreyGuiButtonState.Normal;
-        if (GreyGuiUpdate.FrameId == HoveredFrame)
+        if (GuiUpdate.FrameId == _hoveredFrame)
         {
             _state |= GreyGuiButtonState.Hovered;
         }
-        if (GreyGuiUpdate.FrameId == ActiveFrame)
+        if (GuiUpdate.FrameId <= _pressedFrame + _holdingFrames)
         {
             _state |= GreyGuiButtonState.Active;
+        }
+        else
+        {
+            _holdingFrames = 0;
         }
     }
 
@@ -233,19 +235,27 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         DrawMethod.Invoke(this, position, renderContext, screenScissor);
     }
 
-    public override bool HandleMouseEvent(ref MouseState mouseState)
-    {
-        bool result = new Rectangle(OnScreenPos, _size.ToPoint()).Contains(mouseState.Position);
-        if (result)
-        {
-            HoveredFrame = GreyGuiUpdate.FrameId;
-            if (mouseState.LeftButton == ButtonState.Pressed && ActiveFrame != HoveredFrame)
-            {
-                ActiveFrame = GreyGuiUpdate.FrameId;
-            }
-        }
 
-        return result;
+    public override GreyGuiElement? GetMouseHandler()
+    {
+        return new Rectangle(OnScreenPos, _size.ToPoint()).Contains(GuiUpdate.Mouse.Position) ? this : null;
+    }
+    public override void HandleMouseEvent()
+    {
+        _hoveredFrame = GuiUpdate.FrameId;
+        if (GuiUpdate.Mouse.IsLeftButtonDown)
+        {
+            GuiUpdate.FocusedElement = this;
+            _pressedFrame = GuiUpdate.FrameId;
+        }
+        if (GuiUpdate.Mouse.IsLeftHold)
+        {
+            _holdingFrames++;
+        }
+        if(GuiUpdate.Mouse.IsLeftButtonUp && _state.HasFlag(GreyGuiButtonState.Active))
+        {
+            OnLeftClicked?.Invoke();
+        }
     }
 
     public void DrawChildren(Point selfPosition, RenderContext context, Rectangle screenScissor)

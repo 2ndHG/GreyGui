@@ -292,7 +292,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
 
         float x = borderRadiusPad + PaddingSide + emptySpace * xLayoutMulti;
         float y = borderRadiusPad + PaddingTop;
-        float childGap = (_layoutMode == RowLayoutMode.Spread && _children.Count > 1) ?
+        float childGap = (_layoutMode == RowLayoutMode.Justify && _children.Count > 1) ?
             emptySpace / (_children.Count - 1) + _childGap
             : _childGap;
 
@@ -355,5 +355,20 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
                 container.DrawChildren(position + _childrenPosition[drawOrder], context, screenScissor);
             }
         }
+    }
+
+    public override GreyGuiElement? GetMouseHandler()
+    {
+        for (int i = 0; i < _drawOrder.Count; ++i)
+        {
+            GreyGuiElement? result = _children[i].GetMouseHandler();
+            if (result != null)
+                return result;
+        }
+        if (new Rectangle(OnScreenPos, _size.ToPoint()).Contains(GuiUpdate.Mouse.Position))
+        {
+            return this;
+        }
+        return null;
     }
 }

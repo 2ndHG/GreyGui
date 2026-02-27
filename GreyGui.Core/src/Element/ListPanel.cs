@@ -295,7 +295,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
             int gapCount = elementEnd - elementBegin - 1;
             float emptySpace;
             float childGapWidth;
-            if (_layoutMode == RowLayoutMode.Spread)
+            if (_layoutMode == RowLayoutMode.Justify)
             {
                 emptySpace = _containerSize.X - rowElementTotalWidth;
                 childGapWidth = gapCount == 0 ? 0 : emptySpace / gapCount;
@@ -346,7 +346,10 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
     }
     public override void Update()
     {
-
+        for (int i = 0; i < _drawOrder.Count; ++i)
+        {
+            _children[i].Update();
+        }
     }
 
     // render context not implemented yet
@@ -390,20 +393,25 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         {
             int drawOrder = _drawOrder[i];
             _children[drawOrder].Draw(position + _childrenPosition[drawOrder], context, screenScissor);
-            if(_children[drawOrder] is IContainer container)
+            if (_children[drawOrder] is IContainer container)
             {
                 container.DrawChildren(position + _childrenPosition[drawOrder], context, screenScissor);
             }
         }
     }
 
-    public override bool HandleMouseEvent(ref MouseState mouseState)
+    public override GreyGuiElement? GetMouseHandler()
     {
-        for(int i = 0; i< _drawOrder.Count; ++i)
+        for (int i = 0; i < _drawOrder.Count; ++i)
         {
-            if(_children[i].HandleMouseEvent(ref mouseState))
-                return true;
+            GreyGuiElement? result = _children[i].GetMouseHandler();
+            if (result != null)
+                return result;
         }
-        return new Rectangle(OnScreenPos, _size.ToPoint()).Contains(mouseState.Position);
+        if (new Rectangle(OnScreenPos, _size.ToPoint()).Contains(GuiUpdate.Mouse.Position))
+        {
+            return this;
+        }
+        return null;
     }
 }

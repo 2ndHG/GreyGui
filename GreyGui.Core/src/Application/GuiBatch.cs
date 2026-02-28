@@ -25,7 +25,7 @@ public class GuiBatch
         Rectangle screenScissor = _device.Viewport.Bounds;
         root.ResolveSizeDirty();
         root.Draw(position, context, screenScissor);
-        if(root is IContainer container)
+        if (root is IContainer container)
         {
             container.DrawChildren(position, context, screenScissor);
         }
@@ -50,6 +50,7 @@ public class GuiBatch
         {
             if (batch.IndexCount == 0) continue;
 
+            _device.SamplerStates[0] = batch.Texture == GreyGui.Atlas ? SamplerState.LinearClamp : SamplerState.PointClamp;
             _device.ScissorRectangle = batch.Scissor;
             _uiShader.Parameters["Texture"].SetValue(batch.Texture);
 

@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Input;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace GreyGui;
 
@@ -110,8 +110,10 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     public ReadOnlySpan<GreyGuiElement> Children => CollectionsMarshal.AsSpan(_children);
     public Action<Button, Point, RenderContext, Rectangle> DrawMethod { get; set; }
     public GreyGuiButtonState State => _state;
-    public event Action OnLeftClicked;
-    public event Action OnRightClicked;
+    public Texture2D ImageTexture { get => _imageTexture; set => _imageTexture = value; }
+    public Rectangle ImageSrcRect { get => _srcRect; set => _srcRect = value; }
+    public event Action? OnLeftClicked;
+    public event Action? OnRightClicked;
 
 
     protected bool _useWidthRatio;
@@ -132,14 +134,40 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     protected int _holdingFrames;
     protected int _pressedFrame;
 
-
-
-    // Button special
     protected GreyGuiButtonState _state = GreyGuiButtonState.Normal;
 
-    public Button()
+    // Render
+    protected Texture2D _imageTexture = GreyGui.Atlas;
+    protected Rectangle _srcRect;
+
+    public Button(Color colorMask, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, int paddingVertical = 0, int paddingSide = 0, int borderRadius = 0, int borderWidth = 0, Texture2D? imageTexture = null, Rectangle imageSrcRect = default)
     {
+        ColorMask = colorMask;
+        BorderColor = borderColor;
+        _size = size;
+        _useWidthRatio = useWidthRatio;
+        _useHeightRatio = useHeightRatio;
+        _useHeightWidthRatio = useHeightWidthRatio;
+        _widthRatio = widthRatio;
+        _heightRatio = heightRatio;
+        _heightWidthRatio = heightWidthRatio;
+        _zIndex = zIndex;
+        _imageTexture = imageTexture == null ? GreyGui.Atlas : imageTexture;
+        _srcRect = (imageTexture, imageSrcRect.IsEmpty) switch
+        {
+            (null, _) => new Rectangle(0, 0, 1, 1),
+            (not null, true) => imageTexture.Bounds,
+            (not null, false) => imageSrcRect
+        };
+
+        PaddingVertical = paddingVertical;
+        PaddingSide = paddingSide;
+        BorderRadius = borderRadius;
+        BorderWidth = borderWidth;
+
         DrawMethod = BasicDraw;
+
+        _isSizeDirty = true;
     }
 
 
@@ -252,7 +280,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         {
             _holdingFrames++;
         }
-        if(GuiUpdate.Mouse.IsLeftButtonUp && _state.HasFlag(GreyGuiButtonState.Active))
+        if (GuiUpdate.Mouse.IsLeftButtonUp && _state.HasFlag(GreyGuiButtonState.Active))
         {
             OnLeftClicked?.Invoke();
         }

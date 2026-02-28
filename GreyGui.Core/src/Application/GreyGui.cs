@@ -28,8 +28,9 @@ public static class GreyGui
         Atlas = new Texture2D(device, atlasWidth, atlasHeight);
         Color[] defaultColor = new Color[atlasWidth * atlasHeight];
         Array.Fill(defaultColor, Color.Transparent);
-        
-        defaultColor[0] = Color.White;
+
+        // make a (0, 0, 2, 2) white rectangle at the top-left corner of atlas
+        defaultColor[0] = defaultColor[1] = defaultColor[atlasWidth + 0] = defaultColor[atlasWidth + 1] = Color.White;
         Atlas.SetData(defaultColor);
         AtlasPixelUv = new Vector2(0.5f / atlasWidth, 0.5f / atlasHeight);
         TextSystem = new TextSystem();

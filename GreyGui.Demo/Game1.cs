@@ -16,6 +16,7 @@ public class Game1 : Game
     private GuiBatch guiBatch;
     private Text rootText;
     private Button experimentingButton;
+    private Texture2D _tileTexture;
 
     private bool oneTimeTicket = true;
 
@@ -38,12 +39,14 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
+        _tileTexture = Texture2D.FromFile(GraphicsDevice, "test2Tile.png");
         GreyGui.Initialize(GraphicsDevice);
         GreyGui.TextSystem.LoadFont("huninn", "huninn.ttf");
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
         root = GenerateButtonPanel();
+
 
         // TODO: use this.Content to load your game content here
     }
@@ -183,7 +186,7 @@ public class Game1 : Game
 
         return new ListPanel(colorMask: new(20, 20, 20), size: new(500, 135), borderRadius: 15, borderColor: Color.White, borderWidth: 0).SetChildren([
             GenerateButton(),
-            GenerateButton(),
+            // GenerateButton(),
         ]);
     }
     private Button GenerateButton()
@@ -204,7 +207,7 @@ public class Game1 : Game
             button.ZIndex = (button.State == GreyGuiButtonState.Normal) ? 0 : 1;
 
             Color c = button.ColorMask * (0.3f * timer + 1f);
-            Vector2 minify = new(timer * -30, timer * -15);
+            Vector2 minify = new(timer * -30, timer * -30);
             button.PaddingSide = (int)(timer * -15);
             button.PaddingVertical = (int)(timer * -7.5f);
             foreach (GreyGuiElement child in button.Children)
@@ -213,8 +216,10 @@ public class Game1 : Game
             }
             Vector2 size = button.Size - minify;
             size.Round();
-            renderContext.FillRect(
+            renderContext.RenderTexture(
+                button.ImageTexture,
                 new Rectangle(position + (minify / 2).ToPoint(), size.ToPoint()),
+                button.ImageSrcRect,
                 new Color(c, button.ColorMask.A),
                 button.BorderColor,
                 button.BorderRadius,
@@ -224,11 +229,14 @@ public class Game1 : Game
         };
         Text buttonText = new Text(Color.White, fontSize: 32, widthRatio: 1, useWidthRatio: true, displayText: "0", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: RowLayoutMode.Center, useTextHeight: true);
 
-        Button resultButton = new() { ColorMask = Color.DarkGreen, UseWidthRatio = true, WidthRatio = .5f, UseHeightWidthRatio = true, HeightWidthRatio = .5f, BorderRadius = 15, DrawMethod = buttonDrawMethod };
-        resultButton.AppendChild(buttonText);
-        resultButton.OnLeftClicked+= () =>
+        Button resultButton = new(colorMask: Color.White, useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: 1, imageTexture: _tileTexture, imageSrcRect: new(0, 0, 8, 8))
         {
-            buttonText.DisplayText = (int.Parse(buttonText.DisplayText) + 1 ).ToString();   
+            DrawMethod = buttonDrawMethod
+        };
+        resultButton.AppendChild(buttonText);
+        resultButton.OnLeftClicked += () =>
+        {
+            buttonText.DisplayText = (int.Parse(buttonText.DisplayText) + 1).ToString();
         };
 
         return resultButton;

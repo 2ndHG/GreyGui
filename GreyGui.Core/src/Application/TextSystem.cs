@@ -18,9 +18,9 @@ public class TextSystem
     private Dictionary<string, FontInfo> _fontInfoMap = [];
     public List<GlyphInfo> GlyphInfoList {get; private init; }= [];
 
-    private int _x = 1;
+    private int _x = 2; // this is for default gui texture that has 2*2 white pixels
     private int _y = 0;
-    private int _currentHeight = 1;
+    private int _currentHeight = 2;
 
     // Multi-thread SDF bitmap generation
     private ConcurrentQueue<(Rectangle destRect, Typeface typeface, char c)> _reservedChars = [];

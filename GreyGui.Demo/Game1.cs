@@ -229,14 +229,15 @@ public class Game1 : Game
         };
         Text buttonText = new Text(Color.White, fontSize: 32, widthRatio: 1, useWidthRatio: true, displayText: "0", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: RowLayoutMode.Center, useTextHeight: true);
 
-        Button resultButton = new(colorMask: Color.White, useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: 1, imageTexture: _tileTexture, imageSrcRect: new(0, 0, 8, 8))
-        {
-            DrawMethod = buttonDrawMethod
-        };
+        Button resultButton = new(colorMask: Color.White, useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: 1, imageTexture: _tileTexture, imageSrcRect: new(0, 0, 8, 8));
         resultButton.AppendChild(buttonText);
         resultButton.OnLeftClicked += () =>
         {
             buttonText.DisplayText = (int.Parse(buttonText.DisplayText) + 1).ToString();
+        };
+        resultButton.OnRightClicked += () =>
+        {
+            buttonText.DisplayText = (int.Parse(buttonText.DisplayText) - 1).ToString();
         };
 
         return resultButton;

@@ -131,8 +131,11 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     protected List<Point> _childrenPosition = [];
     protected List<int> _drawOrder = [];
     protected int _hoveredFrame;
-    protected int _holdingFrames;
-    protected int _pressedFrame;
+    protected int _lHoldingFrames;
+    protected int _lPressedFrame;
+    protected int _rHoldingFrames;
+    protected int _rPressedFrame;
+
 
     protected GreyGuiButtonState _state = GreyGuiButtonState.Normal;
 
@@ -248,13 +251,14 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         {
             _state |= GreyGuiButtonState.Hovered;
         }
-        if (GuiUpdate.FrameId <= _pressedFrame + _holdingFrames)
+        if (GuiUpdate.FrameId == _lPressedFrame + _lHoldingFrames || GuiUpdate.FrameId == _rHoldingFrames + _rPressedFrame)
         {
             _state |= GreyGuiButtonState.Active;
         }
         else
         {
-            _holdingFrames = 0;
+            _lHoldingFrames = 0;
+            _rHoldingFrames = 0;
         }
     }
 
@@ -274,15 +278,30 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         if (GuiUpdate.Mouse.IsLeftButtonDown)
         {
             GuiUpdate.FocusedElement = this;
-            _pressedFrame = GuiUpdate.FrameId;
+            _lPressedFrame = GuiUpdate.FrameId;
         }
         if (GuiUpdate.Mouse.IsLeftHold)
         {
-            _holdingFrames++;
+            _lHoldingFrames++;
         }
         if (GuiUpdate.Mouse.IsLeftButtonUp && _state.HasFlag(GreyGuiButtonState.Active))
         {
+            // Console.WriteLine("Left Button clicked");
             OnLeftClicked?.Invoke();
+        }
+        if (GuiUpdate.Mouse.IsRightButtonDown)
+        {
+            GuiUpdate.FocusedElement = this;
+            _rPressedFrame = GuiUpdate.FrameId;
+        }
+        if (GuiUpdate.Mouse.IsRightHold)
+        {
+            _rHoldingFrames++;
+        }
+        if (GuiUpdate.Mouse.IsRightButtonUp && _state.HasFlag(GreyGuiButtonState.Active))
+        {
+            // Console.WriteLine("Right Button clicked");
+            OnRightClicked?.Invoke();
         }
     }
 
@@ -309,22 +328,24 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         Color colorMask = button.ColorMask;
         float scale = button.State switch
         {
+            GreyGuiButtonState.Active | GreyGuiButtonState.Hovered => 0.8f,
             GreyGuiButtonState.Hovered => 1.2f,
-            GreyGuiButtonState.Active => 0.8f,
             _ => 1f
         };
         colorMask = new Color(colorMask * scale, colorMask.A);
         Color borderColor = button.BorderColor;
         scale = button.State switch
         {
+            GreyGuiButtonState.Active | GreyGuiButtonState.Hovered => 0.8f,
             GreyGuiButtonState.Hovered => 1.2f,
-            GreyGuiButtonState.Active => 0.8f,
             GreyGuiButtonState.Selected => 1.2f,
             _ => 1f
         };
         borderColor = new Color(borderColor * scale, borderColor.A);
-        renderContext.FillRect(
+        renderContext.RenderTexture(
+            button.ImageTexture,
             new Rectangle(position, button.Size.ToPoint()),
+            button.ImageSrcRect,
             colorMask,
             borderColor,
             button.BorderRadius,

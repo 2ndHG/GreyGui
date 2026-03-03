@@ -150,10 +150,10 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
 
     public ListPanel() { }
     public ListPanel(
-        Color colorMask, Color borderColor = default, int borderRadius = default, int borderWidth = default,
+        Color? colorMask = null, Color borderColor = default, int borderRadius = default, int borderWidth = default,
         Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, float childGap = default, float rowGap = default, ICollection<GreyGuiElement>? children = null)
     {
-        ColorMask = colorMask;
+        ColorMask = colorMask ?? Color.Gray;
         BorderColor = borderColor;
         BorderRadius = borderRadius;
         BorderWidth = borderWidth;

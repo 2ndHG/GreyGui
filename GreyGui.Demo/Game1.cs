@@ -185,7 +185,7 @@ public class Game1 : Game
     private GreyGuiElement GenerateButtonPanel()
     {
 
-        return new ListPanel(colorMask: new(20, 20, 20), size: new(500, 135), borderRadius: 15, borderColor: Color.White, borderWidth: 0).SetChildren([
+        return new ListPanel(size: new(500, 135), borderRadius: 15, borderColor: Color.White, borderWidth: 0).SetChildren([
             GenerateButton(),
             GenerateButton(),
         ]);
@@ -228,7 +228,7 @@ public class Game1 : Game
                 scissor
             );
         };
-        Text buttonText = new Text(Color.White, fontSize: 32, widthRatio: 1, useWidthRatio: true, displayText: "0", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: RowLayoutMode.Center, useTextHeight: true);
+        Text buttonText = new Text( fontSize: 32, widthRatio: 1, useWidthRatio: true, displayText: "0", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: RowLayoutMode.Center, useTextHeight: true);
 
         Button resultButton = new( useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: .2f);
         resultButton.DrawMethod = buttonDrawMethod;

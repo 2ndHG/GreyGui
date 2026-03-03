@@ -74,7 +74,7 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     float edgeSoftness = 0.1; 
     float alpha = smoothstep(edgeSoftness, 0.0, dist);
 
-    float borderAlpha = smoothstep(borderWidth + edgeSoftness, borderWidth, -dist);
+    float borderAlpha = 1.0 - (smoothstep(borderWidth + edgeSoftness, borderWidth, -dist));
     
     if(borderWidth <= 0) borderAlpha = 1.0;
 

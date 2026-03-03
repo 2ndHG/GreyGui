@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
 namespace GreyGui;
@@ -148,12 +149,23 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
     private List<Point> _childrenPosition = [];
     private List<int> _drawOrder = [];
 
+
+    // Render
+    protected Texture2D _imageTexture = GreyGui.Atlas;
+    protected Rectangle _imageSrcRect;
+
     public ListPanel() { }
     public ListPanel(
         Color? colorMask = null, Color borderColor = default, int borderRadius = default, int borderWidth = default,
-        Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, float childGap = default, float rowGap = default, ICollection<GreyGuiElement>? children = null)
+        Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, float childGap = default, float rowGap = default, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, ICollection<GreyGuiElement>? children = null)
     {
-        ColorMask = colorMask ?? Color.Gray;
+        ColorMask = (colorMask, imageTexture) switch
+        {
+            (not null, _) => (Color)colorMask,
+            (null, not null) => Color.White,
+            _ => Color.Gray
+        };
+
         BorderColor = borderColor;
         BorderRadius = borderRadius;
         BorderWidth = borderWidth;
@@ -171,6 +183,14 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         _childGap = childGap;
         _rowGap = rowGap;
         _zIndex = zIndex;
+        _imageTexture = imageTexture ?? GreyGui.Atlas;
+        _imageSrcRect = (imageTexture, imageSrcRect.IsEmpty) switch
+        {
+            (null, _) => new Rectangle(0, 0, 1, 1),
+            (not null, true) => imageTexture.Bounds,
+            (not null, false) => imageSrcRect
+        };
+
         if (children != null)
         {
             AppendChildren(children);
@@ -355,8 +375,10 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
     // render context not implemented yet
     public override void Draw(Point position, RenderContext context, Rectangle screenScissor)
     {
-        context.FillRect(
-            new Rectangle(position.X, position.Y, (int)Size.X, (int)Size.Y),
+        context.RenderTexture(
+            _imageTexture,
+            new Rectangle(position, _size.ToPoint()),
+            _imageSrcRect,
             ColorMask,
             BorderColor,
             BorderRadius,

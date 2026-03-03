@@ -111,7 +111,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     public Action<Button, Point, RenderContext, Rectangle> DrawMethod { get; set; }
     public GreyGuiButtonState State => _state;
     public Texture2D ImageTexture { get => _imageTexture; set => _imageTexture = value; }
-    public Rectangle ImageSrcRect { get => _srcRect; set => _srcRect = value; }
+    public Rectangle ImageSrcRect { get => _imageSrcRect; set => _imageSrcRect = value; }
     public event Action? OnLeftClicked;
     public event Action? OnRightClicked;
 
@@ -140,13 +140,17 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     protected GreyGuiButtonState _state = GreyGuiButtonState.Normal;
 
     // Render
-    protected Texture2D _imageTexture = GreyGui.Atlas;
-    protected Rectangle _srcRect;
+    protected Texture2D _imageTexture;
+    protected Rectangle _imageSrcRect;
 
     public Button(Color? colorMask = null, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, int paddingVertical = 0, int paddingSide = 0, int borderRadius = 0, int borderWidth = 0, Texture2D? imageTexture = null, Rectangle imageSrcRect = default)
     {
-
-        ColorMask = colorMask ?? Color.Gray;
+        ColorMask = (colorMask, imageTexture) switch
+        {
+            (not null, _) => (Color)colorMask,
+            (null, not null) => Color.White,
+            _ => Color.Gray
+        };
         BorderColor = borderColor;
         _size = size;
         _useWidthRatio = useWidthRatio;
@@ -157,7 +161,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         _heightWidthRatio = heightWidthRatio;
         _zIndex = zIndex;
         _imageTexture = imageTexture == null ? GreyGui.Atlas : imageTexture;
-        _srcRect = (imageTexture, imageSrcRect.IsEmpty) switch
+        _imageSrcRect = (imageTexture, imageSrcRect.IsEmpty) switch
         {
             (null, _) => new Rectangle(0, 0, 1, 1),
             (not null, true) => imageTexture.Bounds,
@@ -332,7 +336,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         Color colorMask = button.ColorMask;
         float scale = button.State switch
         {
-            GreyGuiButtonState.Active  => 0.8f,
+            GreyGuiButtonState.Active => 0.8f,
             GreyGuiButtonState.Hovered => 0.8f,
             _ => 1f
         };
@@ -340,7 +344,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         Color borderColor = button.BorderColor;
         scale = button.State switch
         {
-            GreyGuiButtonState.Active  => 0.8f,
+            GreyGuiButtonState.Active => 0.8f,
             GreyGuiButtonState.Hovered => 1.2f,
             _ => 1f
         };

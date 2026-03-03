@@ -185,8 +185,7 @@ public class Game1 : Game
     private GreyGuiElement GenerateButtonPanel()
     {
 
-        return new ListPanel(size: new(500, 135), borderRadius: 15, borderColor: Color.White, borderWidth: 0).SetChildren([
-            GenerateButton(),
+        return new ListPanel(size: new(500, 135), borderRadius: 40, colorMask:Color.White, borderColor: Color.Black, borderWidth: 5).SetChildren([
             GenerateButton(),
         ]);
     }
@@ -230,7 +229,7 @@ public class Game1 : Game
         };
         Text buttonText = new Text( fontSize: 32, widthRatio: 1, useWidthRatio: true, displayText: "0", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: RowLayoutMode.Center, useTextHeight: true);
 
-        Button resultButton = new( useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: .2f);
+        Button resultButton = new( useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: .2f, borderColor: Color.Black, borderRadius:5, borderWidth:5);
         resultButton.DrawMethod = buttonDrawMethod;
         resultButton.AppendChild(buttonText);
         resultButton.OnLeftClicked += () =>

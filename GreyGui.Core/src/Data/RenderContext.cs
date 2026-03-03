@@ -122,7 +122,7 @@ public class RenderContext
         float top = srcRect.Top / (float)texture.Height;
         float bottom = srcRect.Bottom / (float)texture.Height;
 
-        SetVertex(VertexCount++, new Vector3(destRect.Left, destRect.Top, 0), color, borderColor, new Vector2(left, top) / texture.Width, new Vector2(0, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(destRect.Left, destRect.Top, 0), color, borderColor, new Vector2(left, top), new Vector2(0, 0), rectParams);
         SetVertex(VertexCount++, new Vector3(destRect.Right, destRect.Top, 0), color, borderColor, new Vector2(right, top), new Vector2(1, 0), rectParams);
         SetVertex(VertexCount++, new Vector3(destRect.Right, destRect.Bottom, 0), color, borderColor, new Vector2(right, bottom), new Vector2(1, 1), rectParams);
         SetVertex(VertexCount++, new Vector3(destRect.Left, destRect.Bottom, 0), color, borderColor, new(left, bottom), new Vector2(0, 1), rectParams);

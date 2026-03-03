@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -16,7 +17,7 @@ public class Game1 : Game
     private GuiBatch guiBatch;
     private Text rootText;
     private Button experimentingButton;
-    private Texture2D _tileTexture;
+    private Texture2D _buttonTexture;
 
     private bool oneTimeTicket = true;
 
@@ -38,8 +39,8 @@ public class Game1 : Game
 
     protected override void LoadContent()
     {
+        _buttonTexture = Content.Load<Texture2D>("SampleImage/ButtonSample");
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        _tileTexture = Texture2D.FromFile(GraphicsDevice, "test2Tile.png");
         GreyGui.Initialize(GraphicsDevice);
         GreyGui.TextSystem.LoadFont("huninn", "huninn.ttf");
 
@@ -186,7 +187,7 @@ public class Game1 : Game
 
         return new ListPanel(colorMask: new(20, 20, 20), size: new(500, 135), borderRadius: 15, borderColor: Color.White, borderWidth: 0).SetChildren([
             GenerateButton(),
-            // GenerateButton(),
+            GenerateButton(),
         ]);
     }
     private Button GenerateButton()
@@ -197,7 +198,7 @@ public class Game1 : Game
             button.OnScreenPos = position;
             timer = (button.State, timer) switch
             {
-                (GreyGuiButtonState.Hovered | GreyGuiButtonState.Active, _) => -.3f,
+                (GreyGuiButtonState.Active, _) => -.3f,
                 (GreyGuiButtonState.Hovered, < 1) => timer + .1f,
                 (GreyGuiButtonState.Hovered, >= 1) => 1,
                 (GreyGuiButtonState.Normal, > 0) => timer - .1f,
@@ -229,7 +230,8 @@ public class Game1 : Game
         };
         Text buttonText = new Text(Color.White, fontSize: 32, widthRatio: 1, useWidthRatio: true, displayText: "0", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: RowLayoutMode.Center, useTextHeight: true);
 
-        Button resultButton = new(colorMask: Color.White, useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: 1, imageTexture: _tileTexture, imageSrcRect: new(0, 0, 8, 8));
+        Button resultButton = new( useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: .2f);
+        resultButton.DrawMethod = buttonDrawMethod;
         resultButton.AppendChild(buttonText);
         resultButton.OnLeftClicked += () =>
         {
@@ -241,5 +243,13 @@ public class Game1 : Game
         };
 
         return resultButton;
+    }
+
+    private GreyGuiElement GenerateImageButtonPanel()
+    {
+        return new ListPanel(colorMask: new(20, 20, 20), size: new(500, 135), borderRadius: 15, borderColor: Color.White, borderWidth: 0).SetChildren([
+            // new Button(colorMask: Color.White, useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: 1f, imageTexture: _buttonTexture, imageSrcRect: new(0, 0, 8, 8)),
+            new Button(colorMask:Color.DarkGreen, useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: 1f),
+        ]);
     }
 }

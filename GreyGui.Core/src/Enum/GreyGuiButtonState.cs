@@ -6,5 +6,4 @@ public enum GreyGuiButtonState
     Normal = 0,
     Hovered = 1,
     Active = 2,
-    Selected = 4,
 }

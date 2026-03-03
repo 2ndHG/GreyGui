@@ -143,9 +143,10 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     protected Texture2D _imageTexture = GreyGui.Atlas;
     protected Rectangle _srcRect;
 
-    public Button(Color colorMask, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, int paddingVertical = 0, int paddingSide = 0, int borderRadius = 0, int borderWidth = 0, Texture2D? imageTexture = null, Rectangle imageSrcRect = default)
+    public Button(Color? colorMask = null, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, int paddingVertical = 0, int paddingSide = 0, int borderRadius = 0, int borderWidth = 0, Texture2D? imageTexture = null, Rectangle imageSrcRect = default)
     {
-        ColorMask = colorMask;
+
+        ColorMask = colorMask ?? Color.Gray;
         BorderColor = borderColor;
         _size = size;
         _useWidthRatio = useWidthRatio;
@@ -247,13 +248,14 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     public override void Update()
     {
         _state = GreyGuiButtonState.Normal;
-        if (GuiUpdate.FrameId == _hoveredFrame)
-        {
-            _state |= GreyGuiButtonState.Hovered;
-        }
+
         if (GuiUpdate.FrameId == _lPressedFrame + _lHoldingFrames || GuiUpdate.FrameId == _rHoldingFrames + _rPressedFrame)
         {
-            _state |= GreyGuiButtonState.Active;
+            _state = GreyGuiButtonState.Active;
+        }
+        else if (GuiUpdate.FrameId == _hoveredFrame)
+        {
+            _state = GreyGuiButtonState.Hovered;
         }
         else
         {
@@ -279,8 +281,9 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         {
             GuiUpdate.FocusedElement = this;
             _lPressedFrame = GuiUpdate.FrameId;
+            _lHoldingFrames = 0;
         }
-        if (GuiUpdate.Mouse.IsLeftHold)
+        else if (GuiUpdate.Mouse.IsLeftHold)
         {
             _lHoldingFrames++;
         }
@@ -293,8 +296,9 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         {
             GuiUpdate.FocusedElement = this;
             _rPressedFrame = GuiUpdate.FrameId;
+            _rHoldingFrames = 0;
         }
-        if (GuiUpdate.Mouse.IsRightHold)
+        else if (GuiUpdate.Mouse.IsRightHold)
         {
             _rHoldingFrames++;
         }
@@ -328,20 +332,19 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         Color colorMask = button.ColorMask;
         float scale = button.State switch
         {
-            GreyGuiButtonState.Active | GreyGuiButtonState.Hovered => 0.8f,
-            GreyGuiButtonState.Hovered => 1.2f,
+            GreyGuiButtonState.Active  => 0.8f,
+            GreyGuiButtonState.Hovered => 0.8f,
             _ => 1f
         };
-        colorMask = new Color(colorMask * scale, colorMask.A);
+        colorMask = new Color(colorMask.R * scale, colorMask.G * scale, colorMask.B * scale, colorMask.A);
         Color borderColor = button.BorderColor;
         scale = button.State switch
         {
-            GreyGuiButtonState.Active | GreyGuiButtonState.Hovered => 0.8f,
+            GreyGuiButtonState.Active  => 0.8f,
             GreyGuiButtonState.Hovered => 1.2f,
-            GreyGuiButtonState.Selected => 1.2f,
             _ => 1f
         };
-        borderColor = new Color(borderColor * scale, borderColor.A);
+        borderColor = new Color(borderColor.R * scale, borderColor.G * scale, borderColor.B * scale, borderColor.A);
         renderContext.RenderTexture(
             button.ImageTexture,
             new Rectangle(position, button.Size.ToPoint()),

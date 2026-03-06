@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using GreyGui.Core;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -15,7 +16,7 @@ public class Game1 : Game
     private Point _drawPos = new Point(50, 200);
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
-    private Text rootText;
+    private TextInput rootText;
     private Button experimentingButton;
     private Texture2D _buttonTexture;
 
@@ -46,7 +47,7 @@ public class Game1 : Game
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GenerateButtonPanel();
+        root = GenerateTextPanel(alignMode: RowLayoutMode.Right);
 
 
         // TODO: use this.Content to load your game content here
@@ -160,7 +161,7 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateTextPanel(RowLayoutMode alignMode)
     {
-        rootText = new Text(colorMask: Color.PaleGoldenrod, size: new(800, 24), displayText: "aaaaa   ccccc aaaaa  ccccc  aaaaa   ccccc aaaaa ccccc aaaaa", useWidthRatio: true, widthRatio: 1f, alignMode: alignMode, textYOffset: -6, autoEndLine: true, useTextHeight: true, fontSize: 32);
+        rootText = new TextInput(colorMask: Color.PaleGoldenrod, size: new(800, 24), displayText: "   aaaaa   ccccc aaaaa  ccccc  aaaaa   ccccc aaaaa ccccc aaaaa   ", alignMode: alignMode, textYOffset: -6, autoEndLine: true, useTextHeight: true, useTextWidth: true, fontSize: 50);
 
 
         ListPanel rowPanel = new ListPanel(colorMask: Color.Black, size: new(1200, 400), layoutMode: RowLayoutMode.Left, paddingTop: 10, paddingSide: 10, borderRadius: 10, rowGap: 10).SetChildren([

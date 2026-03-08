@@ -1,4 +1,5 @@
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Input;
 
 namespace GreyGui.Core;
 
@@ -157,7 +158,10 @@ public class TextInput : GreyGuiElement, IRatioElement
             {
                 return;
             }
+
             _displayText = value;
+            _cursorIndex = value.Length;
+
             _isDisplayTextDirty = true;
             _isSizeDirty = _autoEndLine;
         }
@@ -229,6 +233,7 @@ public class TextInput : GreyGuiElement, IRatioElement
             _isSizeDirty = _autoEndLine;
         }
     }
+    public Color FocusedColor { get; set; } = new Color(145, 171, 186, 255);
 
     private Vector2 _size;
     private int _zIndex;
@@ -248,6 +253,10 @@ public class TextInput : GreyGuiElement, IRatioElement
     private float _textYOffset;
     private FontSizeScalingMode _fontSizeScalingMode;
     private float _fontSizeScalingBaseline;
+
+    // update logic
+    private int _cursorIndex = 0;
+    private Keys _lastDownKey = Keys.None;
 
     // Layout
     private readonly List<TextSegment> _textSegments = [];
@@ -538,8 +547,22 @@ public class TextInput : GreyGuiElement, IRatioElement
 
         _isDisplayTextDirty = false;
     }
+
+    public override GreyGuiElement? GetMouseHandler()
+    {
+        return new Rectangle(OnScreenPos, _size.ToPoint()).Contains(GuiUpdate.Mouse.Position) ? this : null;
+    }
+    public override void HandleMouseEvent()
+    {
+        if (GuiUpdate.Mouse.IsLeftButtonDown)
+        {
+            GuiUpdate.FocusedElement = this;
+        }
+    }
+
     public override void Draw(Point pos, RenderContext renderContext, Rectangle screenScissor)
     {
+        OnScreenPos = pos;
         if (_isDisplayTextDirty)
         {
             ResolveDisplayTextDirty();
@@ -548,7 +571,8 @@ public class TextInput : GreyGuiElement, IRatioElement
         {
             ResolveLayoutDirty();
         }
-        renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), Color.Gray, default, 0, 0, screenScissor);
+
+        // renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), Color.SkyBlue, default, 0, 0, screenScissor);
 
         float fontSize;
         if (_useTextWidth)
@@ -567,11 +591,12 @@ public class TextInput : GreyGuiElement, IRatioElement
         fontSize = Math.Abs(fontSize);
         Vector2 position = pos.ToVector2();
         position.Y += fontSize + _textYOffset;
+        bool isFocused = GuiUpdate.FocusedElement == this;
 
         for (int i = 0; i < _textSegments.Count; ++i)
         {
             TextSegment currentSegment = _textSegments[i];
-            renderContext.RenderTextUsingCharIndices(_displayTextCharIndices, currentSegment.startIndex, currentSegment.length, position + _segmentOffsetCache[i], fontSize, ColorMask, screenScissor);
+            renderContext.RenderTextUsingCharIndices(_displayTextCharIndices, currentSegment.startIndex, currentSegment.length, position + _segmentOffsetCache[i], fontSize, isFocused ? FocusedColor : ColorMask, screenScissor);
         }
     }
 
@@ -585,7 +610,31 @@ public class TextInput : GreyGuiElement, IRatioElement
 
     public override void Update()
     {
+        if (GuiUpdate.FocusedElement != this)
+        {
+            return;
+        }
 
+        _cursorIndex = _displayText.Length;
+        ReadOnlySpan<char> inputBuffer = GuiUpdate.Keyboard.GetTextInputBuffer();
+
+        // when using DisplayText =, the _cursorIndex field will be set to _displayText.Length, hence we need to record the original index first
+        int originalCursorIndex = _cursorIndex;
+        for (int i = 0; i < inputBuffer.Length; ++i)
+        {
+            char c = inputBuffer[i];
+            if (c == '\b' && _cursorIndex > 0) // backspace
+            {
+                DisplayText = _displayText.Remove(_cursorIndex - 1, 1);
+                originalCursorIndex--;
+            }
+            else
+            {
+                DisplayText = _displayText.Insert(_cursorIndex, c.ToString());
+                originalCursorIndex++;
+            }
+        }
+        _cursorIndex = originalCursorIndex;
     }
 
     private struct TextSegment

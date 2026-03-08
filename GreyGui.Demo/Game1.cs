@@ -42,7 +42,11 @@ public class Game1 : Game
     {
         _buttonTexture = Content.Load<Texture2D>("SampleImage/ButtonSample");
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        GreyGui.Initialize(GraphicsDevice);
+        GreyGui.Initialize(this);
+        Window.TextInput += (sender, args) =>
+        {
+            Console.WriteLine(args.Key.ToString() + args.Character.ToString());
+        };
         GreyGui.TextSystem.LoadFont("huninn", "huninn.ttf");
 
         guiBatch = new GuiBatch(GraphicsDevice);
@@ -92,6 +96,7 @@ public class Game1 : Game
 
         GuiUpdate.StartFrame(Mouse.GetState(), Keyboard.GetState());
         GuiUpdate.Update(root);
+
 
         base.Update(gameTime);
     }
@@ -161,7 +166,7 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateTextPanel(RowLayoutMode alignMode)
     {
-        rootText = new TextInput(colorMask: Color.PaleGoldenrod, size: new(800, 24), displayText: "   aaaaa   ccccc aaaaa  ccccc  aaaaa   ccccc aaaaa ccccc aaaaa   ", alignMode: alignMode, textYOffset: -6, autoEndLine: true, useTextHeight: true, useTextWidth: true, fontSize: 50);
+        rootText = new TextInput(colorMask: Color.PaleGoldenrod, size: new(800, 24), displayText: "   aaaaa   ccc", alignMode: alignMode, textYOffset: -6, autoEndLine: true, useTextHeight: true, useTextWidth: true, fontSize: 50);
 
 
         ListPanel rowPanel = new ListPanel(colorMask: Color.Black, size: new(1200, 400), layoutMode: RowLayoutMode.Left, paddingTop: 10, paddingSide: 10, borderRadius: 10, rowGap: 10).SetChildren([
@@ -186,7 +191,7 @@ public class Game1 : Game
     private GreyGuiElement GenerateButtonPanel()
     {
 
-        return new ListPanel(size: new(500, 135), borderRadius: 40, colorMask:Color.White, borderColor: Color.Black, borderWidth: 5).SetChildren([
+        return new ListPanel(size: new(500, 135), borderRadius: 40, colorMask: Color.White, borderColor: Color.Black, borderWidth: 5).SetChildren([
             GenerateButton(),
         ]);
     }
@@ -228,9 +233,9 @@ public class Game1 : Game
                 scissor
             );
         };
-        Text buttonText = new Text( fontSize: 32, widthRatio: 1, useWidthRatio: true, displayText: "0", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: RowLayoutMode.Center, useTextHeight: true);
+        Text buttonText = new Text(fontSize: 32, widthRatio: 1, useWidthRatio: true, displayText: "0", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: RowLayoutMode.Center, useTextHeight: true);
 
-        Button resultButton = new( useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: .2f, borderColor: Color.Black, borderRadius:5, borderWidth:5);
+        Button resultButton = new(useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: .2f, borderColor: Color.Black, borderRadius: 5, borderWidth: 5);
         resultButton.DrawMethod = buttonDrawMethod;
         resultButton.AppendChild(buttonText);
         resultButton.OnLeftClicked += () =>

@@ -6,7 +6,7 @@ namespace GreyGui;
 
 public static class GreyGui
 {
-    public static void Initialize(GraphicsDevice device, int atlasWidth = 2048, int atlasHeight = 2048)
+    public static void Initialize(Game game, int atlasWidth = 2048, int atlasHeight = 2048)
     {
         Assembly assembly = Assembly.GetExecutingAssembly();
         string[] resourceNames = assembly.GetManifestResourceNames();
@@ -21,11 +21,11 @@ public static class GreyGui
 
         using MemoryStream ms = new();
         stream.CopyTo(ms);
-        Shader = new Effect(device, ms.ToArray());
+        Shader = new Effect(game.GraphicsDevice, ms.ToArray());
         Shader.Parameters["antiAliasingFactor"].SetValue(6f); // hardcoded. But I found 6f is kind of good
 
         // Texture and TextSystem
-        Atlas = new Texture2D(device, atlasWidth, atlasHeight);
+        Atlas = new Texture2D(game.GraphicsDevice, atlasWidth, atlasHeight);
         Color[] defaultColor = new Color[atlasWidth * atlasHeight];
         Array.Fill(defaultColor, Color.Transparent);
 
@@ -34,6 +34,9 @@ public static class GreyGui
         Atlas.SetData(defaultColor);
         AtlasPixelUv = new Vector2(0.5f / atlasWidth, 0.5f / atlasHeight);
         TextSystem = new TextSystem();
+
+        // Initialize GuiUpdate
+        GuiUpdate.Initialize(game);
     }
 
     public static Texture2D Atlas { get; private set; }

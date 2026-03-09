@@ -71,8 +71,16 @@ public static class GuiUpdate
 
     private static void OnTextInput(object? _, TextInputEventArgs eventArgs)
     {
+        Console.WriteLine(eventArgs.Key.ToString() + eventArgs.Character.ToString());
         if(nextFrameInputBuffer.Count > maxInputBufferSize)
         {
+            return;
+        }
+        
+        if(eventArgs.Key == Keys.Enter)
+        {
+            // Unify \n, \r to \n
+            nextFrameInputBuffer.Add('\n');
             return;
         }
         nextFrameInputBuffer.Add(eventArgs.Character);

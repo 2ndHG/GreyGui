@@ -43,10 +43,6 @@ public class Game1 : Game
         _buttonTexture = Content.Load<Texture2D>("SampleImage/ButtonSample");
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         GreyGui.Initialize(this);
-        Window.TextInput += (sender, args) =>
-        {
-            Console.WriteLine(args.Key.ToString() + args.Character.ToString());
-        };
         GreyGui.TextSystem.LoadFont("huninn", "huninn.ttf");
 
         guiBatch = new GuiBatch(GraphicsDevice);

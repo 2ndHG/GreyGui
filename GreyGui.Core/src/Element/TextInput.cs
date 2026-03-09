@@ -337,6 +337,10 @@ public class TextInput : GreyGuiElement, IRatioElement
         for (int i = 1; i < _textSegments.Count; ++i)
         {
             TextSegment currentSegment = _textSegments[i];
+            if(currentSegment.pendingSpaceWidth == float.PositiveInfinity)
+            {
+                continue;
+            }
             // the row is full, we must draw the row before the current segment comes in
             if (widthSum + currentSegment.width * scale > maxRowSpace)
             {
@@ -499,8 +503,24 @@ public class TextInput : GreyGuiElement, IRatioElement
                 pendingSpaces++;
                 continue;
             }
+            else if (c == '\n')
+            {
+                // Add the current segment
+                if (currentSegment.length > 0)
+                {
+                    currentSegment.pendingSpaceWidth = spaceAdvanceWidth * pendingSpaces;
+                    _textSegments.Add(currentSegment);
+                }
 
-            // c is not a space
+                // Add a special segment that indicating '\n'
+                _textSegments.Add(new TextSegment() { startIndex = i, length = 1, pendingSpaceWidth = float.PositiveInfinity, width = 0 });
+
+                currentSegment = new() { startIndex = i + 1 };
+                pendingSpaces = 0;
+                continue;
+            }
+
+            // c is not a space or \n
             bool shouldSplit = false;
 
             if (currentSegment.length > 0)

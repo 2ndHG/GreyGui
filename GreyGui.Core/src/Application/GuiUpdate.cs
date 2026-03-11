@@ -71,7 +71,7 @@ public static class GuiUpdate
 
     private static void OnTextInput(object? _, TextInputEventArgs eventArgs)
     {
-        Console.WriteLine(eventArgs.Key.ToString() + eventArgs.Character.ToString());
+        // Console.WriteLine(eventArgs.Key.ToString() + eventArgs.Character.ToString());
         if(nextFrameInputBuffer.Count > maxInputBufferSize)
         {
             return;

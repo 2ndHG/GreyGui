@@ -47,7 +47,7 @@ public class Game1 : Game
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GenerateTextPanel(alignMode: RowLayoutMode.Right);
+        root = GenerateTextPanel(alignMode: RowLayoutMode.Center);
 
 
         // TODO: use this.Content to load your game content here

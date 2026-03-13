@@ -256,7 +256,7 @@ public class TextInput : GreyGuiElement, IRatioElement
 
     // update logic
     private int _cursorIndex = 0;
-    private Keys _lastDownKey = Keys.None;
+    private int _cursorSegmentIndex;
 
     // Layout
     private readonly List<TextSegment> _textSegments = [];
@@ -621,11 +621,12 @@ public class TextInput : GreyGuiElement, IRatioElement
                 if (currentSegment.length > 0)
                 {
                     currentSegment.pendingSpaceWidth = spaceAdvanceWidth * pendingSpaces;
+                    currentSegment.length += pendingSpaces;
                     _textSegments.Add(currentSegment);
                 }
 
                 // Add a special segment that indicating '\n'
-                _textSegments.Add(new TextSegment() { startIndex = i, length = 0, pendingSpaceWidth = float.PositiveInfinity, width = 0 });
+                _textSegments.Add(new TextSegment() { startIndex = i, length = 1, pendingSpaceWidth = float.PositiveInfinity, width = 0 });
 
                 currentSegment = new() { startIndex = i + 1 };
                 pendingSpaces = 0;
@@ -655,6 +656,7 @@ public class TextInput : GreyGuiElement, IRatioElement
             if (shouldSplit)
             {
                 currentSegment.pendingSpaceWidth = spaceAdvanceWidth * pendingSpaces;
+                currentSegment.length += pendingSpaces;
                 _textSegments.Add(currentSegment);
 
                 currentSegment = new() { startIndex = i };
@@ -669,6 +671,7 @@ public class TextInput : GreyGuiElement, IRatioElement
         if (pendingSpaces >= 0 || currentSegment.length > 0)
         {
             currentSegment.pendingSpaceWidth = spaceAdvanceWidth * pendingSpaces;
+            currentSegment.length += pendingSpaces;
             _textSegments.Add(currentSegment);
         }
 
@@ -683,6 +686,66 @@ public class TextInput : GreyGuiElement, IRatioElement
         _isDisplayTextDirty = false;
     }
 
+    private int GetCursorSegmentIndex()
+    {
+        if (_textSegments.Count == 0)
+        {
+            _cursorSegmentIndex = 0;
+            return 0;
+        }
+
+        // Binary search to find which segment contains the cursor position
+        int min = 0;
+        int max = _textSegments.Count - 1;
+
+        // Fallback: cursor is at the end, use last segment
+        while (min <= max)
+        {
+            int mid = (min + max) / 2;
+            TextSegment segment = _textSegments[mid];
+
+            // Check if cursor is within this segment (skip newline segments with length == 0)
+            if (segment.length > 0)
+            {
+                int segmentEnd = segment.startIndex + segment.length;
+                if (_cursorIndex >= segment.startIndex && _cursorIndex < segmentEnd)
+                {
+                    _cursorSegmentIndex = mid;
+                    return _cursorSegmentIndex;
+                }
+            }
+
+            if (_cursorIndex < segment.startIndex)
+            {
+                max = mid - 1;
+            }
+            else
+            {
+                min = mid + 1;
+            }
+        }
+        return Math.Max(0, _textSegments.Count - 1);
+    }
+
+    private float GetFinalFontSize()
+    {
+        float fontSize;
+        if (_useTextWidth | _useTextHeight)
+        {
+            fontSize = _fontSize;
+        }
+        else
+        {
+            fontSize = _fontSizeScalingMode switch
+            {
+                FontSizeScalingMode.UseWidthRatio => _size.X / _fontSizeScalingBaseline * _fontSize,
+                FontSizeScalingMode.UseHeightRatio => _size.Y / _fontSizeScalingBaseline * _fontSize,
+                _ => _fontSize
+            };
+        }
+        return Math.Abs(fontSize);
+    }
+
     public override GreyGuiElement? GetMouseHandler()
     {
         return new Rectangle(OnScreenPos, _size.ToPoint()).Contains(GuiUpdate.Mouse.Position) ? this : null;
@@ -691,6 +754,8 @@ public class TextInput : GreyGuiElement, IRatioElement
     {
         if (GuiUpdate.Mouse.IsLeftButtonDown)
         {
+            _cursorIndex = _displayText.Length;
+            _cursorSegmentIndex = _textSegments.Count - 1;
             GuiUpdate.FocusedElement = this;
         }
     }
@@ -733,6 +798,18 @@ public class TextInput : GreyGuiElement, IRatioElement
             TextSegment currentSegment = _textSegments[i];
             renderContext.RenderTextUsingCharIndices(_displayTextCharIndices, currentSegment.startIndex, currentSegment.length, position + _segmentOffsetCache[i], fontSize, isFocused ? FocusedColor : ColorMask, screenScissor);
         }
+
+        // Render the cursor
+        int cursorSegmentIndex = GetCursorSegmentIndex();
+        Vector2 cursorPosition = _segmentOffsetCache[cursorSegmentIndex];
+        TextSegment cursorSegment = _textSegments[cursorSegmentIndex];
+        float originalWidth = 0;
+        for (int i = cursorSegment.startIndex; i < _cursorIndex; ++i)
+        {
+            originalWidth += GreyGui.TextSystem.GlyphInfoList[_displayTextCharIndices[i]].AdvanceWidth;
+        }
+        cursorPosition.X += originalWidth * fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        renderContext.FillRect(new Rectangle(pos + cursorPosition.ToPoint(), new(3, 50)), ColorMask, Color.White, 0, 0, screenScissor);
     }
 
     public override void ResolveSizeDirty()
@@ -750,10 +827,9 @@ public class TextInput : GreyGuiElement, IRatioElement
             return;
         }
 
-        _cursorIndex = _displayText.Length;
         ReadOnlySpan<char> inputBuffer = GuiUpdate.Keyboard.GetTextInputBuffer();
 
-        // when using DisplayText =, the _cursorIndex field will be set to _displayText.Length, hence we need to record the original index first
+        // when using 'DisplayText = ' assignment, the _cursorIndex field will be set to _displayText.Length, hence we need to record the original index first
         int originalCursorIndex = _cursorIndex;
         for (int i = 0; i < inputBuffer.Length; ++i)
         {
@@ -770,6 +846,18 @@ public class TextInput : GreyGuiElement, IRatioElement
             }
         }
         _cursorIndex = originalCursorIndex;
+
+        // handle cursor positioning
+        if (GuiUpdate.Keyboard.IsKeyDown(Keys.Left))
+        {
+            --_cursorIndex;
+        }
+        if (GuiUpdate.Keyboard.IsKeyDown(Keys.Right))
+        {
+            ++_cursorIndex;
+        }
+        _cursorIndex = Math.Clamp(_cursorIndex, 0, _displayText.Length);
+
     }
 
     private struct TextSegment

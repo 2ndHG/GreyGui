@@ -83,6 +83,11 @@ public static class GuiUpdate
             nextFrameInputBuffer.Add('\n');
             return;
         }
+        if(eventArgs.Key == Keys.Back)
+        {
+            nextFrameInputBuffer.Add('\b');
+            return;
+        }
         nextFrameInputBuffer.Add(eventArgs.Character);
     }
 }

@@ -47,7 +47,7 @@ public class Game1 : Game
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GenerateTextPanel(alignMode: RowLayoutMode.Center);
+        root = GenerateTextPanel(alignMode: RowLayoutMode.Right);
 
 
         // TODO: use this.Content to load your game content here
@@ -162,7 +162,7 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateTextPanel(RowLayoutMode alignMode)
     {
-        rootText = new TextInput(colorMask: Color.PaleGoldenrod, size: new(600, 24), displayText: "abc\n\n  12345  ", alignMode: alignMode, textYOffset: -6, autoEndLine: true, useTextHeight: true, fontSize: 50);
+        rootText = new TextInput(colorMask: Color.PaleGoldenrod, size: new(600, 24), displayText: "abc\n\n12345  ", alignMode: alignMode, textYOffset: -6, useTextHeight: true, fontSize: 50);
 
 
         ListPanel rowPanel = new ListPanel(colorMask: Color.Black, size: new(1200, 400), layoutMode: RowLayoutMode.Left, paddingTop: 10, paddingSide: 10, borderRadius: 10, rowGap: 10).SetChildren([

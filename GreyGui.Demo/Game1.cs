@@ -47,7 +47,7 @@ public class Game1 : Game
 
         guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GenerateTextPanel(alignMode: RowLayoutMode.Right);
+        root = GenerateTextPanel(alignMode: RowLayoutMode.Center);
 
 
         // TODO: use this.Content to load your game content here
@@ -58,40 +58,35 @@ public class Game1 : Game
             Exit();
 
         // TODO: Add your update logic here
-        var keyboardState = Keyboard.GetState();
-        if (keyboardState.IsKeyDown(Keys.D))
-        {
-            _drawPos.X -= 1;
-            root.Size = root.Size with { X = root.Size.X + 2f };
-        }
-        else if (keyboardState.IsKeyDown(Keys.A))
-        {
-            _drawPos.X += 1;
-            root.Size = root.Size with { X = root.Size.X - 2f };
-        }
-        if (keyboardState.IsKeyDown(Keys.W))
-        {
-            _drawPos.Y += 1;
-            root.Size = root.Size with { Y = root.Size.Y - 2f };
-        }
-        else if (keyboardState.IsKeyDown(Keys.S))
-        {
-            _drawPos.Y -= 1;
-            root.Size = root.Size with { Y = root.Size.Y + 2f };
-        }
-
-        if (oneTimeTicket && keyboardState.IsKeyDown(Keys.R))
-        {
-            // oneTimeTicket = false;
-            // GreyGui.TextSystem.ReserveChars("huninn", "\" !#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~");
-            rootText.FontSize = 48;
-            rootText.FontSizeScalingMode = FontSizeScalingMode.None;
-            rootText.DisplayText = "中文字測試，中文字測試，中文字測試，中文字測試，中文字測試，中文字測試。";
-            // root = GenerateTextPanel();
-        }
-
         GuiUpdate.StartFrame(Mouse.GetState(), Keyboard.GetState());
         GuiUpdate.Update(root);
+
+        if (GuiUpdate.FocusedElement == null)
+        {
+
+            var keyboardState = Keyboard.GetState();
+            if (keyboardState.IsKeyDown(Keys.D))
+            {
+                _drawPos.X -= 1;
+                root.Size = root.Size with { X = root.Size.X + 2f };
+            }
+            else if (keyboardState.IsKeyDown(Keys.A))
+            {
+                _drawPos.X += 1;
+                root.Size = root.Size with { X = root.Size.X - 2f };
+            }
+            if (keyboardState.IsKeyDown(Keys.W))
+            {
+                _drawPos.Y += 1;
+                root.Size = root.Size with { Y = root.Size.Y - 2f };
+            }
+            else if (keyboardState.IsKeyDown(Keys.S))
+            {
+                _drawPos.Y -= 1;
+                root.Size = root.Size with { Y = root.Size.Y + 2f };
+            }
+
+        }
 
 
         base.Update(gameTime);
@@ -162,7 +157,7 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateTextPanel(RowLayoutMode alignMode)
     {
-        rootText = new TextInput(colorMask: Color.PaleGoldenrod, size: new(600, 24), displayText: "abc\n\n12345  ", alignMode: alignMode, textYOffset: -6, useTextHeight: true, fontSize: 50);
+        rootText = new TextInput(colorMask: Color.PaleGoldenrod, size: new(600, 24), displayText: "abc\n\n12345  ", alignMode: alignMode, textYOffset: -6, useTextHeight: true, useTextWidth: true, widthRatio: .5f, fontSize: 50);
 
 
         ListPanel rowPanel = new ListPanel(colorMask: Color.Black, size: new(1200, 400), layoutMode: RowLayoutMode.Left, paddingTop: 10, paddingSide: 10, borderRadius: 10, rowGap: 10).SetChildren([

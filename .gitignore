@@ -5,3 +5,4 @@ obj/
 */.vscode
 
 *.DS_Store
+*.ttf

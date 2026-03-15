@@ -86,6 +86,10 @@ public class Game1 : Game
                 root.Size = root.Size with { Y = root.Size.Y + 2f };
             }
 
+            if (keyboardState.IsKeyDown(Keys.R))
+            {
+                root = GenerateTextPanel(RowLayoutMode.Center);
+            }
         }
 
 
@@ -157,7 +161,15 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateTextPanel(RowLayoutMode alignMode)
     {
-        rootText = new TextInput(colorMask: Color.PaleGoldenrod, size: new(600, 24), displayText: "abc\n\n12345  ", alignMode: alignMode, textYOffset: -6, useTextHeight: true, useTextWidth: true, widthRatio: .5f, fontSize: 50);
+        rootText = new TextInput(colorMask: Color.White, size: new(600, 100), displayText: "hired this technical person that was supposed to create a workflow and that cost me a fortune.\nHe basically poisoned the project with a technology only him knows and made the project dependent on it.\nI asked him to make a documentation that I could not see few weeks ago as I had to go back and forth in the hospital and stay with my mom who has cancer.", 
+         alignMode: RowLayoutMode.Left,
+         textYOffset: -6, 
+         useTextHeight: true, 
+         autoEndLine:true, 
+         fontSizeScalingMode: FontSizeScalingMode.UseHeightRatio, 
+         widthRatio: .5f, 
+         useWidthRatio:true, 
+         fontSize:24); 
 
 
         ListPanel rowPanel = new ListPanel(colorMask: Color.Black, size: new(1200, 400), layoutMode: RowLayoutMode.Left, paddingTop: 10, paddingSide: 10, borderRadius: 10, rowGap: 10).SetChildren([

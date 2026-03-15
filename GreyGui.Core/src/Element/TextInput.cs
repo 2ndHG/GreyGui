@@ -317,10 +317,7 @@ public class TextInput : GreyGuiElement, IRatioElement
         _rowCount = 0;
         if (_textSegments.Count == 0) { return; }
 
-        float fontSize = _fontSize;
-        if (_fontSizeScalingMode == FontSizeScalingMode.UseHeightRatio && !_useTextHeight)
-            fontSize = _size.Y / _fontSizeScalingBaseline * _fontSize;
-        fontSize = Math.Max(0, fontSize);
+        float fontSize = GetFinalFontSize();
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
         float widthSum = 0;
         int rowCount = 0;
@@ -398,13 +395,7 @@ public class TextInput : GreyGuiElement, IRatioElement
         _rowCount = 0;
         if (_textSegments.Count == 0) { return; }
 
-        float fontSize = (_fontSizeScalingMode, _useTextHeight) switch
-        {
-            (FontSizeScalingMode.UseWidthRatio, _) => _size.X / _fontSizeScalingBaseline * _fontSize,
-            (FontSizeScalingMode.UseHeightRatio, false) => _size.Y / _fontSizeScalingBaseline * _fontSize,
-            _ => _fontSize
-        };
-        fontSize = Math.Max(0, fontSize);
+        float fontSize = GetFinalFontSize();
         RowLayoutMode alignMode = _useTextWidth ? RowLayoutMode.Left : _alignMode;
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
         float endLineThreshold = _autoEndLine ? _size.X : float.MaxValue;
@@ -545,13 +536,7 @@ public class TextInput : GreyGuiElement, IRatioElement
             {
                 ResolveLayoutDirty3();
             }
-            float fontSize = _fontSizeScalingMode switch
-            {
-                FontSizeScalingMode.UseWidthRatio => _size.X / _fontSizeScalingBaseline * _fontSize,
-                _ => _fontSize
-            };
-            fontSize = Math.Abs(fontSize);
-            _size.Y = _rowCount * fontSize;
+            _size.Y = _rowCount * GetFinalFontSize();
 
             sizeChanged = true;
         }
@@ -716,7 +701,9 @@ public class TextInput : GreyGuiElement, IRatioElement
     private float GetFinalFontSize()
     {
         float fontSize;
-        if (_useTextWidth | _useTextHeight)
+        // In this two situation, UseWidthRatio or UseHeightRatio is not allowed
+        if ((_useTextWidth && _fontSizeScalingMode == FontSizeScalingMode.UseWidthRatio) ||
+            (_useTextHeight && _fontSizeScalingMode == FontSizeScalingMode.UseHeightRatio))
         {
             fontSize = _fontSize;
         }
@@ -729,7 +716,7 @@ public class TextInput : GreyGuiElement, IRatioElement
                 _ => _fontSize
             };
         }
-        return Math.Abs(fontSize);
+        return Math.Max(0, fontSize);
     }
 
     public override GreyGuiElement? GetMouseHandler()
@@ -760,21 +747,7 @@ public class TextInput : GreyGuiElement, IRatioElement
 
         renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), Color.SkyBlue, default, 10, 0, screenScissor);
 
-        float fontSize;
-        if (_useTextWidth)
-        {
-            fontSize = _fontSize;
-        }
-        else
-        {
-            fontSize = _fontSizeScalingMode switch
-            {
-                FontSizeScalingMode.UseWidthRatio => _size.X / _fontSizeScalingBaseline * _fontSize,
-                FontSizeScalingMode.UseHeightRatio => _size.Y / _fontSizeScalingBaseline * _fontSize,
-                _ => _fontSize
-            };
-        }
-        fontSize = Math.Abs(fontSize);
+        float fontSize = GetFinalFontSize();
         Vector2 position = pos.ToVector2();
         position.Y += fontSize + _textYOffset;
         bool isFocused = GuiUpdate.FocusedElement == this;
@@ -798,7 +771,7 @@ public class TextInput : GreyGuiElement, IRatioElement
                 originalWidth += GreyGui.TextSystem.GlyphInfoList[_displayTextCharIndices[i]].AdvanceWidth;
             }
             cursorPosition.X += originalWidth * fontSize / GreyGui.TextSystem.GlyphPixelSize;
-            renderContext.FillRect(new Rectangle(pos + cursorPosition.ToPoint() - new Point(3, 0), new(3, 50)), FocusedColor, Color.White, 0, 0, screenScissor);
+            renderContext.FillRect(new Rectangle(pos + cursorPosition.ToPoint() - new Point(3, 0), new(3, (int)fontSize)), FocusedColor, Color.White, 0, 0, screenScissor);
         }
     }
 

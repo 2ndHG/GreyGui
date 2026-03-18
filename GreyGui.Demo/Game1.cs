@@ -13,7 +13,7 @@ public class Game1 : Game
     private SpriteBatch _spriteBatch;
 
     private GreyGuiElement root;
-    private Point _drawPos = new Point(50, 200);
+    private Point _drawPos = new Point(50, 50);
     private RenderContext renderContext = new();
     private GuiBatch guiBatch;
     private TextInput rootText;
@@ -88,7 +88,7 @@ public class Game1 : Game
 
             if (keyboardState.IsKeyDown(Keys.R))
             {
-                root = GenerateTextPanel(RowLayoutMode.Center);
+                root = GenerateTextInputDemoPanel();
             }
         }
 
@@ -99,13 +99,13 @@ public class Game1 : Game
     {
         if (!IsActive)
             return;
-        GraphicsDevice.Clear(new Color(50, 50, 50));
+        GraphicsDevice.Clear(new Color(0, 0, 0));
         // Point point = Mouse.GetState().Position;
         _spriteBatch.Begin();
         _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
         _spriteBatch.End();
 
-        guiBatch.Draw(root, renderContext, _drawPos);
+        guiBatch.Draw(root, renderContext, new Point(50, 50));
         guiBatch.Flush(renderContext);
 
         // Measure draw calls
@@ -161,15 +161,15 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateTextPanel(RowLayoutMode alignMode)
     {
-        rootText = new TextInput(colorMask: Color.White, size: new(600, 100), displayText: "hired this technical person that was supposed to create a workflow and that cost me a fortune.\nHe basically poisoned the project with a technology only him knows and made the project dependent on it.\nI asked him to make a documentation that I could not see few weeks ago as I had to go back and forth in the hospital and stay with my mom who has cancer.", 
+        rootText = new TextInput(colorMask: Color.White, size: new(600, 100), displayText: "I need this paragraph because I need to showcase this very flexible TextInput element, this element allows you to have a dynamic font size that can scale with its own parent's size.\nAlso, various text alignments are supported, you can choose between apply left, center, right, or justify alignment and the layout behavior will be the same as the Google docs'.\nFurthermore, you can also have dynamic element size based on the text content, the more text it has, the bigger it becomes, awesome.\nIf you are a doubting engineer thinking some attributes are affecting each other, you are right! But worry not! GreyGui gets your back, the conflicts are handled so you won't facing the infinite looping calculation.",
          alignMode: RowLayoutMode.Left,
-         textYOffset: -6, 
-         useTextHeight: true, 
-         autoEndLine:true, 
-         fontSizeScalingMode: FontSizeScalingMode.UseHeightRatio, 
-         widthRatio: .5f, 
-         useWidthRatio:true, 
-         fontSize:24); 
+         textYOffset: -6,
+         useTextHeight: true,
+         autoEndLine: true,
+         fontSizeScalingMode: FontSizeScalingMode.UseHeightRatio,
+         widthRatio: .5f,
+         useWidthRatio: true,
+         fontSize: 24);
 
 
         ListPanel rowPanel = new ListPanel(colorMask: Color.Black, size: new(1200, 400), layoutMode: RowLayoutMode.Left, paddingTop: 10, paddingSide: 10, borderRadius: 10, rowGap: 10).SetChildren([
@@ -258,6 +258,185 @@ public class Game1 : Game
         return new ListPanel(colorMask: new(20, 20, 20), size: new(500, 135), borderRadius: 15, borderColor: Color.White, borderWidth: 0).SetChildren([
             // new Button(colorMask: Color.White, useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: 1f, imageTexture: _buttonTexture, imageSrcRect: new(0, 0, 8, 8)),
             new Button(colorMask:Color.DarkGreen, useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: 1f),
+        ]);
+    }
+
+    private GreyGuiElement GenerateTextInputDemoPanel()
+    {
+        static Button TextButtonFactory(string displayText)
+        {
+            return new Button(colorMask: new Color(133, 199, 140), borderColor: Color.White, size: new(0, 40), useWidthRatio: true, widthRatio: .15f, borderRadius: 10).SetChild(
+                new Text(colorMask: Color.White, fontSize: 20, useTextHeight: true, widthRatio: 1, alignMode: RowLayoutMode.Center, displayText: displayText)
+            );
+        }
+        rootText = new TextInput(colorMask: Color.White, size: new(1200, 600), displayText: "I need this paragraph because I need to showcase this very flexible TextInput element, this element allows you to have a dynamic font size that can scale with its own parent's size.\nAlso, various text alignments are supported, you can choose between apply left, center, right, or justify alignment and the layout behavior will be the same as the Google docs'.\nFurthermore, you can also have dynamic element size based on the text content, the more text it has, the bigger it becomes, awesome.\nIf you are a doubting engineer thinking some attributes are affecting each other, you are right! But worry not! GreyGui gets your back, the conflicts are handled so you won't facing the infinite looping calculation.",
+         alignMode: RowLayoutMode.Left,
+         textYOffset: -6,
+         useHeightRatio: true,
+         heightRatio: .5f,
+         autoEndLine: true,
+         fontSizeScalingMode: FontSizeScalingMode.None,
+         widthRatio: .5f,
+         useWidthRatio: true,
+         fontSize: 20);
+
+        Button[] widthDefiners;
+        void ChangeWidthDefiner(string definer)
+        {
+            foreach (Button b in widthDefiners)
+                b.BorderWidth = 0;
+            rootText.UseWidthRatio = definer == "width ratio";
+            rootText.UseTextWidth = definer == "text width";
+            (definer switch
+            {
+                "text width" => widthDefiners[1],
+                "width ratio" => widthDefiners[2],
+                _ => widthDefiners[0]
+            }).BorderWidth = 5;
+        }
+        widthDefiners = [
+            TextButtonFactory("Fixed Width"),
+            TextButtonFactory("Use Text Width"),
+            TextButtonFactory("Use Width Ratio")
+        ];
+        widthDefiners[0].OnLeftClicked += () => { ChangeWidthDefiner(""); };
+        widthDefiners[1].OnLeftClicked += () => { ChangeWidthDefiner("text width"); };
+        widthDefiners[2].OnLeftClicked += () => { ChangeWidthDefiner("width ratio"); };
+
+        // Height Definer
+        Button[] heightDefiners;
+        void ChangeHeightDefiner(string definer)
+        {
+            foreach (Button b in heightDefiners)
+                b.BorderWidth = 0;
+            rootText.UseHeightRatio = definer == "height ratio";
+            rootText.UseTextHeight = definer == "text height";
+            (definer switch
+            {
+                "text height" => heightDefiners[1],
+                "height ratio" => heightDefiners[2],
+                _ => heightDefiners[0]
+            }).BorderWidth = 5;
+        }
+        heightDefiners = [
+            TextButtonFactory("Fixed Height"),
+            TextButtonFactory("Use Text Height"),
+            TextButtonFactory("Use Height Ratio")
+        ];
+        heightDefiners[0].OnLeftClicked += () => { ChangeHeightDefiner(""); };
+        heightDefiners[1].OnLeftClicked += () => { ChangeHeightDefiner("text height"); };
+        heightDefiners[2].OnLeftClicked += () => { ChangeHeightDefiner("height ratio"); };
+
+        // FontSizeScaling
+        Button[] fontSizeScalingButtons;
+        void ChangeFontSizeScalingFactor(string factor)
+        {
+            foreach (Button b in fontSizeScalingButtons)
+                b.BorderWidth = 0;
+            rootText.FontSizeScalingMode = factor switch
+            {
+                "Width" => FontSizeScalingMode.UseWidthRatio,
+                "Height" => FontSizeScalingMode.UseHeightRatio,
+                "None" => FontSizeScalingMode.None,
+                _ => rootText.FontSizeScalingMode
+            };
+            rootText.FontSizeScalingBaseline = factor switch
+            {
+                "Width" => 600,
+                "Height" => 300,
+                _ => 0
+            };
+            (factor switch
+            {
+                "Width" => fontSizeScalingButtons[1],
+                "Height" => fontSizeScalingButtons[2],
+                _ => fontSizeScalingButtons[0]
+            }).BorderWidth = 5;
+        }
+        fontSizeScalingButtons = [
+            TextButtonFactory("None"),
+            TextButtonFactory("Scale with width"),
+            TextButtonFactory("Scale with height")
+        ];
+        fontSizeScalingButtons[0].OnLeftClicked += () => { ChangeFontSizeScalingFactor("None"); };
+        fontSizeScalingButtons[1].OnLeftClicked += () => { ChangeFontSizeScalingFactor("Width"); };
+        fontSizeScalingButtons[2].OnLeftClicked += () => { ChangeFontSizeScalingFactor("Height"); };
+
+        // auto endline
+        Button[] autoEndLineButtons;
+        void ChangeAutoEndLine(bool enabled)
+        {
+            foreach (Button b in autoEndLineButtons)
+                b.BorderWidth = 0;
+            rootText.AutoEndLine = enabled;
+            (enabled ? autoEndLineButtons[0] : autoEndLineButtons[1]).BorderWidth = 5;
+        }
+        autoEndLineButtons = [
+            TextButtonFactory("True"),
+            TextButtonFactory("False")
+        ];
+        autoEndLineButtons[0].OnLeftClicked += () => ChangeAutoEndLine(true);
+        autoEndLineButtons[1].OnLeftClicked += () => ChangeAutoEndLine(false);
+
+        Button[] alignModeButtons;
+        void ChangeAlignMode(RowLayoutMode alignMode)
+        {
+            foreach (Button b in alignModeButtons)
+                b.BorderWidth = 0;
+            rootText.AlignMode = alignMode;
+            (alignMode switch
+            {
+                RowLayoutMode.Left => alignModeButtons[0],
+                RowLayoutMode.Center=> alignModeButtons[1],
+                RowLayoutMode.Right=> alignModeButtons[2],
+                _ => alignModeButtons[3]
+            }).BorderWidth = 5;
+        }
+        alignModeButtons = [
+            TextButtonFactory("Left"),
+            TextButtonFactory("Center"),
+            TextButtonFactory("Right"),
+            TextButtonFactory("Justify")
+        ];
+        alignModeButtons[0].OnLeftClicked += () => { ChangeAlignMode(RowLayoutMode.Left); };
+        alignModeButtons[1].OnLeftClicked += () => { ChangeAlignMode(RowLayoutMode.Center); };
+        alignModeButtons[2].OnLeftClicked += () => { ChangeAlignMode(RowLayoutMode.Right); };
+        alignModeButtons[3].OnLeftClicked += () => { ChangeAlignMode(RowLayoutMode.Justify); };
+
+        return new ListPanel(colorMask: new Color(87, 125, 91), size: new(1200, 800), paddingSide: 10, paddingTop: 10, borderRadius: 10, layoutMode: RowLayoutMode.Center).SetChildren([
+            new RowPanel(colorMask: Color.Transparent, useWidthRatio:true, widthRatio: 1f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([
+                new Text(colorMask: Color.White, useWidthRatio: true, widthRatio: .33f, useTextHeight: true, fontSize: 26f, displayText: "Element Width Definer"),
+                widthDefiners[0],
+                widthDefiners[1],
+                widthDefiners[2]
+            ]),
+
+            new RowPanel(colorMask: Color.Transparent, useWidthRatio:true, widthRatio: 1f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([
+                new Text(colorMask: Color.White, useWidthRatio: true, widthRatio: .33f, useTextHeight: true, fontSize: 26f, displayText: "Element Height Definer"),
+                heightDefiners[0],
+                heightDefiners[1],
+                heightDefiners[2]
+            ]),
+
+            new RowPanel(colorMask: Color.Transparent, useWidthRatio:true, widthRatio: 1f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([
+                new Text(colorMask: Color.White, useWidthRatio: true, widthRatio: .33f, useTextHeight: true, fontSize: 26f, displayText: "Font Size Scaling"),
+                fontSizeScalingButtons[0],
+                fontSizeScalingButtons[1],
+                fontSizeScalingButtons[2]
+            ]),
+            new RowPanel(colorMask: Color.Transparent, useWidthRatio:true, widthRatio: 1f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([
+                new Text(colorMask: Color.White, useWidthRatio: true, widthRatio: .33f, useTextHeight: true, fontSize: 26f, displayText: "Auto Endline"),
+                autoEndLineButtons[0],
+                autoEndLineButtons[1],
+            ]),
+            new RowPanel(colorMask: Color.Transparent, useWidthRatio:true, widthRatio: 1f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([
+                new Text(colorMask: Color.White, useWidthRatio: true, widthRatio: .33f, useTextHeight: true, fontSize: 26f, displayText: "AlignMode"),
+                alignModeButtons[0],
+                alignModeButtons[1],
+                alignModeButtons[2],
+                alignModeButtons[3],
+            ]),
+            rootText
         ]);
     }
 }

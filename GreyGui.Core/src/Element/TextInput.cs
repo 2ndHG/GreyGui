@@ -15,7 +15,6 @@ public class TextInput : GreyGuiElement, IRatioElement
                 return;
             }
             _size = value;
-            _isLayoutDirty = true;
             _isSizeDirty = true;
         }
     }
@@ -44,7 +43,6 @@ public class TextInput : GreyGuiElement, IRatioElement
                 return;
 
             _useWidthRatio = value;
-            _isLayoutDirty = true;
             _isSizeDirty = true;
         }
     }
@@ -57,7 +55,6 @@ public class TextInput : GreyGuiElement, IRatioElement
                 return;
 
             _useTextWidth = value;
-            _isLayoutDirty = true;
             _isSizeDirty = true;
         }
     }
@@ -71,7 +68,6 @@ public class TextInput : GreyGuiElement, IRatioElement
                 return;
 
             _useHeightRatio = value;
-            _isLayoutDirty = true;
             _isSizeDirty = true;
         }
     }
@@ -85,7 +81,6 @@ public class TextInput : GreyGuiElement, IRatioElement
                 return;
 
             _useHeightWidthRatio = value;
-            _isLayoutDirty = true;
             _isSizeDirty = true;
         }
     }
@@ -99,7 +94,6 @@ public class TextInput : GreyGuiElement, IRatioElement
                 return;
             }
             _useTextHeight = value;
-            _isLayoutDirty = true;
             _isSizeDirty = true;
         }
     }
@@ -113,7 +107,6 @@ public class TextInput : GreyGuiElement, IRatioElement
                 return;
 
             _widthRatio = value;
-            _isLayoutDirty = true;
             _isSizeDirty = true;
         }
     }
@@ -127,7 +120,6 @@ public class TextInput : GreyGuiElement, IRatioElement
                 return;
 
             _heightWidthRatio = value;
-            _isLayoutDirty = true;
             _isSizeDirty = true;
         }
     }
@@ -141,7 +133,6 @@ public class TextInput : GreyGuiElement, IRatioElement
                 return;
 
             _heightRatio = value;
-            _isLayoutDirty = true;
             _isSizeDirty = true;
         }
     }
@@ -154,8 +145,7 @@ public class TextInput : GreyGuiElement, IRatioElement
             {
                 _alignMode = value;
 
-                _isLayoutDirty = true;
-                _isSizeDirty = _autoEndLine;
+                _isSizeDirty = true;
             }
         }
     }
@@ -168,7 +158,7 @@ public class TextInput : GreyGuiElement, IRatioElement
                 return;
             _fontName = value;
             _isDisplayTextDirty = true;
-            _isSizeDirty = _autoEndLine;
+            _isSizeDirty = true;
         }
     }
     public string DisplayText
@@ -185,7 +175,6 @@ public class TextInput : GreyGuiElement, IRatioElement
             _cursorIndex = value.Length;
 
             _isDisplayTextDirty = true;
-            _isLayoutDirty = true;
             _isSizeDirty = true;
         }
     }
@@ -200,8 +189,7 @@ public class TextInput : GreyGuiElement, IRatioElement
             }
             _fontSize = value;
 
-            _isLayoutDirty = true;
-            _isSizeDirty = _autoEndLine;
+            _isSizeDirty = true;
         }
     }
     public float TextYOffset
@@ -223,7 +211,6 @@ public class TextInput : GreyGuiElement, IRatioElement
             }
 
             _fontSizeScalingMode = value;
-            _isLayoutDirty = true;
             _isSizeDirty = true;
         }
     }
@@ -238,8 +225,7 @@ public class TextInput : GreyGuiElement, IRatioElement
             }
             _fontSizeScalingBaseline = value;
 
-            _isLayoutDirty = true;
-            _isSizeDirty = _autoEndLine;
+            _isSizeDirty = true;
         }
     }
     public bool AutoEndLine
@@ -253,8 +239,7 @@ public class TextInput : GreyGuiElement, IRatioElement
             }
             _autoEndLine = value;
 
-            _isLayoutDirty = true;
-            _isSizeDirty = _autoEndLine;
+            _isSizeDirty = true;
         }
     }
     public Color FocusedColor { get; set; } = Color.Yellow;
@@ -287,7 +272,6 @@ public class TextInput : GreyGuiElement, IRatioElement
     private readonly List<int> _displayTextCharIndices = [];
     private readonly List<Vector2> _segmentOffsetCache = [];
     private bool _autoEndLine;
-    private bool _isLayoutDirty = false;
     private int _rowCount = 1;
     private float _maxWidth = 0;
 
@@ -389,7 +373,6 @@ public class TextInput : GreyGuiElement, IRatioElement
         }
 
         _rowCount = rowCount;
-        _isLayoutDirty = false;
         return;
         void ComputeNotFullRow(int endIndex)
         {
@@ -482,7 +465,6 @@ public class TextInput : GreyGuiElement, IRatioElement
         }
 
         _rowCount = rowCount;
-        _isLayoutDirty = false;
         return;
 
         void ComputeRow(int endIndex, bool isFullRow)
@@ -519,24 +501,10 @@ public class TextInput : GreyGuiElement, IRatioElement
     private void RecalculateSize()
     {
         // As an IRatioElement
-        bool sizeChanged = false;
+        Vector2 sizeBefore = _size;
         if (_useWidthRatio && _parent != null)
         {
             _size.X = _parent.ContainerSize.X * _widthRatio;
-            sizeChanged = true;
-        }
-        else if (_useTextWidth)
-        {
-            if (_isDisplayTextDirty)
-            {
-                ResolveDisplayTextDirty();
-            }
-            if (_isLayoutDirty)
-            {
-                ResolveLayoutDirty();
-            }
-            sizeChanged = true;
-            _size.X = _maxWidth;
         }
 
         // UseHeightRatio has a higher priority then UseHeightWidthRatio
@@ -545,45 +513,29 @@ public class TextInput : GreyGuiElement, IRatioElement
             if (_parent != null)
             {
                 _size.Y = _parent.ContainerSize.Y * _heightRatio;
-                sizeChanged = true;
             }
         }
         else if (UseHeightWidthRatio)
         {
             _size.Y = _size.X * _heightWidthRatio;
-            sizeChanged = true;
-        }
-        else if (UseTextHeight)
-        {
-
-            // Normally if the size is changed, we set _isLayoutDirty = true; later in this function.
-            // But we need to calculate text layout here in order to calculate height, so check _isDisplayTextDirty and do recalculation
-            if (_isDisplayTextDirty)
-            {
-                ResolveDisplayTextDirty();
-            }
-
-            if (sizeChanged || _isLayoutDirty)
-            {
-                ResolveLayoutDirty();
-            }
-            _size.Y = _rowCount * GetFinalFontSize();
-
-            sizeChanged = true;
         }
 
         // we have calculated the layout before if UseTextHeight is true
-        if (sizeChanged && !UseTextHeight)
-        {
-            _isLayoutDirty = true;
-        }
+        if (_isDisplayTextDirty)
+            ResolveDisplayTextDirty();
+        ResolveLayoutDirty();
+        if (_useTextWidth)
+            _size.X = _maxWidth;
+        if (_useTextHeight)
+            _size.Y = _rowCount * GetFinalFontSize();
 
-        if (sizeChanged && _parent is not null)
+
+        if (sizeBefore != _size && _parent is not null)
         {
             _parent.IsLayoutDirty = true;
         }
 
-        // Console.WriteLine($"{Size.X}");
+        Console.WriteLine($"{Size.X}");
         _isSizeDirty = false;
     }
     private void ParseText()
@@ -678,7 +630,6 @@ public class TextInput : GreyGuiElement, IRatioElement
             _textSegments.Add(currentSegment);
         }
 
-        _isLayoutDirty = true;
     }
 
     private void ResolveDisplayTextDirty()
@@ -771,10 +722,6 @@ public class TextInput : GreyGuiElement, IRatioElement
         if (_isDisplayTextDirty)
         {
             ResolveDisplayTextDirty();
-        }
-        if (_isLayoutDirty)
-        {
-            ResolveLayoutDirty();
         }
 
         renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), new Color(184, 217, 253, 120), default, 10, 0, screenScissor);

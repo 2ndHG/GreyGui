@@ -325,7 +325,10 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     }
     public override void Update()
     {
-
+        for (int i = 0; i < _drawOrder.Count; ++i)
+        {
+            _children[i].Update();
+        }
     }
 
     // render context not implemented yet

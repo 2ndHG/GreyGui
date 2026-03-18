@@ -143,7 +143,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     protected Texture2D _imageTexture;
     protected Rectangle _imageSrcRect;
 
-    public Button(Color? colorMask = null, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, int paddingVertical = 0, int paddingSide = 0, int borderRadius = 0, int borderWidth = 0, Texture2D? imageTexture = null, Rectangle imageSrcRect = default)
+    public Button(Color? colorMask = null, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, int paddingVertical = 0, int paddingSide = 0, int borderRadius = 0, int borderWidth = 0, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, Action? onLeftClicked = null)
     {
         ColorMask = (colorMask, imageTexture) switch
         {
@@ -173,7 +173,9 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         BorderRadius = borderRadius;
         BorderWidth = borderWidth;
 
-        DrawMethod = BasicDraw;
+        OnLeftClicked = onLeftClicked;
+
+        DrawMethod = BasicDraw;        
 
         _isSizeDirty = true;
     }
@@ -248,6 +250,11 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         _isSizeDirty = false;
         _isLayoutDirty = _isLayoutDirty || sizeChanged;
     }
+    public Button SetChild(GreyGuiElement child)
+    {
+        AppendChild(child);
+        return this;
+    }
 
     public override void Update()
     {
@@ -283,7 +290,6 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         _hoveredFrame = GuiUpdate.FrameId;
         if (GuiUpdate.Mouse.IsLeftButtonDown)
         {
-            GuiUpdate.FocusedElement = this;
             _lPressedFrame = GuiUpdate.FrameId;
             _lHoldingFrames = 0;
         }
@@ -298,7 +304,6 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         }
         if (GuiUpdate.Mouse.IsRightButtonDown)
         {
-            GuiUpdate.FocusedElement = this;
             _rPressedFrame = GuiUpdate.FrameId;
             _rHoldingFrames = 0;
         }
@@ -333,22 +338,24 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     public static void BasicDraw(Button button, Point position, RenderContext renderContext, Rectangle screenScissor)
     {
         button.OnScreenPos = position;
-        Color colorMask = button.ColorMask;
         float scale = button.State switch
         {
             GreyGuiButtonState.Active => 0.8f,
-            GreyGuiButtonState.Hovered => 0.8f,
+            GreyGuiButtonState.Hovered => 1.2f,
             _ => 1f
         };
-        colorMask = new Color(colorMask.R * scale, colorMask.G * scale, colorMask.B * scale, colorMask.A);
-        Color borderColor = button.BorderColor;
+        Color colorMask = button.ColorMask * scale;
+        colorMask.A = button.ColorMask.A;
+        
         scale = button.State switch
         {
             GreyGuiButtonState.Active => 0.8f,
             GreyGuiButtonState.Hovered => 1.2f,
             _ => 1f
         };
-        borderColor = new Color(borderColor.R * scale, borderColor.G * scale, borderColor.B * scale, borderColor.A);
+        Color borderColor =  button.BorderColor * scale;
+        borderColor.A = button.ColorMask.A;
+
         renderContext.RenderTexture(
             button.ImageTexture,
             new Rectangle(position, button.Size.ToPoint()),

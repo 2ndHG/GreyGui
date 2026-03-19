@@ -33,54 +33,25 @@ public class Text : GreyGuiElement, IRatioElement
         }
     }
 
-    public bool UseWidthRatio
+    public TextWidthMode WidthMode
     {
-        get => _useWidthRatio;
+        get => _widthMode;
         set
         {
-            if (_useWidthRatio == value)
-                return;
+            if (_widthMode == value) return;
+            _widthMode = value;
 
-            _useWidthRatio = value;
             _isSizeDirty = true;
         }
     }
-
-    public bool UseHeightRatio
+    public TextHeightMode HeightMode
     {
-        get => _useHeightRatio;
+        get => _heightMode;
         set
         {
-            if (_useHeightRatio == value)
+            if (_heightMode == value)
                 return;
-
-            _useHeightRatio = value;
-            _isSizeDirty = true;
-        }
-    }
-
-    public bool UseHeightWidthRatio
-    {
-        get => _useHeightWidthRatio;
-        set
-        {
-            if (_useHeightWidthRatio == value)
-                return;
-
-            _useHeightWidthRatio = value;
-            _isSizeDirty = true;
-        }
-    }
-    public bool UseTextHeight
-    {
-        get => _useTextHeight;
-        set
-        {
-            if (_useTextHeight == value)
-            {
-                return;
-            }
-            _useTextHeight = value;
+            _heightMode = value;
             _isSizeDirty = true;
         }
     }
@@ -123,7 +94,7 @@ public class Text : GreyGuiElement, IRatioElement
             _isSizeDirty = true;
         }
     }
-    public RowLayoutMode AlignMode
+    public TextAlignment AlignMode
     {
         get => _alignMode;
         set
@@ -233,14 +204,12 @@ public class Text : GreyGuiElement, IRatioElement
 
     private Vector2 _size;
     private int _zIndex;
-    private bool _useWidthRatio;
-    private bool _useHeightRatio;
-    private bool _useHeightWidthRatio;
-    private bool _useTextHeight;
+    private TextWidthMode _widthMode;
+    private TextHeightMode _heightMode;
     private float _widthRatio;
     private float _heightRatio;
     private float _heightWidthRatio;
-    private RowLayoutMode _alignMode;
+    private TextAlignment _alignMode;
     private string _fontName = GreyGui.TextSystem.DefaultFont;
     private string _displayText;
     private float _fontSize;
@@ -255,17 +224,17 @@ public class Text : GreyGuiElement, IRatioElement
     private readonly List<Vector2> _segmentOffsetCache = [];
     private bool _autoEndLine;
     private bool _isLayoutDirty = false;
-    private int _rowCount = 1;
+    private int _rowCount = 1;    
+    private float _maxWidth = 0;
 
-    public Text(Color? colorMask = null, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, bool useTextHeight = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, RowLayoutMode alignMode = RowLayoutMode.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default)
+
+    public Text(Color? colorMask = null, Color borderColor = default, Vector2 size = default, TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default)
     {
         ColorMask = colorMask ?? Color.Black;
         BorderColor = borderColor;
         _size = size;
-        _useWidthRatio = useWidthRatio;
-        _useHeightRatio = useHeightRatio;
-        _useHeightWidthRatio = useHeightWidthRatio;
-        _useTextHeight = useTextHeight;
+        _widthMode = widthMode;
+        _heightMode = heightMode;
         _widthRatio = widthRatio;
         _heightRatio = heightRatio;
         _heightWidthRatio = heightWidthRatio;
@@ -294,143 +263,227 @@ public class Text : GreyGuiElement, IRatioElement
 
     private void ResolveLayoutDirty()
     {
+        if (_widthMode != TextWidthMode.TextWidth)
+            ResolveLayoutDirtyNotUseTextWidth();
+        else
+            ResolveLayoutDirtyUseTextWidth();
+    }
+
+    private void ResolveLayoutDirtyUseTextWidth()
+    {
         _segmentOffsetCache.Clear();
-        if (_textSegments.Count == 0)
-        {
-            return;
-        }
-        float fontSize = _fontSizeScalingMode switch
-        {
-            FontSizeScalingMode.UseWidthRatio => _size.X / _fontSizeScalingBaseline * _fontSize,
-            FontSizeScalingMode.UseHeightRatio => _size.Y / _fontSizeScalingBaseline * _fontSize,
-            _ => _fontSize
-        };
-        fontSize = Math.Abs(fontSize);
+        _maxWidth = 0;
+        _rowCount = 0;
+        if (_textSegments.Count == 0) { return; }
+
+        float fontSize = GetFinalFontSize();
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
-        float maxRowSpace = _autoEndLine ? _size.X : float.MaxValue;
-        float widthSum = _textSegments[0].WidthWithSpace * scale;
-        float widthSumWithoutSpace = 0;
-        float prevSegmentSpaceWidth = _textSegments[0].pendingSpaceWidth * scale;
-        int undrewLastIndex = 0;
+        float widthSum = 0;
         int rowCount = 0;
         Vector2 offset = new(0, 0);
-        for (int i = 1; i < _textSegments.Count; ++i)
+
+
+        // The first traversal defines the width of this ui element, i.e., size.X.
+        ReadOnlySpan<TextSegment> textSegmentSpan = CollectionsMarshal.AsSpan(_textSegments);
+        for (int i = 0; i < textSegmentSpan.Length; ++i)
         {
             TextSegment currentSegment = _textSegments[i];
-            // the row is full, we must draw the row before the current segment comes in
-            if (widthSum + currentSegment.width * scale > maxRowSpace)
+            if (currentSegment.pendingSpaceWidth == float.PositiveInfinity)
             {
-                offset.X = _alignMode switch
-                {
-                    RowLayoutMode.Center => (maxRowSpace - widthSum + prevSegmentSpaceWidth) / 2,
-                    RowLayoutMode.Right => maxRowSpace - widthSum + prevSegmentSpaceWidth,
-                    _ => 0
-                };
-                float justifyGap = _alignMode == RowLayoutMode.Justify ? (maxRowSpace - widthSum + prevSegmentSpaceWidth) / (i - undrewLastIndex - 1) : 0;
+                _maxWidth = Math.Max(widthSum, _maxWidth);
+                widthSum = 0;
+                continue;
+            }
+            widthSum += currentSegment.WidthWithSpace * scale;
+        }
+        _maxWidth = Math.Max(widthSum, _maxWidth);
 
-                for (; undrewLastIndex < i; ++undrewLastIndex)
-                {
-                    _segmentOffsetCache.Add(offset);
-
-                    TextSegment drawingSegment = _textSegments[undrewLastIndex];
-                    offset.X += (drawingSegment.width + drawingSegment.pendingSpaceWidth) * scale + justifyGap;
-                }
+        int undrewLastIndex = 0;
+        widthSum = 0;
+        for (int i = 0; i < _textSegments.Count; ++i)
+        {
+            TextSegment currentSegment = _textSegments[i];
+            if (currentSegment.pendingSpaceWidth == float.PositiveInfinity)
+            {
+                ComputeNotFullRow(i);
+                _segmentOffsetCache.Add(offset);
                 offset.X = 0;
                 offset.Y += fontSize;
-                ++rowCount;
                 widthSum = 0;
+                undrewLastIndex = i + 1;
+                continue;
             }
-
-            // Add the segment in the row
             widthSum += currentSegment.WidthWithSpace * scale;
-            widthSumWithoutSpace += currentSegment.width * scale;
-            prevSegmentSpaceWidth = currentSegment.pendingSpaceWidth * scale;
         }
+        if (undrewLastIndex < _textSegments.Count)
         {
-            // the last row
+            ComputeNotFullRow(_textSegments.Count);
+        }
+
+        _rowCount = rowCount;
+        return;
+        void ComputeNotFullRow(int endIndex)
+        {
             // spread is same as left in the last row
-            maxRowSpace = _size.X;
             offset.X = _alignMode switch
             {
-                RowLayoutMode.Center => (maxRowSpace - widthSum + prevSegmentSpaceWidth) / 2,
-                RowLayoutMode.Right => maxRowSpace - widthSum + prevSegmentSpaceWidth,
+                TextAlignment.Center => (_maxWidth - widthSum) / 2,
+                TextAlignment.Right => _maxWidth - widthSum,
                 _ => 0
             };
-            for (; undrewLastIndex < _textSegments.Count; ++undrewLastIndex)
+            int gapCount = endIndex - undrewLastIndex - 1;
+            float justifyGap = _alignMode == TextAlignment.Justify && gapCount > 0 ? (_maxWidth - widthSum) / gapCount : 0;
+
+            for (; undrewLastIndex < endIndex; ++undrewLastIndex)
             {
                 _segmentOffsetCache.Add(offset);
 
                 TextSegment drawingSegment = _textSegments[undrewLastIndex];
-                offset.X += (drawingSegment.width + drawingSegment.pendingSpaceWidth) * scale;
+                offset.X += (drawingSegment.width + drawingSegment.pendingSpaceWidth) * scale + justifyGap;
             }
+            if (_alignMode == TextAlignment.Justify)
+                offset.X -= justifyGap;
             ++rowCount;
+        }
+    }
+
+    private void ResolveLayoutDirtyNotUseTextWidth()
+    {
+        _segmentOffsetCache.Clear();
+        _maxWidth = 0;
+        _rowCount = 0;
+        if (_textSegments.Count == 0) { return; }
+
+        float fontSize = GetFinalFontSize();
+        float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        float endLineThreshold = _autoEndLine ? _size.X : float.MaxValue;
+        float widthSum = 0;
+        float prevSegmentSpaceWidth = 0;
+        int undrewLastIndex = 0;
+        int rowCount = 0;
+        Vector2 offset = new(0, 0);
+        float singleNewlineX = _alignMode switch
+        {
+            TextAlignment.Center => _size.X / 2,
+            TextAlignment.Right => _size.X,
+            _ => 0
+        };
+
+        for (int i = 0; i < _textSegments.Count; ++i)
+        {
+            TextSegment currentSegment = _textSegments[i];
+            if (currentSegment.pendingSpaceWidth == float.PositiveInfinity)
+            {
+                if (i > undrewLastIndex)
+                {
+                    ComputeRow(i, false);
+                    _segmentOffsetCache.Add(offset);
+                }
+                else
+                {
+                    _segmentOffsetCache.Add(new(singleNewlineX, offset.Y));
+                    ++rowCount;
+                }
+                offset.X = 0;
+                offset.Y += fontSize;
+                widthSum = 0;
+                prevSegmentSpaceWidth = 0;
+                undrewLastIndex = i + 1;
+                continue;
+            }
+            if (_autoEndLine && currentSegment.width * scale + widthSum > endLineThreshold)
+            {
+                if (i > undrewLastIndex)
+                {
+                    ComputeRow(i, true);
+                    offset.X = 0;
+                    offset.Y += fontSize;
+                    widthSum = 0;
+                }
+            }
+            widthSum += currentSegment.WidthWithSpace * scale;
+            prevSegmentSpaceWidth = currentSegment.pendingSpaceWidth * scale;
+        }
+        if (undrewLastIndex < _textSegments.Count)
+        {
+            ComputeRow(_textSegments.Count, false);
         }
 
         _rowCount = rowCount;
-        _isLayoutDirty = false;
+        return;
+
+        void ComputeRow(int endIndex, bool isFullRow)
+        {
+            float rowWidth = _size.X;
+            offset.X = _alignMode switch
+            {
+                TextAlignment.Center => (rowWidth - widthSum + prevSegmentSpaceWidth) / 2,
+                TextAlignment.Right => rowWidth - widthSum + prevSegmentSpaceWidth,
+                _ => 0
+            };
+            float justifyGap = 0;
+            if (isFullRow && _alignMode == TextAlignment.Justify)
+            {
+                int gapCount = endIndex - undrewLastIndex - 1;
+                if (gapCount > 0)
+                {
+                    justifyGap = (rowWidth - widthSum + prevSegmentSpaceWidth) / gapCount;
+                }
+            }
+
+            for (; undrewLastIndex < endIndex; ++undrewLastIndex)
+            {
+                _segmentOffsetCache.Add(offset);
+
+                TextSegment drawingSegment = _textSegments[undrewLastIndex];
+                offset.X += (drawingSegment.width + drawingSegment.pendingSpaceWidth) * scale + justifyGap;
+            }
+            ++rowCount;
+        }
     }
+
+
 
     private void RecalculateSize()
     {
         // As an IRatioElement
-        bool sizeChanged = false;
-        if (UseWidthRatio && _parent != null)
+        Vector2 sizeBefore = _size;
+        if (_widthMode == TextWidthMode.ParentRatio && _parent != null)
         {
             _size.X = _parent.ContainerSize.X * _widthRatio;
-            sizeChanged = true;
         }
+
         // UseHeightRatio has a higher priority then UseHeightWidthRatio
-        if (UseHeightRatio)
+        if (_heightMode == TextHeightMode.ParentRatio)
         {
             if (_parent != null)
             {
                 _size.Y = _parent.ContainerSize.Y * _heightRatio;
-                sizeChanged = true;
             }
         }
-        else if (UseHeightWidthRatio)
+        else if (_heightMode == TextHeightMode.HeightWidthRatio)
         {
             _size.Y = _size.X * _heightWidthRatio;
-            sizeChanged = true;
-        }
-        else if (UseTextHeight)
-        {
-
-            // Normally if the size is changed, we set _isLayoutDirty = true; later in this function.
-            // But we need to calculate text layout here in order to calculate height, so check _isDisplayTextDirty and do recalculation
-            if (_isDisplayTextDirty)
-            {
-                ResolveDisplayTextDirty();
-            }
-
-            if (sizeChanged)
-            {
-                ResolveLayoutDirty();
-            }
-            float fontSize = _fontSizeScalingMode switch
-            {
-                FontSizeScalingMode.UseWidthRatio => _size.X / _fontSizeScalingBaseline * _fontSize,
-                _ => _fontSize
-            };
-            fontSize = Math.Abs(fontSize);
-            _size.Y = _rowCount * fontSize;
-
-            sizeChanged = true;
         }
 
         // we have calculated the layout before if UseTextHeight is true
-        if (sizeChanged && !UseTextHeight)
-        {
-            _isLayoutDirty = true;
-        }
+        if (_isDisplayTextDirty)
+            ResolveDisplayTextDirty();
+        ResolveLayoutDirty();
+        if (_widthMode == TextWidthMode.TextWidth)
+            _size.X = _maxWidth;
+        if (_heightMode == TextHeightMode.TextHeight)
+            _size.Y = _rowCount * GetFinalFontSize();
 
-        if (sizeChanged && _parent is not null)
+
+        if (sizeBefore != _size && _parent is not null)
         {
             _parent.IsLayoutDirty = true;
         }
 
         _isSizeDirty = false;
     }
+
     private void ParseText()
     {
         FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
@@ -443,12 +496,13 @@ public class Text : GreyGuiElement, IRatioElement
 
         if (string.IsNullOrEmpty(_displayText))
         {
+            _textSegments.Add(new TextSegment() { });
             return;
         }
 
         TextSegment currentSegment = new() { startIndex = 0 };
 
-        int pendingSpaces = 0;
+        ushort pendingSpaces = 0;
 
         for (int i = 0; i < _displayText.Length; i++)
         {
@@ -462,19 +516,36 @@ public class Text : GreyGuiElement, IRatioElement
                 pendingSpaces++;
                 continue;
             }
+            else if (c == '\n')
+            {
+                // Add the current segment
+                if (currentSegment.nonSpaceCount + pendingSpaces > 0)
+                {
+                    currentSegment.pendingSpaceWidth = spaceAdvanceWidth * pendingSpaces;
+                    currentSegment.pendingSpaceCount = pendingSpaces;
+                    _textSegments.Add(currentSegment);
+                }
 
-            // c is not a space
+                // Add a special segment that indicating '\n'
+                _textSegments.Add(new TextSegment() { startIndex = i, pendingSpaceCount = 1, pendingSpaceWidth = float.PositiveInfinity, width = 0 });
+
+                currentSegment = new() { startIndex = i + 1 };
+                pendingSpaces = 0;
+                continue;
+            }
+
+            // c is not a space or \n
             bool shouldSplit = false;
 
-            if (currentSegment.length > 0)
+            if (pendingSpaces > 0)
+            {
+                shouldSplit = true;
+            }
+            if (currentSegment.nonSpaceCount > 0)
             {
                 char prevC = _displayText[i - 1];
 
-                if (pendingSpaces > 0)
-                {
-                    shouldSplit = true;
-                }
-                else if (TextHelper.IsCjk(c) || TextHelper.IsCjk(prevC))
+                if (TextHelper.IsCjk(c) || TextHelper.IsCjk(prevC))
                 {
                     if (!TextHelper.IsLineStartForbidden(c) && !TextHelper.IsLineEndForbidden(prevC))
                     {
@@ -486,6 +557,7 @@ public class Text : GreyGuiElement, IRatioElement
             if (shouldSplit)
             {
                 currentSegment.pendingSpaceWidth = spaceAdvanceWidth * pendingSpaces;
+                currentSegment.pendingSpaceCount = pendingSpaces;
                 _textSegments.Add(currentSegment);
 
                 currentSegment = new() { startIndex = i };
@@ -493,15 +565,19 @@ public class Text : GreyGuiElement, IRatioElement
             }
 
             currentSegment.width += charWidth;
-            currentSegment.length++;
+            currentSegment.nonSpaceCount++;
         }
 
         // the remaining segment
-        currentSegment.pendingSpaceWidth = spaceAdvanceWidth * pendingSpaces;
-        _textSegments.Add(currentSegment);
+        if (pendingSpaces >= 0 || currentSegment.nonSpaceCount > 0)
+        {
+            currentSegment.pendingSpaceWidth = spaceAdvanceWidth * pendingSpaces;
+            currentSegment.pendingSpaceCount = pendingSpaces;
+            _textSegments.Add(currentSegment);
+        }
 
-        _isLayoutDirty = true;
     }
+
 
     private void ResolveDisplayTextDirty()
     {
@@ -510,31 +586,44 @@ public class Text : GreyGuiElement, IRatioElement
 
         _isDisplayTextDirty = false;
     }
+
+    private float GetFinalFontSize()
+    {
+        float fontSize;
+        // In this two situation, UseWidthRatio or UseHeightRatio is not allowed
+        if ((_widthMode == TextWidthMode.TextWidth && _fontSizeScalingMode == FontSizeScalingMode.UseWidthRatio) ||
+            (_heightMode == TextHeightMode.TextHeight && _fontSizeScalingMode == FontSizeScalingMode.UseHeightRatio))
+        {
+            fontSize = _fontSize;
+        }
+        else
+        {
+            fontSize = _fontSizeScalingMode switch
+            {
+                FontSizeScalingMode.UseWidthRatio => _size.X / _fontSizeScalingBaseline * _fontSize,
+                FontSizeScalingMode.UseHeightRatio => _size.Y / _fontSizeScalingBaseline * _fontSize,
+                _ => _fontSize
+            };
+        }
+        return Math.Max(0, fontSize);
+    }
+
     public override void Draw(Point pos, RenderContext renderContext, Rectangle screenScissor)
     {
         if (_isDisplayTextDirty)
         {
             ResolveDisplayTextDirty();
         }
-        if (_isLayoutDirty)
-        {
-            ResolveLayoutDirty();
-        }
 
-        float fontSize = _fontSizeScalingMode switch
-        {
-            FontSizeScalingMode.UseWidthRatio => _size.X / _fontSizeScalingBaseline * _fontSize,
-            FontSizeScalingMode.UseHeightRatio => _size.Y / _fontSizeScalingBaseline * _fontSize,
-            _ => _fontSize
-        };
-        fontSize = Math.Abs(fontSize);
+        float fontSize = GetFinalFontSize();
         Vector2 position = pos.ToVector2();
         position.Y += fontSize + _textYOffset;
+        bool isFocused = GuiUpdate.FocusedElement == this;
 
         for (int i = 0; i < _textSegments.Count; ++i)
         {
             TextSegment currentSegment = _textSegments[i];
-            renderContext.RenderTextUsingCharIndices(_displayTextCharIndices, currentSegment.startIndex, currentSegment.length, position + _segmentOffsetCache[i], fontSize, ColorMask, screenScissor);
+            renderContext.RenderTextUsingCharIndices(_displayTextCharIndices, currentSegment.startIndex, currentSegment.nonSpaceCount, position + _segmentOffsetCache[i], fontSize, ColorMask, screenScissor);
         }
     }
 
@@ -551,105 +640,5 @@ public class Text : GreyGuiElement, IRatioElement
 
     }
 
-    private struct TextSegment
-    {
-        public float WidthWithSpace => width + pendingSpaceWidth;
-        public int startIndex;
-        public int length;
-        public float width;
-        public float pendingSpaceWidth;
-    }
-
-    // for reference purpose, delete when done refactoring
-    private void ParseText_Legacy()
-    {
-        /*
-        TextSegment GetOrCreateSegment(int index)
-        {
-            if (index < _textSegments.Count)
-            {
-                return _textSegments[index];
-            }
-            TextSegment segment = new();
-            _textSegments.Add(segment);
-            return segment;
-        }
-
-        void ResetTextSegment(TextSegment segment, int startIndex)
-        {
-            segment.pendingSpaceWidth = segment.width = 0;
-            segment.startIndex = startIndex;
-            segment.length = 0;
-        }
-
-        FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
-        float spaceAdvanceWidth = fontInfo.GlyphInfoMap.TryGetValue(' ', out var spaceGlyphInfo) ?
-            spaceGlyphInfo.AdvanceWidth :
-            GreyGui.TextSystem.GlyphPixelSize / 4; // Normally this default setting should not be used
-
-        _displayTextCharIndices.Clear();
-        _textSegmentCount = 0;
-
-        if (string.IsNullOrEmpty(_displayText)) return;
-
-        TextSegment currentSegment = GetOrCreateSegment(0);
-        ResetTextSegment(currentSegment, 0);
-
-        int pendingSpaces = 0;
-
-        for (int i = 0; i < _displayText.Length; i++)
-        {
-            char c = _displayText[i];
-            int charIndex = fontInfo.GetCharIndex(c);
-            _displayTextCharIndices.Add(charIndex);
-            float charWidth = GreyGui.TextSystem.GlyphInfoList[charIndex].AdvanceWidth;
-
-            if (c == ' ')
-            {
-                pendingSpaces++;
-                continue;
-            }
-
-            // c is not a space
-            bool shouldSplit = false;
-
-            if (currentSegment.length > 0)
-            {
-                char prevC = _displayText[i - 1];
-
-                if (pendingSpaces > 0)
-                {
-                    shouldSplit = true;
-                }
-                else if (TextHelper.IsCjk(c) || TextHelper.IsCjk(prevC))
-                {
-                    if (!TextHelper.IsLineStartForbidden(c) && !TextHelper.IsLineEndForbidden(prevC))
-                    {
-                        shouldSplit = true;
-                    }
-                }
-            }
-
-            if (shouldSplit)
-            {
-                currentSegment.pendingSpaceWidth = spaceAdvanceWidth * pendingSpaces;
-                _textSegmentCount++;
-
-                currentSegment = GetOrCreateSegment(_textSegmentCount);
-                ResetTextSegment(currentSegment, i);
-                pendingSpaces = 0;
-            }
-
-            currentSegment.width += charWidth;
-            currentSegment.length++;
-        }
-
-        // the remaining segment
-        currentSegment.pendingSpaceWidth = spaceAdvanceWidth * pendingSpaces;
-        _textSegmentCount++;
-
-        _isLayoutDirty = true;
-        */
-    }
 
 }

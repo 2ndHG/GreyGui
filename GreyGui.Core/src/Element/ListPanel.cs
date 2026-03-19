@@ -21,40 +21,28 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
     }
     public Vector2 ContainerSize { get => _containerSize; }
 
-    public bool UseWidthRatio
+    public WidthMode WidthMode
     {
-        get => _useWidthRatio;
+        get => _widthMode;
         set
         {
-            if (_useWidthRatio == value)
-                return;
-            _useWidthRatio = value;
-            _isSizeDirty = true;
-        }
-    }
-    public bool UseHeightRatio
-    {
-        get => _useHeightRatio;
-        set
-        {
-            if (value == _useHeightRatio)
-                return;
-            _isSizeDirty = true;
-            _useHeightRatio = value;
-        }
-    }
-    public bool UseHeightWidthRatio
-    {
-        get => _useHeightWidthRatio;
-        set
-        {
-            if (_useHeightWidthRatio == value)
-                return;
-            _isSizeDirty = true;
-            _useHeightWidthRatio = value;
-        }
-    }
+            if(_widthMode == value) return;
+            _widthMode = value;
 
+            _isSizeDirty = true;
+        }
+    }
+    public HeightMode HeightMode
+    {
+        get => _heightMode;
+        set
+        {
+            if (_heightMode == value)
+                return;
+            _heightMode = value;
+            _isSizeDirty = true;
+        }
+    }
     public float WidthRatio
     {
         get => _widthRatio;
@@ -130,10 +118,8 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         }
     }
 
-
-    private bool _useWidthRatio;
-    private bool _useHeightRatio;
-    private bool _useHeightWidthRatio;
+    private WidthMode _widthMode;
+    private HeightMode _heightMode;
     private float _widthRatio;
     private float _heightRatio;
     private float _heightWidthRatio;
@@ -157,7 +143,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
     public ListPanel() { }
     public ListPanel(
         Color? colorMask = null, Color borderColor = default, int borderRadius = default, int borderWidth = default,
-        Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, float childGap = default, float rowGap = default, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, ICollection<GreyGuiElement>? children = null)
+        Vector2 size = default, WidthMode widthMode = WidthMode.Fixed, HeightMode heightMode = HeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, float childGap = default, float rowGap = default, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, ICollection<GreyGuiElement>? children = null)
     {
         ColorMask = (colorMask, imageTexture) switch
         {
@@ -170,9 +156,8 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         BorderRadius = borderRadius;
         BorderWidth = borderWidth;
         _size = size;
-        _useWidthRatio = useWidthRatio;
-        _useHeightRatio = useHeightRatio;
-        _useHeightWidthRatio = useHeightWidthRatio;
+        _heightMode = heightMode;
+        _widthMode = widthMode;
         _widthRatio = widthRatio;
         _heightRatio = heightRatio;
         _heightWidthRatio = heightWidthRatio;
@@ -264,13 +249,14 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
     {
         // As an IRatioElement
         bool sizeChanged = false;
-        if (UseWidthRatio && _parent != null)
+        if (_widthMode == WidthMode.ParentRatio && _parent != null)
         {
             _size.X = _parent.ContainerSize.X * _widthRatio;
             sizeChanged = true;
         }
+
         // UseHeightRatio has a higher priority then UseHeightWidthRatio
-        if (UseHeightRatio)
+        if (_heightMode == HeightMode.ParentRatio)
         {
             if (_parent != null)
             {
@@ -278,7 +264,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
                 sizeChanged = true;
             }
         }
-        else if (UseHeightWidthRatio)
+        else if (_heightMode == HeightMode.HeightWidthRatio)
         {
             _size.Y = _size.X * _heightWidthRatio;
             sizeChanged = true;

@@ -696,12 +696,14 @@ public class TextInput : GreyGuiElement, IRatioElement
             Vector2 cursorPosition = _segmentOffsetCache[cursorSegmentIndex];
             TextSegment cursorSegment = _textSegments[cursorSegmentIndex];
             float originalWidth = 0;
+            int cursorWidth = Math.Max(1, (int)(fontSize / 10));
             for (int i = cursorSegment.startIndex; i < _cursorIndex; ++i)
             {
                 originalWidth += GreyGui.TextSystem.GlyphInfoList[_displayTextCharIndices[i]].AdvanceWidth;
             }
             cursorPosition.X += originalWidth * fontSize / GreyGui.TextSystem.GlyphPixelSize;
-            renderContext.FillRect(new Rectangle(pos + cursorPosition.ToPoint() - new Point(3, 0), new(3, (int)fontSize)), FocusedColor, Color.White, 0, 0, screenScissor);
+            cursorPosition.Y += _textYOffset;
+            renderContext.FillRect(new Rectangle(pos + cursorPosition.ToPoint() - new Point(cursorWidth, 0), new(cursorWidth, (int)fontSize)), FocusedColor, Color.White, 0, 0, screenScissor);
         }
     }
 

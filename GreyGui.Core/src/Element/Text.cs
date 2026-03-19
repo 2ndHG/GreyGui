@@ -103,7 +103,6 @@ public class Text : GreyGuiElement, IRatioElement
             {
                 _alignMode = value;
 
-                _isLayoutDirty = true;
                 _isSizeDirty = _autoEndLine;
             }
         }
@@ -145,7 +144,6 @@ public class Text : GreyGuiElement, IRatioElement
             }
             _fontSize = value;
 
-            _isLayoutDirty = true;
             _isSizeDirty = _autoEndLine;
         }
     }
@@ -168,7 +166,6 @@ public class Text : GreyGuiElement, IRatioElement
             }
 
             _fontSizeScalingMode = value;
-            _isLayoutDirty = true;
         }
     }
     public float FontSizeScalingBaseline
@@ -182,7 +179,6 @@ public class Text : GreyGuiElement, IRatioElement
             }
             _fontSizeScalingBaseline = value;
 
-            _isLayoutDirty = true;
             _isSizeDirty = _autoEndLine;
         }
     }
@@ -197,7 +193,6 @@ public class Text : GreyGuiElement, IRatioElement
             }
             _autoEndLine = value;
 
-            _isLayoutDirty = true;
             _isSizeDirty = _autoEndLine;
         }
     }
@@ -223,7 +218,6 @@ public class Text : GreyGuiElement, IRatioElement
     private readonly List<int> _displayTextCharIndices = [];
     private readonly List<Vector2> _segmentOffsetCache = [];
     private bool _autoEndLine;
-    private bool _isLayoutDirty = false;
     private int _rowCount = 1;    
     private float _maxWidth = 0;
 
@@ -618,7 +612,6 @@ public class Text : GreyGuiElement, IRatioElement
         float fontSize = GetFinalFontSize();
         Vector2 position = pos.ToVector2();
         position.Y += fontSize + _textYOffset;
-        bool isFocused = GuiUpdate.FocusedElement == this;
 
         for (int i = 0; i < _textSegments.Count; ++i)
         {

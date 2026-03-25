@@ -19,6 +19,8 @@ public static class GreyGui
             throw new Exception($"Cannot find {resourcePath}");
         }
 
+        GameInstance = game;
+
         using MemoryStream ms = new();
         stream.CopyTo(ms);
         Shader = new Effect(game.GraphicsDevice, ms.ToArray());
@@ -43,4 +45,5 @@ public static class GreyGui
     public static Effect Shader { get; private set; }
     public static TextSystem TextSystem { get; private set; }
     public static Vector2 AtlasPixelUv { get; private set; }
+    public static Game GameInstance {get; private set;}
 }

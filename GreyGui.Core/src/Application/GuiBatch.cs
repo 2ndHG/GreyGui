@@ -8,6 +8,7 @@ public class GuiBatch
     private readonly GraphicsDevice _device;
     private readonly Effect _uiShader;
     private static readonly RasterizerState ScissorState = new() { ScissorTestEnable = true };
+    private GameTime _gameTime;
 
     public GuiBatch(GraphicsDevice device, Effect uiShader)
     {
@@ -19,9 +20,15 @@ public class GuiBatch
         _device = device;
         _uiShader = GreyGui.Shader;
     }
+    
+    public void ReceiveFrameInfo(GameTime gameTime)
+    {
+        _gameTime = gameTime;
+    }
 
     public void Draw(GreyGuiElement root, RenderContext context, Point position)
     {
+        context.ElapsedTimeSecond = _gameTime.ElapsedGameTime.TotalSeconds;
         Rectangle screenScissor = _device.Viewport.Bounds;
         root.ResolveSizeDirty();
         root.Draw(position, context, screenScissor);

@@ -219,8 +219,9 @@ public class TextInput : GreyGuiElement, IRatioElement
     private FontSizeScalingMode _fontSizeScalingMode;
     private float _fontSizeScalingBaseline;
 
-    // update logic
+    // cursor
     private int _cursorIndex = 0;
+    private double _cursorBlinkFactor;
 
     // Layout
     private readonly List<TextSegment> _textSegments = [];
@@ -372,8 +373,6 @@ public class TextInput : GreyGuiElement, IRatioElement
             TextAlignment.Right => _size.X,
             _ => 0
         };
-        // Console.WriteLine("ResolveLayoutDirtyNotUseTextWidth");
-        // Console.WriteLine($"finalFontSize: {fontSize}, endLineThreshold: {endLineThreshold}");
 
         for (int i = 0; i < _textSegments.Count; ++i)
         {
@@ -448,6 +447,92 @@ public class TextInput : GreyGuiElement, IRatioElement
         }
     }
 
+    private int GetCharIndexAtMouse(Point mousePosition)
+    {
+        float fontSize = GetFinalFontSize();
+        float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
+
+        // returns -1 when behind, 1 when ahead, 0 when within
+        int AheadOrBehindMouse(int segmentIndex)
+        {
+            Point segScreenPos = OnScreenPos + _segmentOffsetCache[segmentIndex].ToPoint();
+            if (mousePosition.Y < segScreenPos.Y)
+            {
+                return -1;
+            }
+            else if (mousePosition.Y > segScreenPos.Y + fontSize)
+            {
+                return 1;
+            }
+
+            if (mousePosition.X < segScreenPos.X)
+            {
+                return -1;
+            }
+            else if (mousePosition.X >= segScreenPos.X + _textSegments[segmentIndex].WidthWithSpace * scale)
+            {
+                return 1;
+            }
+            return 0;
+        }
+
+        // Binary search to find the segment index
+        int left = 0;
+        int right = _segmentOffsetCache.Count - 1;
+        int mid = 0;
+        int segmentIndex = -1;
+        while (left <= right)
+        {
+            mid = left + (right - left) / 2;
+            int comparison = AheadOrBehindMouse(mid);
+            if (comparison == 0)
+            {
+                segmentIndex = mid;
+                break;
+            }
+            else if (comparison < 0)
+            {
+                right = mid - 1;
+            }
+            else
+            {
+                left = mid + 1;
+            }
+        }
+
+        if (segmentIndex == -1)
+        {
+            // The mouse is between left and right but not overlapped with any of them
+            // There are 2 situation: left and right at the same row or not
+            // We always choose right if the mouse is at right's row
+            (left, right) = (right, left);
+            right = Math.Clamp(right, 0, _textSegments.Count - 1);
+            if (mousePosition.Y >= OnScreenPos.Y + _segmentOffsetCache[right].Y)
+                segmentIndex = right;
+            else
+                segmentIndex = left;
+        }
+
+        // Use the segment information to find the exact character
+        TextSegment segment = _textSegments[segmentIndex];
+        float currentX = OnScreenPos.X + _segmentOffsetCache[segmentIndex].X;
+
+        for (int i = segment.startIndex; i < segment.startIndex + segment.CharCount; i++)
+        {
+            int charIndex = _displayTextCharIndices[i];
+            float charWidth = GreyGui.TextSystem.GlyphInfoList[charIndex].AdvanceWidth * scale;
+
+            if (mousePosition.X < currentX + charWidth / 2)
+            {
+                return i;
+            }
+
+            currentX += charWidth;
+        }
+
+        // If no exact match, set cursor index to the end of the segment
+        return segment.startIndex + segment.nonSpaceCount;
+    }
 
     private void RecalculateSize()
     {
@@ -662,7 +747,14 @@ public class TextInput : GreyGuiElement, IRatioElement
         if (GuiUpdate.Mouse.IsLeftButtonDown)
         {
             if (GuiUpdate.FocusedElement != this)
+            {
                 _cursorIndex = _displayText.Length;
+            }
+            else
+            {
+                _cursorIndex = GetCharIndexAtMouse(GuiUpdate.Mouse.Position);
+            }
+            _cursorBlinkFactor = .5;
             GuiUpdate.FocusedElement = this;
         }
     }
@@ -690,7 +782,14 @@ public class TextInput : GreyGuiElement, IRatioElement
 
 
         // Render the cursor
-        if (isFocused)
+        if (!isFocused)
+            return;
+        _cursorBlinkFactor += renderContext.ElapsedTimeSecond;
+        if (_cursorBlinkFactor > 1)
+        {
+            _cursorBlinkFactor = 0;
+        }
+        else if (_cursorBlinkFactor > .5)
         {
             int cursorSegmentIndex = GetCursorSegmentIndex();
             Vector2 cursorPosition = _segmentOffsetCache[cursorSegmentIndex];
@@ -744,16 +843,19 @@ public class TextInput : GreyGuiElement, IRatioElement
             {
                 DisplayText = _displayText.Insert(cursorIndex++, c.ToString());
             }
+            _cursorBlinkFactor = .5;
         }
         _cursorIndex = cursorIndex;
 
         // handle cursor positioning
         if (GuiUpdate.Keyboard.IsKeyDown(Keys.Left))
         {
+            _cursorBlinkFactor = .5;
             --_cursorIndex;
         }
         if (GuiUpdate.Keyboard.IsKeyDown(Keys.Right))
         {
+            _cursorBlinkFactor = .5;
             ++_cursorIndex;
         }
         _cursorIndex = Math.Clamp(_cursorIndex, 0, _displayText.Length);

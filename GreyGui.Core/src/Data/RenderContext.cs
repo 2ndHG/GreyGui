@@ -16,6 +16,7 @@ public class RenderContext
 
     private UiVertex[] _vertices = new UiVertex[MAX_VERTEX_COUNT];
     private int[] _indices = new int[MAX_INDEX_COUNT];
+    public double ElapsedTimeSecond {get; set;}
 
     public void Clear()
     {

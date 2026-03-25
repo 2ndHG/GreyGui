@@ -767,7 +767,7 @@ public class TextInput : GreyGuiElement, IRatioElement
             ResolveDisplayTextDirty();
         }
 
-        renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), new Color(184, 217, 253, 120), default, 10, 0, screenScissor);
+        // renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), new Color(184, 217, 253, 120), default, 10, 0, screenScissor);
 
         float fontSize = GetFinalFontSize();
         Vector2 position = pos.ToVector2();

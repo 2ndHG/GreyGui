@@ -59,7 +59,7 @@ public class Game1 : Game
             Exit();
 
         // TODO: Add your update logic here
-        GuiUpdate.StartFrame(Mouse.GetState(), Keyboard.GetState());
+        GuiUpdate.StartFrame(gameTime, Mouse.GetState(), Keyboard.GetState());
         GuiUpdate.Update(root);
 
         if (GuiUpdate.FocusedElement == null)

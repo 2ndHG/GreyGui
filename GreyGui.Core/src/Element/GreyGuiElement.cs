@@ -13,6 +13,7 @@ public abstract class GreyGuiElement
     public int BorderWidth { get; set; }
     public IContainer? Parent { get => _parent; }
     public abstract Vector2 Size { get; set; }
+    public virtual Vector2 FinalSize { get; }
     /// <summary>
     /// Smaller draw first
     /// </summary>

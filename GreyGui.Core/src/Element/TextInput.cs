@@ -222,6 +222,12 @@ public class TextInput : GreyGuiElement, IRatioElement
     // cursor
     private int _cursorIndex = 0;
     private double _cursorBlinkFactor;
+    private double _directionKeyHoldingTime;
+    private float fastMoving = 0;
+    private Keys _lastPressedDirectionKey;
+    private Action _lastCursorMoveAction;
+    readonly private Keys[] _cursorMoveKeys;
+    readonly private Action[] _cursorMoveMethods = new Action[4];
 
     // Layout
     private readonly List<TextSegment> _textSegments = [];
@@ -263,6 +269,11 @@ public class TextInput : GreyGuiElement, IRatioElement
 
         _isSizeDirty = true;
         _isDisplayTextDirty = true;
+
+        // cursor moving function initialization
+        _lastCursorMoveAction = CursorMovePlaceHolder;
+        _cursorMoveKeys = [Keys.Up, Keys.Down, Keys.Left, Keys.Right];
+        _cursorMoveMethods = [CursorMoveUp, CursorMoveDown, CursorMoveLeft, CursorMoveRight];
     }
     private void ResolveLayoutDirty()
     {
@@ -451,6 +462,14 @@ public class TextInput : GreyGuiElement, IRatioElement
     {
         float fontSize = GetFinalFontSize();
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        if (mousePosition.Y < OnScreenPos.Y)
+        {
+            return 0;
+        }
+        else if (mousePosition.Y > OnScreenPos.Y + _segmentOffsetCache[^1].Y + fontSize)
+        {
+            return _displayText.Length - 1;
+        }
 
         // returns -1 when behind, 1 when ahead, 0 when within
         int AheadOrBehindMouse(int segmentIndex)
@@ -512,6 +531,7 @@ public class TextInput : GreyGuiElement, IRatioElement
             else
                 segmentIndex = left;
         }
+        segmentIndex = Math.Clamp(segmentIndex, 0, _textSegments.Count - 1);
 
         // Use the segment information to find the exact character
         TextSegment segment = _textSegments[segmentIndex];
@@ -716,6 +736,19 @@ public class TextInput : GreyGuiElement, IRatioElement
         }
         return Math.Max(0, _textSegments.Count - 1);
     }
+    private Vector2 GetCursorCharOffset(float fontSize)
+    {
+        int cursorSegmentIndex = GetCursorSegmentIndex();
+        Vector2 result = _segmentOffsetCache[cursorSegmentIndex];
+        TextSegment cursorSegment = _textSegments[cursorSegmentIndex];
+        float originalWidth = 0;
+        for (int i = cursorSegment.startIndex; i < _cursorIndex; ++i)
+        {
+            originalWidth += GreyGui.TextSystem.GlyphInfoList[_displayTextCharIndices[i]].AdvanceWidth;
+        }
+        result.X += originalWidth * fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        return result;
+    }
 
     private float GetFinalFontSize()
     {
@@ -789,18 +822,10 @@ public class TextInput : GreyGuiElement, IRatioElement
         {
             _cursorBlinkFactor = 0;
         }
-        else if (_cursorBlinkFactor > .5)
+        else if (_cursorBlinkFactor >= .5)
         {
-            int cursorSegmentIndex = GetCursorSegmentIndex();
-            Vector2 cursorPosition = _segmentOffsetCache[cursorSegmentIndex];
-            TextSegment cursorSegment = _textSegments[cursorSegmentIndex];
-            float originalWidth = 0;
             int cursorWidth = Math.Max(1, (int)(fontSize / 10));
-            for (int i = cursorSegment.startIndex; i < _cursorIndex; ++i)
-            {
-                originalWidth += GreyGui.TextSystem.GlyphInfoList[_displayTextCharIndices[i]].AdvanceWidth;
-            }
-            cursorPosition.X += originalWidth * fontSize / GreyGui.TextSystem.GlyphPixelSize;
+            Vector2 cursorPosition = GetCursorCharOffset(fontSize);
             cursorPosition.Y += _textYOffset;
             renderContext.FillRect(new Rectangle(pos + cursorPosition.ToPoint() - new Point(cursorWidth, 0), new(cursorWidth, (int)fontSize)), FocusedColor, Color.White, 0, 0, screenScissor);
         }
@@ -816,7 +841,7 @@ public class TextInput : GreyGuiElement, IRatioElement
 
     public override void Update()
     {
-        if (GuiUpdate.FocusedElement != this)
+        if (GuiUpdate.FocusedElement != this || _isDisplayTextDirty)
         {
             return;
         }
@@ -847,18 +872,67 @@ public class TextInput : GreyGuiElement, IRatioElement
         }
         _cursorIndex = cursorIndex;
 
-        // handle cursor positioning
-        if (GuiUpdate.Keyboard.IsKeyDown(Keys.Left))
+        // handle cursor moving via keyboard arrow keys
+        for (int i = 0; i < 4; ++i)
         {
-            _cursorBlinkFactor = .5;
-            --_cursorIndex;
+            if (GuiUpdate.Keyboard.IsKeyDown(_cursorMoveKeys[i]))
+            {
+                _lastPressedDirectionKey = _cursorMoveKeys[i];
+                _lastCursorMoveAction = _cursorMoveMethods[i];
+                _lastCursorMoveAction.Invoke();
+                _cursorBlinkFactor = .5;
+                _directionKeyHoldingTime = 0;
+            }
         }
-        if (GuiUpdate.Keyboard.IsKeyDown(Keys.Right))
+
+        if (GuiUpdate.Keyboard.IsKeyHold(_lastPressedDirectionKey))
         {
             _cursorBlinkFactor = .5;
-            ++_cursorIndex;
+            _directionKeyHoldingTime += GuiUpdate.ElapsedTimeSecond;
+            if (_directionKeyHoldingTime > .5f)
+            {
+                fastMoving += (float)GuiUpdate.ElapsedTimeSecond * 16;
+                while (fastMoving > 1)
+                {
+                    _lastCursorMoveAction.Invoke();
+                    fastMoving -= 1;
+                }
+            }
+        }
+        else
+        {
+            _directionKeyHoldingTime = 0;
+            fastMoving = 0;
         }
         _cursorIndex = Math.Clamp(_cursorIndex, 0, _displayText.Length);
+    }
 
+    private void CursorMoveUp()
+    {
+        CursorMoveVertical(-1);
+    }
+    private void CursorMoveDown()
+    {
+        CursorMoveVertical(1);
+    }
+    private void CursorMoveLeft()
+    {
+        _cursorIndex = Math.Max(_cursorIndex - 1, 0);
+    }
+    private void CursorMoveRight()
+    {
+        _cursorIndex = Math.Min(_cursorIndex + 1, _displayText.Length - 1);
+    }
+    private void CursorMovePlaceHolder()
+    {
+    }
+    private void CursorMoveVertical(int direction)
+    {
+        float fontSize = GetFinalFontSize();
+        Vector2 cursorOffset = GetCursorCharOffset(fontSize);
+        cursorOffset.Y += fontSize * (0.5f + direction);
+
+        // Need to plus onScreenPos because GetCharIndexAtMouse uses last onScreen pos to calculate char index
+        _cursorIndex = GetCharIndexAtMouse(cursorOffset.ToPoint() + OnScreenPos);
     }
 }

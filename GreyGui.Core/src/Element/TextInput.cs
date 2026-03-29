@@ -18,6 +18,7 @@ public class TextInput : GreyGuiElement, IRatioElement
             _isSizeDirty = true;
         }
     }
+    public Color BackgroundColor { get; set; }
     public override int ZIndex
     {
         get => _zIndex; set
@@ -237,10 +238,14 @@ public class TextInput : GreyGuiElement, IRatioElement
     private int _rowCount = 1;
     private float _maxWidth = 0;
 
-    public TextInput(Color? colorMask = null, Color borderColor = default, Vector2 size = default, TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default, Color? focusedColor = null)
+    public TextInput(Color? colorMask = null, Color? borderColor = null, Color? backgroundColor = null, Vector2 size = default, int borderRadius = default, int borderWidth = default,
+    TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default, Color? focusedColor = null)
     {
         ColorMask = colorMask ?? Color.Black;
-        BorderColor = borderColor;
+        BackgroundColor = backgroundColor ?? Color.Transparent;
+        BorderColor = borderColor ?? Color.Transparent;
+        BorderWidth = borderWidth;
+        BorderRadius = borderRadius;
         FocusedColor = focusedColor ?? Color.White;
         _size = size;
         _widthMode = widthMode;
@@ -800,7 +805,7 @@ public class TextInput : GreyGuiElement, IRatioElement
             ResolveDisplayTextDirty();
         }
 
-        renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), new Color(184, 217, 253, 120), default, 10, 0, screenScissor);
+        renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), BackgroundColor, BorderColor, BorderRadius, BorderWidth, screenScissor);
 
         float fontSize = GetFinalFontSize();
         Vector2 position = pos.ToVector2();

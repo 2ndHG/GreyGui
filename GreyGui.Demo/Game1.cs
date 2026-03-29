@@ -280,7 +280,12 @@ public class Game1 : Game
          fontSizeScalingMode: FontSizeScalingMode.None,
          widthRatio: .5f,
          widthMode: TextWidthMode.ParentRatio,
-         fontSize: 20);
+         fontSize: 20
+        //  borderColor: Color.AntiqueWhite,
+        //  backgroundColor: new Color(184, 217, 253, 120),
+        //  borderRadius: 10,
+        //  borderWidth : 3
+         );
 
         Button[] widthDefiners;
         void ChangeWidthDefiner(string definer)

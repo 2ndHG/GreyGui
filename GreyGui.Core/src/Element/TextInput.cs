@@ -468,7 +468,7 @@ public class TextInput : GreyGuiElement, IRatioElement
         }
         else if (mousePosition.Y > OnScreenPos.Y + _segmentOffsetCache[^1].Y + fontSize)
         {
-            return _displayText.Length - 1;
+            return _displayText.Length;
         }
 
         // returns -1 when behind, 1 when ahead, 0 when within
@@ -800,7 +800,7 @@ public class TextInput : GreyGuiElement, IRatioElement
             ResolveDisplayTextDirty();
         }
 
-        // renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), new Color(184, 217, 253, 120), default, 10, 0, screenScissor);
+        renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), new Color(184, 217, 253, 120), default, 10, 0, screenScissor);
 
         float fontSize = GetFinalFontSize();
         Vector2 position = pos.ToVector2();
@@ -921,7 +921,7 @@ public class TextInput : GreyGuiElement, IRatioElement
     }
     private void CursorMoveRight()
     {
-        _cursorIndex = Math.Min(_cursorIndex + 1, _displayText.Length - 1);
+        _cursorIndex = Math.Min(_cursorIndex + 1, _displayText.Length);
     }
     private void CursorMovePlaceHolder()
     {

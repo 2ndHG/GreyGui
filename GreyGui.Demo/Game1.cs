@@ -14,6 +14,7 @@ public class Game1 : Game
     private SpriteBatch _spriteBatch;
 
     private GreyGuiElement root;
+    private GreyGuiElement root2;
     private Point _drawPos = new Point(50, 50);
     private RenderContext renderContext = new();
     private GuiBatch _guiBatch;
@@ -50,6 +51,7 @@ public class Game1 : Game
         _guiBatch = new GuiBatch(GraphicsDevice);
 
         root = GenerateTextInputDemoPanel();
+        root2 = GenerateButtonPanel();
 
 
         // TODO: use this.Content to load your game content here
@@ -62,6 +64,7 @@ public class Game1 : Game
         // TODO: Add your update logic here
         GuiUpdate.StartFrame(gameTime, Mouse.GetState(), Keyboard.GetState());
         GuiUpdate.Update(root);
+        GuiUpdate.Update(root2);
 
         if (GuiUpdate.FocusedElement == null)
         {
@@ -109,6 +112,7 @@ public class Game1 : Game
 
         // _stopwatch.Restart();
         _guiBatch.ReceiveFrameInfo(gameTime);
+        _guiBatch.Draw(root2, renderContext, new Point(850, 50));
         _guiBatch.Draw(root, renderContext, new Point(50, 50));
         _guiBatch.Flush(renderContext);
         // Console.WriteLine(_stopwatch.Elapsed.TotalMicroseconds);
@@ -199,8 +203,9 @@ public class Game1 : Game
     private GreyGuiElement GenerateButtonPanel()
     {
 
-        return new ListPanel(size: new(500, 135), borderRadius: 40, colorMask: Color.White, borderColor: Color.Black, borderWidth: 5).SetChildren([
+        return new ListPanel(size: new(500, 135), borderRadius: 10, colorMask: new(48, 121, 161), borderColor: Color.Black, borderWidth: 5).SetChildren([
             GenerateButton(),
+            new Text(fontSize: 20, displayText:"This panel is here to showcase the correctness of mouse detection", size: new(200, 200), autoEndLine: true, colorMask: Color.Black)
         ]);
     }
     private Button GenerateButton()
@@ -209,6 +214,7 @@ public class Game1 : Game
         Action<Button, Point, RenderContext, Rectangle> buttonDrawMethod = (button, position, renderContext, scissor) =>
         {
             button.OnScreenPos = position;
+            button.LastScissor = scissor;
             timer = (button.State, timer) switch
             {
                 (GreyGuiButtonState.Active, _) => -.3f,
@@ -243,7 +249,7 @@ public class Game1 : Game
         };
         Text buttonText = new Text(fontSize: 32, widthRatio: 1, widthMode: TextWidthMode.ParentRatio, displayText: "0", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: TextAlignment.Center, heightMode: TextHeightMode.TextHeight);
 
-        Button resultButton = new(useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: .2f, borderColor: Color.Black, borderRadius: 5, borderWidth: 5);
+        Button resultButton = new(useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: .2f, borderColor: Color.Black, borderRadius: 5, borderWidth: 5, colorMask: Color.SkyBlue);
         resultButton.DrawMethod = buttonDrawMethod;
         resultButton.AppendChild(buttonText);
         resultButton.OnLeftClicked += () =>

@@ -175,7 +175,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
 
         OnLeftClicked = onLeftClicked;
 
-        DrawMethod = BasicDraw;        
+        DrawMethod = BasicDraw;
 
         _isSizeDirty = true;
     }
@@ -283,7 +283,10 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
 
     public override GreyGuiElement? GetMouseHandler()
     {
-        return new Rectangle(OnScreenPos, _size.ToPoint()).Contains(GuiUpdate.Mouse.Position) ? this : null;
+        Rectangle selfRect = new(OnScreenPos, _size.ToPoint());
+        Rectangle lastAppliedScissor = LastScissor;
+        Rectangle.Intersect(ref selfRect, ref lastAppliedScissor, out Rectangle detectingRect);
+        return detectingRect.Contains(GuiUpdate.Mouse.Position) ? this : null;
     }
     public override void HandleMouseEvent()
     {
@@ -326,7 +329,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         }
         GreyGuiElement child = _children[0];
         child.ResolveSizeDirty();
-        Point childPosition = selfPosition + new Point(PaddingSide, PaddingVertical) + ((ContainerSize - child.Size) / 2  + new Vector2(BorderRadius * (Constant.SQRT2 - 1))).ToPoint();
+        Point childPosition = selfPosition + new Point(PaddingSide, PaddingVertical) + ((ContainerSize - child.Size) / 2 + new Vector2(BorderRadius * (Constant.SQRT2 - 1))).ToPoint();
 
         // context.FillRect(new(childPosition, new(50, 50)), Color.Blue, Color.Blue, 0, 0, GreyGui.Atlas, screenScissor);
         child.Draw(childPosition, context, screenScissor);
@@ -338,6 +341,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     public static void BasicDraw(Button button, Point position, RenderContext renderContext, Rectangle screenScissor)
     {
         button.OnScreenPos = position;
+        button.LastScissor = screenScissor;
         float scale = button.State switch
         {
             GreyGuiButtonState.Active => 0.8f,
@@ -346,14 +350,14 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         };
         Color colorMask = button.ColorMask * scale;
         colorMask.A = button.ColorMask.A;
-        
+
         scale = button.State switch
         {
             GreyGuiButtonState.Active => 0.8f,
             GreyGuiButtonState.Hovered => 1.2f,
             _ => 1f
         };
-        Color borderColor =  button.BorderColor * scale;
+        Color borderColor = button.BorderColor * scale;
         borderColor.A = button.ColorMask.A;
 
         renderContext.RenderTexture(

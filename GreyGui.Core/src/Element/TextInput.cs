@@ -778,7 +778,10 @@ public class TextInput : GreyGuiElement, IRatioElement
 
     public override GreyGuiElement? GetMouseHandler()
     {
-        return new Rectangle(OnScreenPos, _size.ToPoint()).Contains(GuiUpdate.Mouse.Position) ? this : null;
+        Rectangle selfRect = new(OnScreenPos, _size.ToPoint());
+        Rectangle lastAppliedScissor = LastScissor;
+        Rectangle.Intersect(ref selfRect, ref lastAppliedScissor, out Rectangle detectingRect);
+        return detectingRect.Contains(GuiUpdate.Mouse.Position) ? this : null;
     }
     public override void HandleMouseEvent()
     {
@@ -800,6 +803,7 @@ public class TextInput : GreyGuiElement, IRatioElement
     public override void Draw(Point pos, RenderContext renderContext, Rectangle screenScissor)
     {
         OnScreenPos = pos;
+        LastScissor = screenScissor;
         if (_isDisplayTextDirty)
         {
             ResolveDisplayTextDirty();

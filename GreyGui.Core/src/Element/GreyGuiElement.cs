@@ -9,6 +9,7 @@ public abstract class GreyGuiElement
     public Color ColorMask { get; set; } = Color.Gray;
     public Color BorderColor { get; set; } = Color.Gray;
     public Point OnScreenPos { get; set; }
+    public Rectangle LastScissor { get; set; }
     public int BorderRadius { get; set; }
     public int BorderWidth { get; set; }
     public IContainer? Parent { get => _parent; }

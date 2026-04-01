@@ -318,6 +318,8 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     // render context not implemented yet
     public override void Draw(Point position, RenderContext context, Rectangle screenScissor)
     {
+        OnScreenPos = position;
+        LastScissor = screenScissor;
         context.RenderTexture(
             _imageTexture,
             new Rectangle(position, _size.ToPoint()),
@@ -328,7 +330,6 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             BorderWidth,
             screenScissor
         );
-        OnScreenPos = position;
     }
     public void DrawChildren(Point position, RenderContext context, Rectangle screenScissor)
     {
@@ -372,10 +373,10 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             if (result != null)
                 return result;
         }
-        if (new Rectangle(OnScreenPos, _size.ToPoint()).Contains(GuiUpdate.Mouse.Position))
-        {
-            return this;
-        }
-        return null;
+        
+        Rectangle selfRect = new(OnScreenPos, _size.ToPoint());
+        Rectangle lastAppliedScissor = LastScissor;
+        Rectangle.Intersect(ref selfRect, ref lastAppliedScissor, out Rectangle detectingRect);
+        return detectingRect.Contains(GuiUpdate.Mouse.Position) ? this : null;
     }
 }

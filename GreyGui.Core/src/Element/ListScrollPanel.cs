@@ -136,10 +136,9 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
     // scroll bar
     private float _scrollBarWidth = 16;
     private float _scrollButtonHeight;
-    private Point _buttonOnScreenOffset;
     private int _buttonYOffset;
     private int _startScrollingMouseYPos;
-    private int _buttonScrollingYOffset;
+    private float _contentHeight;
     private int _contentOffset;
 
 
@@ -354,9 +353,22 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
         {
             InsertRow(y, totalWidth, rowHeight, notInsertedIndex, _children.Count);
         }
-        float contentHeight = y + rowHeight;
-        _scrollButtonHeight = (int)(_size.Y / contentHeight * _containerSize.Y);
+
+        // scroll bar
+        _contentHeight = y + rowHeight;
+        _scrollButtonHeight = (int)(_size.Y / _contentHeight * _containerSize.Y);
         _scrollButtonHeight = Math.Min(_size.Y, _scrollButtonHeight);
+
+        // reposition scrollbar and content
+        float contentHeightDiff = Math.Max(0, _contentHeight - _size.Y);
+        float scrollSpace = _size.Y - _scrollButtonHeight;
+        // _contentOffset / contentHeightDiff = the percentage to fully scrolled down
+        // scrollSpace is how far can scroll button go. so scrollSpace * percentage is where the button should be .
+        _buttonYOffset = Math.Clamp((int)(scrollSpace * _contentOffset / contentHeightDiff), 0, (int)scrollSpace);
+
+        // if the scroll panel gets bigger, than there might be not that many space to scroll, so the maximum of _contentOffset is contentHeightDiff, therefore use Math.Min to clamp it
+        _contentOffset = Math.Min(_contentOffset, (int)contentHeightDiff);
+
         _isLayoutDirty = false;
     }
     private void CalculateScrollButtonHeight()
@@ -367,17 +379,15 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
     {
         if (GuiUpdate.FocusedElement == this)
         {
-            if (GuiUpdate.Mouse.IsLeftHold)
+            if (GuiUpdate.Mouse.IsLeftHold && _size.Y > _scrollButtonHeight)
             {
                 int diff = GuiUpdate.Mouse.Position.Y - _startScrollingMouseYPos;
-                _buttonScrollingYOffset = diff;
+                _buttonYOffset = Math.Clamp(diff, 0, (int)(_size.Y - _scrollButtonHeight));
+                _contentOffset = (int)((_contentHeight - _size.Y) * _buttonYOffset / (_size.Y - _scrollButtonHeight));
             }
             else
             {
                 GuiUpdate.FocusedElement = null;
-                _buttonYOffset += _buttonScrollingYOffset;
-                _buttonYOffset = Math.Clamp(_buttonYOffset, 0, (int)(_size.Y - _scrollButtonHeight));
-                _buttonScrollingYOffset = 0;
             }
         }
         for (int i = 0; i < _drawOrder.Count; ++i)
@@ -432,20 +442,12 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
             _isChildrenZIndexDirty = false;
         }
 
-        _buttonOnScreenOffset.X = (int)(_size.X - _scrollBarWidth);
-        _buttonOnScreenOffset.Y = _buttonYOffset;
-        int buttonFinalOffset = Math.Clamp(_buttonYOffset + _buttonScrollingYOffset, 0, (int)(_size.Y - _scrollButtonHeight));
-
         Point scissorPos = new Point((int)(BorderRadius * (Constant.SQRT2 - 1) + PaddingTop));
         Rectangle selfScissor = new(position + scissorPos, _containerSize.ToPoint());
         Rectangle.Intersect(ref selfScissor, ref screenScissor, out Rectangle newScreenScissor);
 
         Point childPosition = position;
-        float contentHeight = _containerSize.Y * _size.Y / _scrollButtonHeight;
-        if (_scrollButtonHeight < _size.Y)
-        {
-            childPosition.Y -= (int)((contentHeight - _containerSize.Y) * buttonFinalOffset / (_size.Y - _scrollButtonHeight));
-        }
+        childPosition.Y -= _contentOffset;
         for (int i = 0; i < _drawOrder.Count; i++)
         {
             int drawOrder = _drawOrder[i];
@@ -457,8 +459,8 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
         }
 
         //draw scroll button
-        position.X += _buttonOnScreenOffset.X;
-        position.Y += buttonFinalOffset;
+        position.X += (int)(_size.X - _scrollBarWidth);
+        position.Y += _buttonYOffset;
         context.FillRect(
             new Rectangle(position, new((int)_scrollBarWidth, (int)_scrollButtonHeight)),
             GuiUpdate.FocusedElement == this ? new(.8f, .8f, .8f, 1f) : new(.8f, .8f, .8f, .7f),
@@ -471,7 +473,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
 
     public override GreyGuiElement? GetMouseHandler()
     {
-        if (new Rectangle(OnScreenPos + _buttonOnScreenOffset, new((int)_scrollBarWidth, (int)_scrollButtonHeight)).Contains(GuiUpdate.Mouse.Position))
+        if (new Rectangle(OnScreenPos + new Point((int)(_size.X - _scrollBarWidth), _buttonYOffset), new((int)_scrollBarWidth, (int)_scrollButtonHeight)).Contains(GuiUpdate.Mouse.Position))
         {
             return this;
         }
@@ -489,10 +491,9 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
     }
     public override void HandleMouseEvent()
     {
-        if (GuiUpdate.Mouse.IsLeftButtonDown && new Rectangle(OnScreenPos + _buttonOnScreenOffset, new((int)_scrollBarWidth, (int)_scrollButtonHeight)).Contains(GuiUpdate.Mouse.Position))
+        if (GuiUpdate.Mouse.IsLeftButtonDown && new Rectangle(OnScreenPos + new Point((int)(_size.X - _scrollBarWidth), _buttonYOffset), new((int)_scrollBarWidth, (int)_scrollButtonHeight)).Contains(GuiUpdate.Mouse.Position))
         {
-            _startScrollingMouseYPos = GuiUpdate.Mouse.Position.Y;
-            _buttonYOffset = _buttonOnScreenOffset.Y;
+            _startScrollingMouseYPos = GuiUpdate.Mouse.Position.Y - _buttonYOffset;
             GuiUpdate.FocusedElement = this;
             Console.WriteLine("press scroll button");
         }

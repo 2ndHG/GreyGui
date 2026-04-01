@@ -22,6 +22,7 @@ public class Game1 : Game
     private Texture2D _buttonTexture;
 
     private bool oneTimeTicket = true;
+    private Stopwatch _stopwatch = new Stopwatch();
 
     public Game1()
     {
@@ -106,9 +107,11 @@ public class Game1 : Game
         _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
         _spriteBatch.End();
 
+        // _stopwatch.Restart();
         _guiBatch.ReceiveFrameInfo(gameTime);
         _guiBatch.Draw(root, renderContext, new Point(50, 50));
         _guiBatch.Flush(renderContext);
+        // Console.WriteLine(_stopwatch.Elapsed.TotalMicroseconds);
 
         // Measure draw calls
         // var metrics = GraphicsDevice.Metrics;
@@ -418,7 +421,7 @@ public class Game1 : Game
         alignModeButtons[2].OnLeftClicked += () => { ChangeAlignMode(TextAlignment.Right); };
         alignModeButtons[3].OnLeftClicked += () => { ChangeAlignMode(TextAlignment.Justify); };
 
-        return new ListPanel(colorMask: new Color(87, 125, 91), size: new(1200, 800), paddingSide: 10, paddingTop: 10, borderRadius: 10, layoutMode: RowLayoutMode.Center).SetChildren([
+        return new ListScrollPanel(colorMask: new Color(87, 125, 91), size: new(1200, 800), paddingSide: 10, paddingTop: 10, borderRadius: 10, layoutMode: RowLayoutMode.Center).SetChildren([
             new RowPanel(colorMask: Color.Transparent, widthMode: WidthMode.ParentRatio, widthRatio: 1f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([
                 new Text(colorMask: Color.White, widthMode: TextWidthMode.ParentRatio, widthRatio: .33f, heightMode: TextHeightMode.TextHeight, fontSize: 26f, displayText: "Element Width Definer"),
                 new RowPanel(colorMask: Color.Transparent, widthMode: WidthMode.ParentRatio, widthRatio: .67f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([

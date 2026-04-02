@@ -252,7 +252,7 @@ public class TextInput : GreyGuiElement, IRatioElement
         BorderWidth = borderWidth;
         BorderRadius = borderRadius;
         FocusedColor = focusedColor ?? Color.White;
-        _size = _finalSize = size;
+        _size = size;
         _widthMode = widthMode;
         _heightMode = heightMode;
         _widthRatio = widthRatio;
@@ -568,6 +568,7 @@ public class TextInput : GreyGuiElement, IRatioElement
     {
         // As an IRatioElement
         Vector2 sizeBefore = _finalSize;
+        _finalSize = _size;
         if (_widthMode == TextWidthMode.ParentRatio && _parent != null)
         {
             _finalSize.X = _parent.ContainerSize.X * _widthRatio;

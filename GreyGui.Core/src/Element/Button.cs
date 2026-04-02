@@ -13,11 +13,11 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         {
             if (_size == value) return;
 
-            _size = value;
+            _size = _finalSize = value;
             _isSizeDirty = true;
         }
     }
-    public override Vector2 FinalSize => _size;
+    public override Vector2 FinalSize => _finalSize;
     public override int ZIndex
     {
         get => _zIndex; set
@@ -124,6 +124,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     protected float _heightRatio;
     protected float _heightWidthRatio;
     protected Vector2 _size;
+    protected Vector2 _finalSize;
     protected int _zIndex;
     protected Vector2 _containerSize;
     protected bool _isLayoutDirty;
@@ -153,7 +154,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
             _ => Color.Gray
         };
         BorderColor = borderColor;
-        _size = size;
+        _size = _finalSize = size;
         _useWidthRatio = useWidthRatio;
         _useHeightRatio = useHeightRatio;
         _useHeightWidthRatio = useHeightWidthRatio;
@@ -220,20 +221,20 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         bool sizeChanged = false;
         if (UseWidthRatio && _parent != null)
         {
-            _size.X = _parent.ContainerSize.X * _widthRatio;
+            _finalSize.X = _parent.ContainerSize.X * _widthRatio;
             sizeChanged = true;
         }
         if (UseHeightRatio)
         {
             if (_parent != null)
             {
-                _size.Y = _parent.ContainerSize.Y * _heightRatio;
+                _finalSize.Y = _parent.ContainerSize.Y * _heightRatio;
                 sizeChanged = true;
             }
         }
         else if (UseHeightWidthRatio)
         {
-            _size.Y = _size.X * _heightWidthRatio;
+            _finalSize.Y = _finalSize.X * _heightWidthRatio;
             sizeChanged = true;
         }
         if (sizeChanged && _parent is not null)
@@ -242,7 +243,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         }
 
         // As an IContainer
-        _containerSize = _size - new Vector2(BorderRadius * (Constant.SQRT2 - 1) * 2);
+        _containerSize = _finalSize - new Vector2(BorderRadius * (Constant.SQRT2 - 1) * 2);
         foreach (GreyGuiElement child in _children)
         {
             child.IsSizeDirty = true;
@@ -284,7 +285,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
 
     public override GreyGuiElement? GetMouseHandler()
     {
-        Rectangle selfRect = new(OnScreenPos, _size.ToPoint());
+        Rectangle selfRect = new(OnScreenPos, _finalSize.ToPoint());
         Rectangle lastAppliedScissor = LastScissor;
         Rectangle.Intersect(ref selfRect, ref lastAppliedScissor, out Rectangle detectingRect);
         return detectingRect.Contains(GuiUpdate.Mouse.Position) ? this : null;

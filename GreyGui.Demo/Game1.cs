@@ -234,7 +234,7 @@ public class Game1 : Game
             {
                 child.IsSizeDirty = true;
             }
-            Vector2 size = button.Size - minify;
+            Vector2 size = button.FinalSize - minify;
             size.Round();
             renderContext.RenderTexture(
                 button.ImageTexture,

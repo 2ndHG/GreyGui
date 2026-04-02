@@ -17,7 +17,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
             _isLayoutDirty = true;
         }
     }
-    public override Vector2 FinalSize => _size;
+    public override Vector2 FinalSize => _finalSize;
     public Vector2 ContainerSize { get => _containerSize; }
 
     public WidthMode WidthMode
@@ -123,6 +123,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
     private float _heightRatio;
     private float _heightWidthRatio;
     private Vector2 _size;
+    private Vector2 _finalSize;
     private int _zIndex;
     private RowLayoutMode _layoutMode;
     private float _childGap;
@@ -255,9 +256,10 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
     {
         // As an IRatioElement
         bool sizeChanged = false;
+        _finalSize = _size;
         if (_widthMode == WidthMode.ParentRatio && _parent != null)
         {
-            _size.X = _parent.ContainerSize.X * _widthRatio;
+            _finalSize.X = _parent.ContainerSize.X * _widthRatio;
             sizeChanged = true;
         }
 
@@ -266,13 +268,13 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
         {
             if (_parent != null)
             {
-                _size.Y = _parent.ContainerSize.Y * _heightRatio;
+                _finalSize.Y = _parent.ContainerSize.Y * _heightRatio;
                 sizeChanged = true;
             }
         }
         else if (_heightMode == HeightMode.HeightWidthRatio)
         {
-            _size.Y = _size.X * _heightWidthRatio;
+            _finalSize.Y = _finalSize.X * _heightWidthRatio;
             sizeChanged = true;
         }
 
@@ -282,7 +284,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
         }
 
         // As an IContainer
-        _containerSize = _size - new Vector2(BorderRadius * (Constant.SQRT2 - 1) * 2);
+        _containerSize = _finalSize - new Vector2(BorderRadius * (Constant.SQRT2 - 1) * 2);
         _containerSize.X -= PaddingSide * 2 + _scrollBarWidth;
         _containerSize.Y -= PaddingTop;
         foreach (GreyGuiElement child in _children)
@@ -357,12 +359,12 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
 
         // scroll bar
         _contentHeight = y + rowHeight;
-        _scrollButtonHeight = (int)(_size.Y / _contentHeight * _containerSize.Y);
-        _scrollButtonHeight = Math.Min(_size.Y, _scrollButtonHeight);
+        _scrollButtonHeight = (int)(_finalSize.Y / _contentHeight * _containerSize.Y);
+        _scrollButtonHeight = Math.Min(_finalSize.Y, _scrollButtonHeight);
 
         // reposition scrollbar and content
-        float contentHeightDiff = Math.Max(0, _contentHeight - _size.Y);
-        float scrollSpace = _size.Y - _scrollButtonHeight;
+        float contentHeightDiff = Math.Max(0, _contentHeight - _finalSize.Y);
+        float scrollSpace = _finalSize.Y - _scrollButtonHeight;
         // _contentOffset / contentHeightDiff = the percentage to fully scrolled down
         // scrollSpace is how far can scroll button go. so scrollSpace * percentage is where the button should be .
         _buttonYOffset = Math.Clamp((int)(scrollSpace * _contentOffset / contentHeightDiff), 0, (int)scrollSpace);
@@ -380,11 +382,11 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
     {
         if (GuiUpdate.FocusedElement == this)
         {
-            if (GuiUpdate.Mouse.IsLeftHold && _size.Y > _scrollButtonHeight)
+            if (GuiUpdate.Mouse.IsLeftHold && _finalSize.Y > _scrollButtonHeight)
             {
                 int diff = GuiUpdate.Mouse.Position.Y - _startScrollingMouseYPos;
-                _buttonYOffset = Math.Clamp(diff, 0, (int)(_size.Y - _scrollButtonHeight));
-                _contentOffset = (int)((_contentHeight - _size.Y) * _buttonYOffset / (_size.Y - _scrollButtonHeight));
+                _buttonYOffset = Math.Clamp(diff, 0, (int)(_finalSize.Y - _scrollButtonHeight));
+                _contentOffset = (int)((_contentHeight - _finalSize.Y) * _buttonYOffset / (_finalSize.Y - _scrollButtonHeight));
             }
             else
             {
@@ -404,7 +406,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
         LastScissor = screenScissor;
         context.RenderTexture(
             _imageTexture,
-            new Rectangle(position, _size.ToPoint()),
+            new Rectangle(position, _finalSize.ToPoint()),
             _imageSrcRect,
             ColorMask,
             BorderColor,
@@ -412,9 +414,9 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
             BorderWidth,
             screenScissor
         );
-        position.X += (int)(_size.X - _scrollBarWidth);
+        position.X += (int)(_finalSize.X - _scrollBarWidth);
         context.FillRect(
-            new Rectangle(position, new((int)_scrollBarWidth, (int)_size.Y)),
+            new Rectangle(position, new((int)_scrollBarWidth, (int)_finalSize.Y)),
             new(1, 1, 1, .2f),
             Color.Transparent,
             BorderRadius,
@@ -461,7 +463,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
         }
 
         //draw scroll button
-        position.X += (int)(_size.X - _scrollBarWidth);
+        position.X += (int)(_finalSize.X - _scrollBarWidth);
         position.Y += _buttonYOffset;
         context.FillRect(
             new Rectangle(position, new((int)_scrollBarWidth, (int)_scrollButtonHeight)),
@@ -475,7 +477,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
 
     public override GreyGuiElement? GetMouseHandler()
     {
-        if (new Rectangle(OnScreenPos + new Point((int)(_size.X - _scrollBarWidth), _buttonYOffset), new((int)_scrollBarWidth, (int)_scrollButtonHeight)).Contains(GuiUpdate.Mouse.Position))
+        if (new Rectangle(OnScreenPos + new Point((int)(_finalSize.X - _scrollBarWidth), _buttonYOffset), new((int)_scrollBarWidth, (int)_scrollButtonHeight)).Contains(GuiUpdate.Mouse.Position))
         {
             return this;
         }
@@ -486,14 +488,14 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
                 return result;
         }
         
-        Rectangle selfRect = new(OnScreenPos, _size.ToPoint());
+        Rectangle selfRect = new(OnScreenPos, _finalSize.ToPoint());
         Rectangle lastAppliedScissor = LastScissor;
         Rectangle.Intersect(ref selfRect, ref lastAppliedScissor, out Rectangle detectingRect);
         return detectingRect.Contains(GuiUpdate.Mouse.Position) ? this : null;
     }
     public override void HandleMouseEvent()
     {
-        if (GuiUpdate.Mouse.IsLeftButtonDown && new Rectangle(OnScreenPos + new Point((int)(_size.X - _scrollBarWidth), _buttonYOffset), new((int)_scrollBarWidth, (int)_scrollButtonHeight)).Contains(GuiUpdate.Mouse.Position))
+        if (GuiUpdate.Mouse.IsLeftButtonDown && new Rectangle(OnScreenPos + new Point((int)(_finalSize.X - _scrollBarWidth), _buttonYOffset), new((int)_scrollBarWidth, (int)_scrollButtonHeight)).Contains(GuiUpdate.Mouse.Position))
         {
             _startScrollingMouseYPos = GuiUpdate.Mouse.Position.Y - _buttonYOffset;
             GuiUpdate.FocusedElement = this;

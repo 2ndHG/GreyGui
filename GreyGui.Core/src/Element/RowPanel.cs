@@ -17,7 +17,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             _isLayoutDirty = true;
         }
     }
-    public override Vector2 FinalSize => _size;
+    public override Vector2 FinalSize => _finalSize;
     public Vector2 ContainerSize { get => _containerSize; }
 
     public WidthMode WidthMode
@@ -123,6 +123,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     private float _heightRatio;
     private float _heightWidthRatio;
     private Vector2 _size;
+    private Vector2 _finalSize;
     private int _zIndex;
     private RowLayoutMode _layoutMode;
     private float _childGap;
@@ -242,22 +243,23 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     {
         // As an IRatioElement
         bool sizeChanged = false;
+        _finalSize = _size;
         if (_widthMode == WidthMode.ParentRatio && _parent != null)
         {
-            _size.X = _parent.ContainerSize.X * _widthRatio;
+            _finalSize.X = _parent.ContainerSize.X * _widthRatio;
             sizeChanged = true;
         }
         if (_heightMode == HeightMode.ParentRatio)
         {
             if (_parent != null)
             {
-                _size.Y = _parent.ContainerSize.Y * _heightRatio;
+                _finalSize.Y = _parent.ContainerSize.Y * _heightRatio;
                 sizeChanged = true;
             }
         }
         else if (_heightMode == HeightMode.HeightWidthRatio)
         {
-            _size.Y = _size.X * _heightWidthRatio;
+            _finalSize.Y = _finalSize.X * _heightWidthRatio;
             sizeChanged = true;
         }
         if (sizeChanged && _parent is not null)
@@ -266,7 +268,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         }
 
         // As an IContainer
-        _containerSize = _size - new Vector2(BorderRadius * (Constant.SQRT2 - 1) * 2);
+        _containerSize = _finalSize - new Vector2(BorderRadius * (Constant.SQRT2 - 1) * 2);
         _containerSize.X -= PaddingSide * 2 + _childGap * MathF.Max(0, _children.Count - 1);
         _containerSize.Y -= PaddingTop + PaddingBottom;
         foreach (GreyGuiElement child in _children)
@@ -323,7 +325,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         LastScissor = screenScissor;
         context.RenderTexture(
             _imageTexture,
-            new Rectangle(position, _size.ToPoint()),
+            new Rectangle(position, _finalSize.ToPoint()),
             _imageSrcRect,
             ColorMask,
             BorderColor,
@@ -375,7 +377,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
                 return result;
         }
         
-        Rectangle selfRect = new(OnScreenPos, _size.ToPoint());
+        Rectangle selfRect = new(OnScreenPos, _finalSize.ToPoint());
         Rectangle lastAppliedScissor = LastScissor;
         Rectangle.Intersect(ref selfRect, ref lastAppliedScissor, out Rectangle detectingRect);
         return detectingRect.Contains(GuiUpdate.Mouse.Position) ? this : null;

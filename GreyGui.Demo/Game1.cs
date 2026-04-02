@@ -112,7 +112,7 @@ public class Game1 : Game
 
         // _stopwatch.Restart();
         _guiBatch.ReceiveFrameInfo(gameTime);
-        _guiBatch.Draw(root2, renderContext, new Point(850, 50));
+        _guiBatch.Draw(root2, renderContext, new Point(950, 50));
         _guiBatch.Draw(root, renderContext, new Point(50, 50));
         _guiBatch.Flush(renderContext);
         // Console.WriteLine(_stopwatch.Elapsed.TotalMicroseconds);
@@ -203,9 +203,9 @@ public class Game1 : Game
     private GreyGuiElement GenerateButtonPanel()
     {
 
-        return new ListPanel(size: new(500, 135), borderRadius: 10, colorMask: new(48, 121, 161), borderColor: Color.Black, borderWidth: 5).SetChildren([
+        return new ListPanel(size: new(300, 200), borderRadius: 10, colorMask: new(48, 121, 161), borderColor: Color.Black, borderWidth: 5).SetChildren([
             GenerateButton(),
-            new Text(fontSize: 20, displayText:"This panel is here to showcase the correctness of mouse detection", size: new(200, 200), autoEndLine: true, colorMask: Color.Black)
+            new Text(fontSize: 20, displayText:"This panel is here to showcase the correctness of mouse detection", size: new(170, 200), autoEndLine: true, colorMask: Color.Black)
         ]);
     }
     private Button GenerateButton()
@@ -247,9 +247,9 @@ public class Game1 : Game
                 scissor
             );
         };
-        Text buttonText = new Text(fontSize: 32, widthRatio: 1, widthMode: TextWidthMode.ParentRatio, displayText: "0", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: TextAlignment.Center, heightMode: TextHeightMode.TextHeight);
+        Text buttonText = new Text(fontSize: 32, widthRatio: 1, widthMode: TextWidthMode.ParentRatio, displayText: "0", size: new(230, 50), alignMode: TextAlignment.Center, heightMode: TextHeightMode.TextHeight);
 
-        Button resultButton = new(useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: .2f, borderColor: Color.Black, borderRadius: 5, borderWidth: 5, colorMask: Color.SkyBlue);
+        Button resultButton = new(useWidthRatio: true, widthRatio: .3f, useHeightWidthRatio: true, heightWidthRatio: .8f, borderColor: new(44, 91, 138), borderRadius: 10, borderWidth: 5, colorMask: Color.SkyBlue);
         resultButton.DrawMethod = buttonDrawMethod;
         resultButton.AppendChild(buttonText);
         resultButton.OnLeftClicked += () =>

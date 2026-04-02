@@ -7,7 +7,7 @@ public class Text : GreyGuiElement, IRatioElement
 {
     public override Vector2 Size
     {
-        get => _finalSize;  // need to change back to _size when all FinalSize implementation are done
+        get => _size;  // need to change back to _size when all FinalSize implementation are done
         set
         {
             if (_size == value)

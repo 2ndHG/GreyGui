@@ -17,6 +17,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
             _isSizeDirty = true;
         }
     }
+    public override Vector2 FinalSize => _size;
     public override int ZIndex
     {
         get => _zIndex; set
@@ -329,7 +330,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         }
         GreyGuiElement child = _children[0];
         child.ResolveSizeDirty();
-        Point childPosition = selfPosition + new Point(PaddingSide, PaddingVertical) + ((ContainerSize - child.Size) / 2 + new Vector2(BorderRadius * (Constant.SQRT2 - 1))).ToPoint();
+        Point childPosition = selfPosition + new Point(PaddingSide, PaddingVertical) + ((ContainerSize - child.FinalSize) / 2 + new Vector2(BorderRadius * (Constant.SQRT2 - 1))).ToPoint();
 
         // context.FillRect(new(childPosition, new(50, 50)), Color.Blue, Color.Blue, 0, 0, GreyGui.Atlas, screenScissor);
         child.Draw(childPosition, context, screenScissor);
@@ -362,7 +363,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
 
         renderContext.RenderTexture(
             button.ImageTexture,
-            new Rectangle(position, button.Size.ToPoint()),
+            new Rectangle(position, button.FinalSize.ToPoint()),
             button.ImageSrcRect,
             colorMask,
             borderColor,

@@ -17,6 +17,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
             _isLayoutDirty = true;
         }
     }
+    public override Vector2 FinalSize => _size;
     public Vector2 ContainerSize { get => _containerSize; }
 
     public WidthMode WidthMode
@@ -321,7 +322,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
             for (int i = elementBegin; i < elementEnd; ++i)
             {
                 _childrenPosition.Add(new Point((int)MathF.Round(x), (int)MathF.Round(y)));
-                x += _children[i].Size.X + childGapWidth;
+                x += _children[i].FinalSize.X + childGapWidth;
             }
         }
         // update layout cache
@@ -335,7 +336,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
         for (int i = 0; i < _children.Count; ++i)
         {
             GreyGuiElement child = _children[i];
-            Vector2 childSize = child.Size;
+            Vector2 childSize = child.FinalSize;
             if (totalWidth + gapWidth + childSize.X > _containerSize.X)
             {
                 int count = i - notInsertedIndex;

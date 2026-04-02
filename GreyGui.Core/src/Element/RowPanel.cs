@@ -17,6 +17,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             _isLayoutDirty = true;
         }
     }
+    public override Vector2 FinalSize => _size;
     public Vector2 ContainerSize { get => _containerSize; }
 
     public WidthMode WidthMode
@@ -281,7 +282,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         float elementTotalWidth = 0f;
         for (int i = 0; i < _children.Count; ++i)
         {
-            elementTotalWidth += _children[i].Size.X;
+            elementTotalWidth += _children[i].FinalSize.X;
         }
         float xLayoutMulti = _layoutMode switch
         {
@@ -303,7 +304,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         for (int i = 0; i < _children.Count; ++i)
         {
             _childrenPosition.Add(new Point((int)x, (int)y));
-            x += _children[i].Size.X + childGap;
+            x += _children[i].FinalSize.X + childGap;
         }
         _isLayoutDirty = false;
     }

@@ -8,15 +8,20 @@ public class TextInput : GreyGuiElement, IRatioElement
 {
     public override Vector2 Size
     {
-        get => _size; set
+        get => _size; 
+        set
         {
             if (_size == value)
             {
                 return;
             }
-            _size = value;
+            _finalSize = _size = value;
             _isSizeDirty = true;
         }
+    }
+    public override Vector2 FinalSize
+    {
+        get => _finalSize;
     }
     public Color BackgroundColor { get; set; }
     public override int ZIndex
@@ -247,7 +252,7 @@ public class TextInput : GreyGuiElement, IRatioElement
         BorderWidth = borderWidth;
         BorderRadius = borderRadius;
         FocusedColor = focusedColor ?? Color.White;
-        _size = size;
+        _size = _finalSize = size;
         _widthMode = widthMode;
         _heightMode = heightMode;
         _widthRatio = widthRatio;
@@ -377,7 +382,7 @@ public class TextInput : GreyGuiElement, IRatioElement
 
         float fontSize = GetFinalFontSize();
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
-        float endLineThreshold = _autoEndLine ? _size.X : float.MaxValue;
+        float endLineThreshold = _autoEndLine ? _finalSize.X : float.MaxValue;
         float widthSum = 0;
         float prevSegmentSpaceWidth = 0;
         int undrewLastIndex = 0;
@@ -385,8 +390,8 @@ public class TextInput : GreyGuiElement, IRatioElement
         Vector2 offset = new(0, 0);
         float singleNewlineX = _alignMode switch
         {
-            TextAlignment.Center => _size.X / 2,
-            TextAlignment.Right => _size.X,
+            TextAlignment.Center => _finalSize.X / 2,
+            TextAlignment.Right => _finalSize.X,
             _ => 0
         };
 
@@ -435,7 +440,7 @@ public class TextInput : GreyGuiElement, IRatioElement
 
         void ComputeRow(int endIndex, bool isFullRow)
         {
-            float rowWidth = _size.X;
+            float rowWidth = _finalSize.X;
             offset.X = _alignMode switch
             {
                 TextAlignment.Center => (rowWidth - widthSum + prevSegmentSpaceWidth) / 2,
@@ -562,10 +567,10 @@ public class TextInput : GreyGuiElement, IRatioElement
     private void RecalculateSize()
     {
         // As an IRatioElement
-        Vector2 sizeBefore = _size;
+        Vector2 sizeBefore = _finalSize;
         if (_widthMode == TextWidthMode.ParentRatio && _parent != null)
         {
-            _size.X = _parent.ContainerSize.X * _widthRatio;
+            _finalSize.X = _parent.ContainerSize.X * _widthRatio;
         }
 
         // UseHeightRatio has a higher priority then UseHeightWidthRatio
@@ -573,12 +578,12 @@ public class TextInput : GreyGuiElement, IRatioElement
         {
             if (_parent != null)
             {
-                _size.Y = _parent.ContainerSize.Y * _heightRatio;
+                _finalSize.Y = _parent.ContainerSize.Y * _heightRatio;
             }
         }
         else if (_heightMode == TextHeightMode.HeightWidthRatio)
         {
-            _size.Y = _size.X * _heightWidthRatio;
+            _finalSize.Y = _finalSize.X * _heightWidthRatio;
         }
 
         // we have calculated the layout before if UseTextHeight is true
@@ -586,12 +591,12 @@ public class TextInput : GreyGuiElement, IRatioElement
             ResolveDisplayTextDirty();
         ResolveLayoutDirty();
         if (_widthMode == TextWidthMode.TextWidth)
-            _size.X = _maxWidth;
+            _finalSize.X = _maxWidth;
         if (_heightMode == TextHeightMode.TextHeight)
-            _size.Y = _rowCount * GetFinalFontSize();
+            _finalSize.Y = _rowCount * GetFinalFontSize();
 
 
-        if (sizeBefore != _size && _parent is not null)
+        if (sizeBefore != _finalSize && _parent is not null)
         {
             _parent.IsLayoutDirty = true;
         }
@@ -768,8 +773,8 @@ public class TextInput : GreyGuiElement, IRatioElement
         {
             fontSize = _fontSizeScalingMode switch
             {
-                FontSizeScalingMode.UseWidthRatio => _size.X / _fontSizeScalingBaseline * _fontSize,
-                FontSizeScalingMode.UseHeightRatio => _size.Y / _fontSizeScalingBaseline * _fontSize,
+                FontSizeScalingMode.UseWidthRatio => _finalSize.X / _fontSizeScalingBaseline * _fontSize,
+                FontSizeScalingMode.UseHeightRatio => _finalSize.Y / _fontSizeScalingBaseline * _fontSize,
                 _ => _fontSize
             };
         }
@@ -778,7 +783,7 @@ public class TextInput : GreyGuiElement, IRatioElement
 
     public override GreyGuiElement? GetMouseHandler()
     {
-        Rectangle selfRect = new(OnScreenPos, _size.ToPoint());
+        Rectangle selfRect = new(OnScreenPos, _finalSize.ToPoint());
         Rectangle lastAppliedScissor = LastScissor;
         Rectangle.Intersect(ref selfRect, ref lastAppliedScissor, out Rectangle detectingRect);
         return detectingRect.Contains(GuiUpdate.Mouse.Position) ? this : null;
@@ -809,7 +814,7 @@ public class TextInput : GreyGuiElement, IRatioElement
             ResolveDisplayTextDirty();
         }
 
-        renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), BackgroundColor, BorderColor, BorderRadius, BorderWidth, screenScissor);
+        renderContext.FillRect(new Rectangle(pos, _finalSize.ToPoint()), BackgroundColor, BorderColor, BorderRadius, BorderWidth, screenScissor);
 
         float fontSize = GetFinalFontSize();
         Vector2 position = pos.ToVector2();

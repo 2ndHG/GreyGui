@@ -13,7 +13,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         {
             if (_size == value) return;
 
-            _size = _finalSize = value;
+            _size = value;
             _isSizeDirty = true;
         }
     }
@@ -154,7 +154,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
             _ => Color.Gray
         };
         BorderColor = borderColor;
-        _size = _finalSize = size;
+        _size = size;
         _useWidthRatio = useWidthRatio;
         _useHeightRatio = useHeightRatio;
         _useHeightWidthRatio = useHeightWidthRatio;
@@ -217,6 +217,8 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         {
             return;
         }
+        _finalSize = _size;
+
         // As an IRatioElement
         bool sizeChanged = false;
         if (UseWidthRatio && _parent != null)

@@ -1,11 +1,9 @@
-using System.Collections.ObjectModel;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input;
-
 namespace GreyGui;
 
-public class ListPanel : GreyGuiElement, IContainer, IRatioElement
+public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
 {
     public override Vector2 Size
     {
@@ -26,7 +24,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         get => _widthMode;
         set
         {
-            if(_widthMode == value) return;
+            if (_widthMode == value) return;
             _widthMode = value;
 
             _isSizeDirty = true;
@@ -135,13 +133,20 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
     private List<Point> _childrenPosition = [];
     private List<int> _drawOrder = [];
 
+    // scroll bar
+    private float _scrollBarWidth = 16;
+    private float _scrollButtonHeight;
+    private int _buttonYOffset;
+    private int _startScrollingMouseYPos;
+    private float _contentHeight;
+    private int _contentOffset;
+
 
     // Render
     protected Texture2D _imageTexture = GreyGui.Atlas;
     protected Rectangle _imageSrcRect;
 
-    public ListPanel() { }
-    public ListPanel(
+    public ListScrollPanel(
         Color? colorMask = null, Color borderColor = default, int borderRadius = default, int borderWidth = default,
         Vector2 size = default, WidthMode widthMode = WidthMode.Fixed, HeightMode heightMode = HeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, float childGap = default, float rowGap = default, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, ICollection<GreyGuiElement>? children = null)
     {
@@ -230,7 +235,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         _isChildrenZIndexDirty = true;
     }
 
-    public ListPanel SetChildren(ICollection<GreyGuiElement> children)
+    public ListScrollPanel SetChildren(ICollection<GreyGuiElement> children)
     {
         RemoveAllChildren();
         AppendChildren(children);
@@ -277,7 +282,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
 
         // As an IContainer
         _containerSize = _size - new Vector2(BorderRadius * (Constant.SQRT2 - 1) * 2);
-        _containerSize.X -= PaddingSide * 2;
+        _containerSize.X -= PaddingSide * 2 + _scrollBarWidth;
         _containerSize.Y -= PaddingTop;
         foreach (GreyGuiElement child in _children)
         {
@@ -348,10 +353,43 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         {
             InsertRow(y, totalWidth, rowHeight, notInsertedIndex, _children.Count);
         }
+
+        // scroll bar
+        _contentHeight = y + rowHeight;
+        _scrollButtonHeight = (int)(_size.Y / _contentHeight * _containerSize.Y);
+        _scrollButtonHeight = Math.Min(_size.Y, _scrollButtonHeight);
+
+        // reposition scrollbar and content
+        float contentHeightDiff = Math.Max(0, _contentHeight - _size.Y);
+        float scrollSpace = _size.Y - _scrollButtonHeight;
+        // _contentOffset / contentHeightDiff = the percentage to fully scrolled down
+        // scrollSpace is how far can scroll button go. so scrollSpace * percentage is where the button should be .
+        _buttonYOffset = Math.Clamp((int)(scrollSpace * _contentOffset / contentHeightDiff), 0, (int)scrollSpace);
+
+        // if the scroll panel gets bigger, than there might be not that many space to scroll, so the maximum of _contentOffset is contentHeightDiff, therefore use Math.Min to clamp it
+        _contentOffset = Math.Min(_contentOffset, (int)contentHeightDiff);
+
         _isLayoutDirty = false;
+    }
+    private void CalculateScrollButtonHeight()
+    {
+
     }
     public override void Update()
     {
+        if (GuiUpdate.FocusedElement == this)
+        {
+            if (GuiUpdate.Mouse.IsLeftHold && _size.Y > _scrollButtonHeight)
+            {
+                int diff = GuiUpdate.Mouse.Position.Y - _startScrollingMouseYPos;
+                _buttonYOffset = Math.Clamp(diff, 0, (int)(_size.Y - _scrollButtonHeight));
+                _contentOffset = (int)((_contentHeight - _size.Y) * _buttonYOffset / (_size.Y - _scrollButtonHeight));
+            }
+            else
+            {
+                GuiUpdate.FocusedElement = null;
+            }
+        }
         for (int i = 0; i < _drawOrder.Count; ++i)
         {
             _children[i].Update();
@@ -373,8 +411,16 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
             BorderWidth,
             screenScissor
         );
+        position.X += (int)(_size.X - _scrollBarWidth);
+        context.FillRect(
+            new Rectangle(position, new((int)_scrollBarWidth, (int)_size.Y)),
+            new(1, 1, 1, .2f),
+            Color.Transparent,
+            BorderRadius,
+            0,
+            screenScissor
+        );
     }
-
     public void DrawChildren(Point position, RenderContext context, Rectangle screenScissor)
     {
         foreach (GreyGuiElement child in _children)
@@ -397,29 +443,60 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
             _isChildrenZIndexDirty = false;
         }
 
+        Point scissorPos = new Point((int)(BorderRadius * (Constant.SQRT2 - 1) + PaddingTop));
+        Rectangle selfScissor = new(position + scissorPos, _containerSize.ToPoint());
+        Rectangle.Intersect(ref selfScissor, ref screenScissor, out Rectangle newScreenScissor);
+
+        Point childPosition = position;
+        childPosition.Y -= _contentOffset;
         for (int i = 0; i < _drawOrder.Count; i++)
         {
             int drawOrder = _drawOrder[i];
-            _children[drawOrder].Draw(position + _childrenPosition[drawOrder], context, screenScissor);
+            _children[drawOrder].Draw(childPosition + _childrenPosition[drawOrder], context, newScreenScissor);
             if (_children[drawOrder] is IContainer container)
             {
-                container.DrawChildren(position + _childrenPosition[drawOrder], context, screenScissor);
+                container.DrawChildren(childPosition + _childrenPosition[drawOrder], context, newScreenScissor);
             }
         }
+
+        //draw scroll button
+        position.X += (int)(_size.X - _scrollBarWidth);
+        position.Y += _buttonYOffset;
+        context.FillRect(
+            new Rectangle(position, new((int)_scrollBarWidth, (int)_scrollButtonHeight)),
+            GuiUpdate.FocusedElement == this ? new(.8f, .8f, .8f, 1f) : new(.8f, .8f, .8f, .7f),
+            Color.Transparent,
+            BorderRadius,
+            0,
+            screenScissor
+        );
     }
 
     public override GreyGuiElement? GetMouseHandler()
     {
+        if (new Rectangle(OnScreenPos + new Point((int)(_size.X - _scrollBarWidth), _buttonYOffset), new((int)_scrollBarWidth, (int)_scrollButtonHeight)).Contains(GuiUpdate.Mouse.Position))
+        {
+            return this;
+        }
         for (int i = 0; i < _drawOrder.Count; ++i)
         {
             GreyGuiElement? result = _children[i].GetMouseHandler();
             if (result != null)
                 return result;
         }
-
+        
         Rectangle selfRect = new(OnScreenPos, _size.ToPoint());
         Rectangle lastAppliedScissor = LastScissor;
         Rectangle.Intersect(ref selfRect, ref lastAppliedScissor, out Rectangle detectingRect);
         return detectingRect.Contains(GuiUpdate.Mouse.Position) ? this : null;
+    }
+    public override void HandleMouseEvent()
+    {
+        if (GuiUpdate.Mouse.IsLeftButtonDown && new Rectangle(OnScreenPos + new Point((int)(_size.X - _scrollBarWidth), _buttonYOffset), new((int)_scrollBarWidth, (int)_scrollButtonHeight)).Contains(GuiUpdate.Mouse.Position))
+        {
+            _startScrollingMouseYPos = GuiUpdate.Mouse.Position.Y - _buttonYOffset;
+            GuiUpdate.FocusedElement = this;
+            Console.WriteLine("press scroll button");
+        }
     }
 }

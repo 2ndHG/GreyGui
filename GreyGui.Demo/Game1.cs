@@ -14,6 +14,7 @@ public class Game1 : Game
     private SpriteBatch _spriteBatch;
 
     private GreyGuiElement root;
+    private GreyGuiElement root2;
     private Point _drawPos = new Point(50, 50);
     private RenderContext renderContext = new();
     private GuiBatch _guiBatch;
@@ -22,6 +23,7 @@ public class Game1 : Game
     private Texture2D _buttonTexture;
 
     private bool oneTimeTicket = true;
+    private Stopwatch _stopwatch = new Stopwatch();
 
     public Game1()
     {
@@ -49,6 +51,7 @@ public class Game1 : Game
         _guiBatch = new GuiBatch(GraphicsDevice);
 
         root = GenerateTextInputDemoPanel();
+        root2 = GenerateButtonPanel();
 
 
         // TODO: use this.Content to load your game content here
@@ -59,8 +62,9 @@ public class Game1 : Game
             Exit();
 
         // TODO: Add your update logic here
-        GuiUpdate.StartFrame(Mouse.GetState(), Keyboard.GetState());
+        GuiUpdate.StartFrame(gameTime, Mouse.GetState(), Keyboard.GetState());
         GuiUpdate.Update(root);
+        GuiUpdate.Update(root2);
 
         if (GuiUpdate.FocusedElement == null)
         {
@@ -106,9 +110,12 @@ public class Game1 : Game
         _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
         _spriteBatch.End();
 
+        // _stopwatch.Restart();
         _guiBatch.ReceiveFrameInfo(gameTime);
+        _guiBatch.Draw(root2, renderContext, new Point(850, 50));
         _guiBatch.Draw(root, renderContext, new Point(50, 50));
         _guiBatch.Flush(renderContext);
+        // Console.WriteLine(_stopwatch.Elapsed.TotalMicroseconds);
 
         // Measure draw calls
         // var metrics = GraphicsDevice.Metrics;
@@ -196,8 +203,9 @@ public class Game1 : Game
     private GreyGuiElement GenerateButtonPanel()
     {
 
-        return new ListPanel(size: new(500, 135), borderRadius: 40, colorMask: Color.White, borderColor: Color.Black, borderWidth: 5).SetChildren([
+        return new ListPanel(size: new(500, 135), borderRadius: 10, colorMask: new(48, 121, 161), borderColor: Color.Black, borderWidth: 5).SetChildren([
             GenerateButton(),
+            new Text(fontSize: 20, displayText:"This panel is here to showcase the correctness of mouse detection", size: new(200, 200), autoEndLine: true, colorMask: Color.Black)
         ]);
     }
     private Button GenerateButton()
@@ -206,6 +214,7 @@ public class Game1 : Game
         Action<Button, Point, RenderContext, Rectangle> buttonDrawMethod = (button, position, renderContext, scissor) =>
         {
             button.OnScreenPos = position;
+            button.LastScissor = scissor;
             timer = (button.State, timer) switch
             {
                 (GreyGuiButtonState.Active, _) => -.3f,
@@ -240,7 +249,7 @@ public class Game1 : Game
         };
         Text buttonText = new Text(fontSize: 32, widthRatio: 1, widthMode: TextWidthMode.ParentRatio, displayText: "0", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: TextAlignment.Center, heightMode: TextHeightMode.TextHeight);
 
-        Button resultButton = new(useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: .2f, borderColor: Color.Black, borderRadius: 5, borderWidth: 5);
+        Button resultButton = new(useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: .2f, borderColor: Color.Black, borderRadius: 5, borderWidth: 5, colorMask: Color.SkyBlue);
         resultButton.DrawMethod = buttonDrawMethod;
         resultButton.AppendChild(buttonText);
         resultButton.OnLeftClicked += () =>
@@ -280,7 +289,12 @@ public class Game1 : Game
          fontSizeScalingMode: FontSizeScalingMode.None,
          widthRatio: .5f,
          widthMode: TextWidthMode.ParentRatio,
-         fontSize: 20);
+         fontSize: 20
+        //  borderColor: Color.AntiqueWhite,
+        //  backgroundColor: new Color(184, 217, 253, 120),
+        //  borderRadius: 10,
+        //  borderWidth : 3
+         );
 
         Button[] widthDefiners;
         void ChangeWidthDefiner(string definer)
@@ -413,7 +427,7 @@ public class Game1 : Game
         alignModeButtons[2].OnLeftClicked += () => { ChangeAlignMode(TextAlignment.Right); };
         alignModeButtons[3].OnLeftClicked += () => { ChangeAlignMode(TextAlignment.Justify); };
 
-        return new ListPanel(colorMask: new Color(87, 125, 91), size: new(1200, 800), paddingSide: 10, paddingTop: 10, borderRadius: 10, layoutMode: RowLayoutMode.Center).SetChildren([
+        return new ListScrollPanel(colorMask: new Color(87, 125, 91), size: new(1200, 800), paddingSide: 10, paddingTop: 10, borderRadius: 10, layoutMode: RowLayoutMode.Center).SetChildren([
             new RowPanel(colorMask: Color.Transparent, widthMode: WidthMode.ParentRatio, widthRatio: 1f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([
                 new Text(colorMask: Color.White, widthMode: TextWidthMode.ParentRatio, widthRatio: .33f, heightMode: TextHeightMode.TextHeight, fontSize: 26f, displayText: "Element Width Definer"),
                 new RowPanel(colorMask: Color.Transparent, widthMode: WidthMode.ParentRatio, widthRatio: .67f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([

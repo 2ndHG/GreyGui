@@ -8,11 +8,14 @@ namespace GreyGui;
 public static class GuiUpdate
 {
     public static int FrameId { get; set; }
+    public static double ElapsedTimeSecond { get; set; }
     public static GreyGuiElement? FocusedElement { get; set; }
     public static bool IsMouseHandled { get; private set; }
     public static GreyGuiElement? MouseHandler { get; set; }
-    public static void StartFrame(MouseState mouseState, KeyboardState keyboardState)
+    public static void StartFrame(GameTime gameTime, MouseState mouseState, KeyboardState keyboardState)
     {
+        ElapsedTimeSecond = gameTime.ElapsedGameTime.TotalSeconds;
+
         prevMouseState = currMouseState;
         currMouseState = mouseState;
         prevKeyboardState = currKeyboardState;
@@ -72,18 +75,18 @@ public static class GuiUpdate
     private static void OnTextInput(object? _, TextInputEventArgs eventArgs)
     {
         // Console.WriteLine(eventArgs.Key.ToString() + eventArgs.Character.ToString());
-        if(nextFrameInputBuffer.Count > maxInputBufferSize)
+        if (nextFrameInputBuffer.Count > maxInputBufferSize)
         {
             return;
         }
-        
-        if(eventArgs.Key == Keys.Enter)
+
+        if (eventArgs.Key == Keys.Enter)
         {
             // Unify \n, \r to \n
             nextFrameInputBuffer.Add('\n');
             return;
         }
-        if(eventArgs.Key == Keys.Back)
+        if (eventArgs.Key == Keys.Back)
         {
             nextFrameInputBuffer.Add('\b');
             return;

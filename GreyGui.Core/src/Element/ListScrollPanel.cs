@@ -500,7 +500,6 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
         {
             _startScrollingMouseYPos = GuiUpdate.Mouse.Position.Y - _buttonYOffset;
             GuiUpdate.FocusedElement = this;
-            Console.WriteLine("press scroll button");
         }
     }
 }

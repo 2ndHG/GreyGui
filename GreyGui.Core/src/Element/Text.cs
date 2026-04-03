@@ -19,6 +19,7 @@ public class Text : GreyGuiElement, IRatioElement
         }
     }
     public override Vector2 FinalSize => _finalSize;
+    public Color BackgroundColor { get; set; }
     public override int ZIndex
     {
         get => _zIndex; set
@@ -221,15 +222,21 @@ public class Text : GreyGuiElement, IRatioElement
     private readonly List<int> _displayTextCharIndices = [];
     private readonly List<Vector2> _segmentOffsetCache = [];
     private bool _autoEndLine;
-    private int _rowCount = 1;    
+    private int _rowCount = 1;
     private float _maxWidth = 0;
 
 
-    public Text(Color? colorMask = null, Color borderColor = default, Vector2 size = default, TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default)
+    public Text(
+    Color? colorMask = null, Color? borderColor = null, Color? backgroundColor = null, Vector2 size = default, int borderRadius = default, int borderWidth = default,
+    TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default)
     {
         ColorMask = colorMask ?? Color.Black;
-        BorderColor = borderColor;
+        BorderColor = borderColor ?? Color.Transparent;
+        BackgroundColor = backgroundColor ?? Color.Transparent;
+        BorderRadius = borderRadius;
+        BorderWidth = borderWidth;
         _size = size;
+
         _widthMode = widthMode;
         _heightMode = heightMode;
         _widthRatio = widthRatio;
@@ -611,6 +618,11 @@ public class Text : GreyGuiElement, IRatioElement
         if (_isDisplayTextDirty)
         {
             ResolveDisplayTextDirty();
+        }
+
+        if (BackgroundColor != Color.Transparent || BorderWidth > 0)
+        {
+            renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), BackgroundColor, BorderColor, BorderRadius, BorderWidth, screenScissor);
         }
 
         float fontSize = GetFinalFontSize();

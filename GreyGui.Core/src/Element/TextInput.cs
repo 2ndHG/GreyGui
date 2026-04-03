@@ -833,7 +833,10 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
             ResolveDisplayTextDirty();
         }
 
-        renderContext.FillRect(new Rectangle(pos, _finalSize.ToPoint()), BackgroundColor, BorderColor, BorderRadius, BorderWidth, screenScissor);
+        if (BackgroundColor != Color.Transparent || BorderWidth > 0)
+        {
+            renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), BackgroundColor, BorderColor, BorderRadius, BorderWidth, screenScissor);
+        }
 
         float fontSize = GetFinalFontSize();
         Vector2 position = pos.ToVector2();

@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 namespace GreyGui;
 
-public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
+public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocusable
 {
     public override Vector2 Size
     {
@@ -252,6 +252,10 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
         }
     }
 
+    public void TriggerOnBlurred() { }
+
+    public void TriggerOnFocused() { }
+
     private void RecalculateSize()
     {
         // As an IRatioElement
@@ -499,7 +503,6 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
         {
             _startScrollingMouseYPos = GuiUpdate.Mouse.Position.Y - _buttonYOffset;
             GuiUpdate.FocusedElement = this;
-            Console.WriteLine("press scroll button");
         }
     }
 }

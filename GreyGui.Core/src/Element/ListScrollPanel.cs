@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 namespace GreyGui;
 
-public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
+public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocusable
 {
     public override Vector2 Size
     {
@@ -250,6 +250,10 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
         }
     }
 
+    public void TriggerOnBlurred() { }
+
+    public void TriggerOnFocused() { }
+
     private void RecalculateSize()
     {
         // As an IRatioElement
@@ -484,7 +488,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement
             if (result != null)
                 return result;
         }
-        
+
         Rectangle selfRect = new(OnScreenPos, _size.ToPoint());
         Rectangle lastAppliedScissor = LastScissor;
         Rectangle.Intersect(ref selfRect, ref lastAppliedScissor, out Rectangle detectingRect);

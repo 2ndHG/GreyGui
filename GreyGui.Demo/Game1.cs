@@ -295,9 +295,9 @@ public class Game1 : Game
         //  borderRadius: 10,
         //  borderWidth : 3
          );
-        rootText.OnClicked += () => { Console.WriteLine("display text clicked");};
-        rootText.OnBlurred += () => { Console.WriteLine("display text blurred");};
-        rootText.OnTextChanged += () => { Console.WriteLine("display text textChanged");};
+        rootText.OnClicked += (_) => { Console.WriteLine("display text clicked"); };
+        rootText.OnBlurred += (_) => { Console.WriteLine("display text blurred"); };
+        rootText.OnTextChanged += (_, _) => { Console.WriteLine("display text textChanged"); };
 
 
         Button[] widthDefiners;

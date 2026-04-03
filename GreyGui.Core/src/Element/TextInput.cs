@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace GreyGui.Core;
 
-public class TextInput : GreyGuiElement, IRatioElement
+public class TextInput : GreyGuiElement, IRatioElement, IFocusable
 {
     public override Vector2 Size
     {
@@ -202,10 +202,6 @@ public class TextInput : GreyGuiElement, IRatioElement
         }
     }
     public Color FocusedColor { get; set; } = Color.Yellow;
-    public event Action? OnTextChanged;
-    public event Action? OnBlurred;
-    public event Action? OnClicked;
-
 
     private Vector2 _size;
     private Vector2 _finalSize;
@@ -223,6 +219,11 @@ public class TextInput : GreyGuiElement, IRatioElement
     private float _textYOffset;
     private FontSizeScalingMode _fontSizeScalingMode;
     private float _fontSizeScalingBaseline;
+
+    // events
+    public event Action<TextInput>? OnBlurred;
+    public event Action<TextInput>? OnClicked;
+    public event Action<TextInput, string>? OnTextChanged;
 
     // cursor
     private int _cursorIndex = 0;
@@ -243,7 +244,7 @@ public class TextInput : GreyGuiElement, IRatioElement
     private float _maxWidth = 0;
 
     public TextInput(Color? colorMask = null, Color? borderColor = null, Color? backgroundColor = null, Vector2 size = default, int borderRadius = default, int borderWidth = default,
-    TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default, Color? focusedColor = null)
+    TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default, Color? focusedColor = null, Action<TextInput>? onClicked = null, Action<TextInput>? onBlurred = null, Action<TextInput, string>? onTextChanged = null)
     {
         ColorMask = colorMask ?? Color.Black;
         BackgroundColor = backgroundColor ?? Color.Transparent;
@@ -275,6 +276,9 @@ public class TextInput : GreyGuiElement, IRatioElement
             _ => fontSize,
         };
         _autoEndLine = autoEndLine;
+        OnBlurred = onBlurred;
+        OnClicked = onClicked;
+        OnTextChanged = onTextChanged;
 
         _isSizeDirty = true;
         _isDisplayTextDirty = true;
@@ -284,6 +288,15 @@ public class TextInput : GreyGuiElement, IRatioElement
         _cursorMoveKeys = [Keys.Up, Keys.Down, Keys.Left, Keys.Right];
         _cursorMoveMethods = [CursorMoveUp, CursorMoveDown, CursorMoveLeft, CursorMoveRight];
     }
+    public void TriggerOnBlurred()
+    {
+        OnBlurred?.Invoke(this);
+    }
+    public void TriggerOnFocused()
+    {
+        OnClicked?.Invoke(this);
+    }
+
     private void ResolveLayoutDirty()
     {
         if (_widthMode != TextWidthMode.TextWidth)
@@ -802,7 +815,6 @@ public class TextInput : GreyGuiElement, IRatioElement
             _cursorBlinkFactor = .5;
             GuiUpdate.FocusedElement = this;
 
-            OnClicked?.Invoke();
         }
     }
 
@@ -862,7 +874,6 @@ public class TextInput : GreyGuiElement, IRatioElement
         }
         if (GuiUpdate.Mouse.IsLeftButtonDown && GetMouseHandler() == null)
         {
-            OnBlurred?.Invoke();
             GuiUpdate.FocusedElement = null;
         }
 
@@ -925,9 +936,9 @@ public class TextInput : GreyGuiElement, IRatioElement
         }
         _cursorIndex = Math.Clamp(_cursorIndex, 0, _displayText.Length);
 
-        if(displayTextChanged)
+        if (displayTextChanged)
         {
-            OnTextChanged?.Invoke();
+            OnTextChanged?.Invoke(this, _displayText);
         }
     }
 

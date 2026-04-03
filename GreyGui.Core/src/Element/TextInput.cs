@@ -202,6 +202,10 @@ public class TextInput : GreyGuiElement, IRatioElement
         }
     }
     public Color FocusedColor { get; set; } = Color.Yellow;
+    public event Action? OnTextChanged;
+    public event Action? OnBlurred;
+    public event Action? OnClicked;
+
 
     private Vector2 _size;
     private Vector2 _finalSize;
@@ -797,6 +801,8 @@ public class TextInput : GreyGuiElement, IRatioElement
             }
             _cursorBlinkFactor = .5;
             GuiUpdate.FocusedElement = this;
+
+            OnClicked?.Invoke();
         }
     }
 
@@ -856,10 +862,12 @@ public class TextInput : GreyGuiElement, IRatioElement
         }
         if (GuiUpdate.Mouse.IsLeftButtonDown && GetMouseHandler() == null)
         {
+            OnBlurred?.Invoke();
             GuiUpdate.FocusedElement = null;
         }
 
         ReadOnlySpan<char> inputBuffer = GuiUpdate.Keyboard.GetTextInputBuffer();
+        bool displayTextChanged = false;
 
         // when using 'DisplayText = ' assignment, the _cursorIndex field will be set to _displayText.Length, hence we need to record the original index first
         int cursorIndex = _cursorIndex;
@@ -871,11 +879,13 @@ public class TextInput : GreyGuiElement, IRatioElement
                 if (cursorIndex > 0)
                 {
                     DisplayText = _displayText.Remove((cursorIndex--) - 1, 1);
+                    displayTextChanged = true;
                 }
             }
             else
             {
                 DisplayText = _displayText.Insert(cursorIndex++, c.ToString());
+                displayTextChanged = true;
             }
             _cursorBlinkFactor = .5;
         }
@@ -914,6 +924,11 @@ public class TextInput : GreyGuiElement, IRatioElement
             fastMoving = 0;
         }
         _cursorIndex = Math.Clamp(_cursorIndex, 0, _displayText.Length);
+
+        if(displayTextChanged)
+        {
+            OnTextChanged?.Invoke();
+        }
     }
 
     private void CursorMoveUp()

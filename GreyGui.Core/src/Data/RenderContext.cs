@@ -16,7 +16,7 @@ public class RenderContext
 
     private UiVertex[] _vertices = new UiVertex[MAX_VERTEX_COUNT];
     private int[] _indices = new int[MAX_INDEX_COUNT];
-    public double ElapsedTimeSecond {get; set;}
+    public double ElapsedTimeSecond { get; set; }
 
     public void Clear()
     {
@@ -93,27 +93,32 @@ public class RenderContext
         _indices[IndexCount++] = vOffset + 3;
         _indices[IndexCount++] = vOffset + 0;
     }
+    
+    public void FillRect(Rectangle dest, Color colorTl, Color colorTr, Color colorBl, Color colorBr, Color borderColorTl, Color borderColorTr, Color borderColorBl, Color borderColorBr, float borderRadius, float borderWidth, Rectangle scissor)
+    {
+        EnsureCapacity(4, 6);
+        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor, 6);
+        Vector4 rectParams = new(dest.Width, dest.Height, borderRadius, borderWidth);
+        int vOffset = VertexCount;
+
+        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), colorTl, borderColorTl, GreyGui.AtlasPixelUv, new Vector2(0, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), colorTr, borderColorTr, GreyGui.AtlasPixelUv, new Vector2(1, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), colorBr, borderColorBr, GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), colorBl, borderColorBl, GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
+
+        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = vOffset + 1;
+        _indices[IndexCount++] = vOffset + 2;
+        _indices[IndexCount++] = vOffset + 2;
+        _indices[IndexCount++] = vOffset + 3;
+        _indices[IndexCount++] = vOffset + 0;
+    }
 
     public void RenderTexture(Texture2D texture, Rectangle destRect, Rectangle srcRect, Color color, Color borderColor, float borderRadius, float borderWidth, Rectangle scissor)
     {
         EnsureCapacity(4, 6);
 
-        DrawBatch lastBatch = Batches[^1];
-        if (
-            texture != lastBatch.Texture ||
-            scissor != lastBatch.Scissor)
-        {
-            Batches.Add(new DrawBatch
-            {
-                Texture = texture,
-                Scissor = scissor,
-                IndexOffset = IndexCount,
-                IndexCount = 0
-            });
-            lastBatch = Batches[^1];
-        }
-        lastBatch.IndexCount += 6;
-        Batches[^1] = lastBatch;
+        PrepareDrawBatchForTexture(texture, scissor, 6);
 
         Vector4 rectParams = new(destRect.Width, destRect.Height, borderRadius, borderWidth);
         int vOffset = VertexCount;
@@ -136,16 +141,58 @@ public class RenderContext
         _indices[IndexCount++] = vOffset + 0;
     }
 
+    public Span<UiVertex> RequireRectVertices(Texture2D texture, Rectangle destRect, Rectangle srcRect, Color color, Color borderColor, float borderRadius, float borderWidth, Rectangle scissor)
+    {
+        EnsureCapacity(4, 6);
+
+        PrepareDrawBatchForTexture(texture, scissor, 6);
+
+        Vector4 rectParams = new(destRect.Width, destRect.Height, borderRadius, borderWidth);
+        int vOffset = VertexCount;
+
+        float left = srcRect.Left / (float)texture.Width;
+        float right = srcRect.Right / (float)texture.Width;
+        float top = srcRect.Top / (float)texture.Height;
+        float bottom = srcRect.Bottom / (float)texture.Height;
+
+        SetVertex(VertexCount++, new Vector3(destRect.Left, destRect.Top, 0), color, borderColor, new Vector2(left, top), new Vector2(0, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(destRect.Right, destRect.Top, 0), color, borderColor, new Vector2(right, top), new Vector2(1, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(destRect.Right, destRect.Bottom, 0), color, borderColor, new Vector2(right, bottom), new Vector2(1, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(destRect.Left, destRect.Bottom, 0), color, borderColor, new(left, bottom), new Vector2(0, 1), rectParams);
+
+        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = vOffset + 1;
+        _indices[IndexCount++] = vOffset + 2;
+        _indices[IndexCount++] = vOffset + 2;
+        _indices[IndexCount++] = vOffset + 3;
+        _indices[IndexCount++] = vOffset + 0;
+        return new Span<UiVertex>(_vertices, vOffset, 4);
+    }
+
+    public Span<UiVertex> GetLastAddedVertices(int count)
+    {
+        if (count > VertexCount)
+        {
+            throw new ArgumentOutOfRangeException(nameof(count), "Requested vertex count exceeds the number of vertices in the current batch.");
+        }
+        return new Span<UiVertex>(_vertices, VertexCount - count, count);
+    }
+
+    public void RenderTextUsingCharIndices(List<int> indices, int startIndex, int length, Vector2 position, float fontSize, Color color, Rectangle scissor, out AddVertexResult result)
+    {
+        result = new AddVertexResult() { VertexStart = VertexCount, VertexCount = length * 4, IndexStart = IndexCount, IndexCount = length * 6 };
+        RenderTextUsingCharIndices(indices, startIndex, length, position, fontSize, color, scissor);
+    }
     /// <summary>
     /// 
     /// </summary>
     /// <param name="indices">List of rendering characters indices in GreyGui.TextSystem.GlyphInfoList</param>
     /// <param name="startIndex">Starting index of indices</param>
     /// <param name="length">Length</param>
-    /// <param name="position"></param>
-    /// <param name="fontSize"></param>
-    /// <param name="color"></param>
-    /// <param name="scissor"></param>
+    /// <param name="position">Position of the first character</param>
+    /// <param name="fontSize">Font size</param>
+    /// <param name="color">Text color</param>
+    /// <param name="scissor">Screen scissor</param>
     public void RenderTextUsingCharIndices(List<int> indices, int startIndex, int length, Vector2 position, float fontSize, Color color, Rectangle scissor)
     {
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
@@ -286,5 +333,25 @@ public class RenderContext
             int newCapacity = Math.Max(_indices.Length * 2, newIndexCount);
             Array.Resize(ref _indices, newCapacity);
         }
+    }
+
+    public void PrepareDrawBatchForTexture(Texture2D incomingTexture, in Rectangle incomingScissor, int indexCount)
+    {
+        DrawBatch lastBatch = Batches[^1];
+        if (
+            incomingTexture != lastBatch.Texture ||
+            incomingScissor != lastBatch.Scissor)
+        {
+            Batches.Add(new DrawBatch
+            {
+                Texture = incomingTexture,
+                Scissor = incomingScissor,
+                IndexOffset = IndexCount,
+                IndexCount = 0
+            });
+            lastBatch = Batches[^1];
+        }
+        lastBatch.IndexCount += indexCount;
+        Batches[^1] = lastBatch;
     }
 }

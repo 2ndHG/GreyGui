@@ -93,7 +93,7 @@ public class RenderContext
         _indices[IndexCount++] = vOffset + 3;
         _indices[IndexCount++] = vOffset + 0;
     }
-    
+
     public void FillRect(Rectangle dest, Color colorTl, Color colorTr, Color colorBl, Color colorBr, Color borderColorTl, Color borderColorTr, Color borderColorBl, Color borderColorBr, float borderRadius, float borderWidth, Rectangle scissor)
     {
         EnsureCapacity(4, 6);
@@ -195,33 +195,17 @@ public class RenderContext
     /// <param name="scissor">Screen scissor</param>
     public void RenderTextUsingCharIndices(List<int> indices, int startIndex, int length, Vector2 position, float fontSize, Color color, Rectangle scissor)
     {
+        EnsureCapacity(4 * length, 6 * length);
+        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor, 6 * length);
+
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
         Vector2 cursor = position;
         length += startIndex;
         for (int i = startIndex; i < length; ++i)
         {
-            EnsureCapacity(4, 6);
-
-            GlyphInfo glyphInfo = GreyGui.TextSystem.GlyphInfoList[indices[i]];
-            DrawBatch lastBatch = Batches[^1];
-
-            if (
-                GreyGui.Atlas != lastBatch.Texture ||
-                scissor != lastBatch.Scissor)
-            {
-                Batches.Add(new DrawBatch
-                {
-                    Texture = GreyGui.Atlas,
-                    Scissor = scissor,
-                    IndexOffset = IndexCount,
-                    IndexCount = 0
-                });
-                lastBatch = Batches[^1];
-            }
-            lastBatch.IndexCount += 6;
-            Batches[^1] = lastBatch;
             int vOffset = VertexCount;
 
+            GlyphInfo glyphInfo = GreyGui.TextSystem.GlyphInfoList[indices[i]];
             Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
             // rectParams.Z = fontSize to tell what the anti-aliasing distant value should be
             // rectParams.W = -1 tells the shader we are rendering text
@@ -255,33 +239,17 @@ public class RenderContext
     }
     public void RenderText(ReadOnlySpan<GlyphInfo> glyphInfoSpan, int startIndex, int length, Vector2 position, float fontSize, Color color, Rectangle scissor)
     {
+        EnsureCapacity(4 * length, 6 * length);
+        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor, 6 * length);
+
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
         Vector2 cursor = position;
         length += startIndex;
         for (int i = startIndex; i < length; ++i)
         {
-            EnsureCapacity(4, 6);
-
-            GlyphInfo glyphInfo = glyphInfoSpan[i];
-            DrawBatch lastBatch = Batches[^1];
-
-            if (
-                GreyGui.Atlas != lastBatch.Texture ||
-                scissor != lastBatch.Scissor)
-            {
-                Batches.Add(new DrawBatch
-                {
-                    Texture = GreyGui.Atlas,
-                    Scissor = scissor,
-                    IndexOffset = IndexCount,
-                    IndexCount = 0
-                });
-                lastBatch = Batches[^1];
-            }
-            lastBatch.IndexCount += 6;
-            Batches[^1] = lastBatch;
             int vOffset = VertexCount;
 
+            GlyphInfo glyphInfo = glyphInfoSpan[i];
             Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
             // rectParams.Z = fontSize to tell what the anti-aliasing distant value should be
             // rectParams.W = -1 tells the shader we are rendering text

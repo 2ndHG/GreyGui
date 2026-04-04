@@ -5,7 +5,7 @@ namespace GreyGui;
 
 public abstract class GreyGuiElement
 {
-    public bool Enabled { get; set; } = true;
+    // public bool Enabled { get; set; } = true;
     public Color ColorMask { get; set; } = Color.Gray;
     public Color BorderColor { get; set; } = Color.Gray;
     public Point OnScreenPos { get; set; }

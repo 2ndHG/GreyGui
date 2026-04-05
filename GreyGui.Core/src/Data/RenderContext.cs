@@ -26,25 +26,13 @@ public class RenderContext
         Batches.Add(new DrawBatch());
     }
 
-    public void AddCommand(Texture2D texture, UiVertex[] vertices, int[] indices, Rectangle scissor)
+    public void AddCommand_Unstable(Texture2D texture, UiVertex[] vertices, int[] indices, Rectangle scissor)
     {
         // full
         EnsureCapacity(vertices.Length, indices.Length);
 
-        DrawBatch lastBatch = Batches[^1];
-        if (scissor != lastBatch.Scissor || texture != lastBatch.Texture)
-        {
-            Batches.Add(new DrawBatch()
-            {
-                Texture = texture,
-                IndexCount = 0,
-                IndexOffset = IndexCount,
-                Scissor = scissor
-            });
-            lastBatch = Batches[^1];
-        }
-        lastBatch.IndexCount += indices.Length;
-        Batches[^1] = lastBatch;
+        PrepareDrawBatchForTexture(texture, scissor);
+        AddIndicesToLastBatch(indices.Length);
 
         int offset = VertexCount;
         Array.Copy(vertices, 0, _vertices, VertexCount, vertices.Length);
@@ -61,22 +49,8 @@ public class RenderContext
     {
         EnsureCapacity(4, 6);
 
-        DrawBatch lastBatch = Batches[^1];
-        if (
-            GreyGui.Atlas != lastBatch.Texture ||
-            scissor != lastBatch.Scissor)
-        {
-            Batches.Add(new DrawBatch
-            {
-                Texture = GreyGui.Atlas,
-                Scissor = scissor,
-                IndexOffset = IndexCount,
-                IndexCount = 0
-            });
-            lastBatch = Batches[^1];
-        }
-        lastBatch.IndexCount += 6;
-        Batches[^1] = lastBatch;
+        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor);
+        AddIndicesToLastBatch(6);
 
         Vector4 rectParams = new(dest.Width, dest.Height, borderRadius, borderWidth);
         int vOffset = VertexCount;
@@ -97,7 +71,9 @@ public class RenderContext
     public void FillRect(Rectangle dest, Color colorTl, Color colorTr, Color colorBl, Color colorBr, Color borderColorTl, Color borderColorTr, Color borderColorBl, Color borderColorBr, float borderRadius, float borderWidth, Rectangle scissor)
     {
         EnsureCapacity(4, 6);
-        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor, 6);
+        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor);
+        AddIndicesToLastBatch(6);
+
         Vector4 rectParams = new(dest.Width, dest.Height, borderRadius, borderWidth);
         int vOffset = VertexCount;
 
@@ -118,7 +94,9 @@ public class RenderContext
     {
         EnsureCapacity(4, 6);
 
-        PrepareDrawBatchForTexture(texture, scissor, 6);
+        PrepareDrawBatchForTexture(texture, scissor);
+        AddIndicesToLastBatch(6);
+
 
         Vector4 rectParams = new(destRect.Width, destRect.Height, borderRadius, borderWidth);
         int vOffset = VertexCount;
@@ -145,7 +123,8 @@ public class RenderContext
     {
         EnsureCapacity(4, 6);
 
-        PrepareDrawBatchForTexture(texture, scissor, 6);
+        PrepareDrawBatchForTexture(texture, scissor);
+        AddIndicesToLastBatch(6);
 
         Vector4 rectParams = new(destRect.Width, destRect.Height, borderRadius, borderWidth);
         int vOffset = VertexCount;
@@ -196,7 +175,8 @@ public class RenderContext
     public void RenderTextUsingCharIndices(List<int> indices, int startIndex, int length, Vector2 position, float fontSize, Color color, Rectangle scissor)
     {
         EnsureCapacity(4 * length, 6 * length);
-        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor, 6 * length);
+        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor);
+        AddIndicesToLastBatch(6 * length);
 
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
         Vector2 cursor = position;
@@ -240,7 +220,8 @@ public class RenderContext
     public void RenderText(ReadOnlySpan<GlyphInfo> glyphInfoSpan, int startIndex, int length, Vector2 position, float fontSize, Color color, Rectangle scissor)
     {
         EnsureCapacity(4 * length, 6 * length);
-        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor, 6 * length);
+        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor);
+        AddIndicesToLastBatch(6 * length);
 
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
         Vector2 cursor = position;
@@ -279,6 +260,59 @@ public class RenderContext
 
     }
 
+    public void FillCircle(Vector2 center, float radius, Color colorTl, Color colorTr, Color colorBl, Color colorBr, Color borderColorTl, Color borderColorTr, Color borderColorBl, Color borderColorBr, float borderWidth, Rectangle scissor)
+    {
+        EnsureCapacity(4, 6);
+        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor);
+        AddIndicesToLastBatch(6);
+
+        float left = center.X - radius;
+        float right = center.X + radius;
+        float top = center.Y - radius;
+        float bottom = center.Y + radius;
+        Vector4 rectParams = new(right - left, bottom - top, radius, borderWidth);
+        int vOffset = VertexCount;
+
+        SetVertex(VertexCount++, new Vector3(left, top, 0), colorTl, borderColorTl, GreyGui.AtlasPixelUv, new Vector2(0, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(right, top, 0), colorTr, borderColorTr, GreyGui.AtlasPixelUv, new Vector2(1, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(right, bottom, 0), colorBr, borderColorBr, GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(left, bottom, 0), colorBl, borderColorBl, GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
+
+        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = vOffset + 1;
+        _indices[IndexCount++] = vOffset + 2;
+        _indices[IndexCount++] = vOffset + 2;
+        _indices[IndexCount++] = vOffset + 3;
+        _indices[IndexCount++] = vOffset + 0;
+    }
+
+    public void FillCircle(Vector2 center, float radius, Color color, Color borderColor, float borderWidth, Rectangle scissor)
+    {
+        EnsureCapacity(4, 6);
+        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor);
+        AddIndicesToLastBatch(6);
+
+        float left = center.X - radius;
+        float right = center.X + radius;
+        float top = center.Y - radius;
+        float bottom = center.Y + radius;
+        Vector4 rectParams = new(right - left, bottom - top, radius, borderWidth);
+        int vOffset = VertexCount;
+
+        SetVertex(VertexCount++, new Vector3(left, top, 0), color, borderColor, GreyGui.AtlasPixelUv, new Vector2(0, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(right, top, 0), color, borderColor, GreyGui.AtlasPixelUv, new Vector2(1, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(right, bottom, 0), color, borderColor, GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(left, bottom, 0), color, borderColor, GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
+
+        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = vOffset + 1;
+        _indices[IndexCount++] = vOffset + 2;
+        _indices[IndexCount++] = vOffset + 2;
+        _indices[IndexCount++] = vOffset + 3;
+        _indices[IndexCount++] = vOffset + 0;
+    }
+    
+
     public void SetVertex(int index, Vector3 pos, Color col, Color borderCol, Vector2 uv, Vector2 local, Vector4 rParams)
     {
         _vertices[index].Position = pos;
@@ -303,7 +337,7 @@ public class RenderContext
         }
     }
 
-    public void PrepareDrawBatchForTexture(Texture2D incomingTexture, in Rectangle incomingScissor, int indexCount)
+    public void PrepareDrawBatchForTexture(Texture2D incomingTexture, in Rectangle incomingScissor)
     {
         DrawBatch lastBatch = Batches[^1];
         if (
@@ -317,9 +351,11 @@ public class RenderContext
                 IndexOffset = IndexCount,
                 IndexCount = 0
             });
-            lastBatch = Batches[^1];
         }
-        lastBatch.IndexCount += indexCount;
-        Batches[^1] = lastBatch;
+    }
+
+    public void AddIndicesToLastBatch(int count)
+    {
+        CollectionsMarshal.AsSpan(Batches)[^1].IndexCount += count;
     }
 }

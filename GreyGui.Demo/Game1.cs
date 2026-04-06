@@ -480,14 +480,14 @@ public class Game1 : Game
     }
     private GreyGuiElement GenerateGitHubBanner()
     {
-        ListPanel result = new ListPanel(size: new(800, 180), colorMask: new(91, 136, 181), borderRadius: 10, layoutMode: RowLayoutMode.Left, borderWidth: 2, paddingSide: 20, rowGap: 25).SetChildren([
+        ListPanel result = new ListPanel(size: new(800, 180), colorMask: new(91, 136, 181), borderRadius: 10, layoutMode: RowLayoutMode.Left, borderWidth: 4, paddingSide: 20, rowGap: 25, borderColor: new(200,200,200)).SetChildren([
             new Text(displayText: "Do you want", widthMode: TextWidthMode.TextWidth, widthRatio:.5f, fontSize: 40, colorMask: new(206, 221, 237), textYOffset:24),
             new Text(displayText: " Grey", widthMode: TextWidthMode.TextWidth, widthRatio:.35f, fontSize: 70, colorMask: new(200,200,200), heightMode: TextHeightMode.TextHeight),
             new Text(displayText: "Gui", widthMode: TextWidthMode.TextWidth, widthRatio:.35f, fontSize: 70, colorMask: new(255,255,255), heightMode: TextHeightMode.TextHeight),
             new Text(displayText: "   ?", widthMode: TextWidthMode.TextWidth, widthRatio:1f, fontSize: 40, colorMask: new(206, 221, 237), textYOffset:24),
             new RowPanel(widthMode: WidthMode.ParentRatio, widthRatio: 1, layoutMode: RowLayoutMode.Justify, childGap:10).SetChildren([
                 new Button(colorMask: new (47, 96, 145), size:new(365, 64), borderRadius: 10, borderColor: new (47, 96, 145), borderWidth: 4).SetChild(
-                    new Text(displayText: "Maybe?", fontSize: 50, widthMode: TextWidthMode.TextWidth, heightMode: TextHeightMode.TextHeight, textYOffset: -6, colorMask: Color.White)
+                    new Text(displayText: "maybe?", fontSize: 50, widthMode: TextWidthMode.TextWidth, heightMode: TextHeightMode.TextHeight, textYOffset: -6, colorMask: Color.White)
                 ),
                 new Button(colorMask: new (47, 96, 145), size:new(365, 64), borderRadius: 10, borderColor: new (200,200,200), borderWidth: 4).SetChild(
                     new Text(displayText: "YES", fontSize: 50, widthMode: TextWidthMode.TextWidth, heightMode: TextHeightMode.TextHeight, textYOffset: -6, colorMask: Color.White)

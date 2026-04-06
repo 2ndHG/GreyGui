@@ -622,7 +622,7 @@ public class Text : GreyGuiElement, IRatioElement
 
         if (BackgroundColor != Color.Transparent || BorderWidth > 0)
         {
-            renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), BackgroundColor, BorderColor, BorderRadius, BorderWidth, screenScissor);
+            renderContext.FillRect(new Rectangle(pos, _finalSize.ToPoint()), BackgroundColor, BorderColor, BorderRadius, BorderWidth, screenScissor);
         }
 
         float fontSize = GetFinalFontSize();

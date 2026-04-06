@@ -25,6 +25,7 @@ public class Game1 : Game
     private bool oneTimeTicket = true;
     private Stopwatch _stopwatch = new Stopwatch();
 
+
     public Game1()
     {
         _graphics = new GraphicsDeviceManager(this);
@@ -50,7 +51,7 @@ public class Game1 : Game
 
         _guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GenerateTextInputDemoPanel();
+        root = GenerateButtonPanel();
         root2 = GenerateButtonPanel();
 
 
@@ -64,7 +65,7 @@ public class Game1 : Game
         // TODO: Add your update logic here
         GuiUpdate.StartFrame(gameTime, Mouse.GetState(), Keyboard.GetState());
         GuiUpdate.Update(root);
-        GuiUpdate.Update(root2);
+        // GuiUpdate.Update(root2);
 
         if (GuiUpdate.FocusedElement == null)
         {
@@ -93,7 +94,7 @@ public class Game1 : Game
 
             if (keyboardState.IsKeyDown(Keys.R))
             {
-                root = GenerateTextInputDemoPanel();
+                root = GenerateGitHubBanner();
             }
         }
 
@@ -112,7 +113,7 @@ public class Game1 : Game
 
         // _stopwatch.Restart();
         _guiBatch.ReceiveFrameInfo(gameTime);
-        _guiBatch.Draw(root2, renderContext, new Point(950, 50));
+        // _guiBatch.Draw(root2, renderContext, new Point(950, 50));
         _guiBatch.Draw(root, renderContext, new Point(50, 50));
         _guiBatch.Flush(renderContext);
         // Console.WriteLine(_stopwatch.Elapsed.TotalMicroseconds);
@@ -476,5 +477,25 @@ public class Game1 : Game
             ]),
             rootText
         ]);
+    }
+    private GreyGuiElement GenerateGitHubBanner()
+    {
+        ListPanel result = new ListPanel(size: new(800, 180), colorMask: new(91, 136, 181), borderRadius: 10, layoutMode: RowLayoutMode.Left, borderWidth: 2, paddingSide: 20, rowGap: 25).SetChildren([
+            new Text(displayText: "Do you want", widthMode: TextWidthMode.TextWidth, widthRatio:.5f, fontSize: 40, colorMask: new(206, 221, 237), textYOffset:24),
+            new Text(displayText: " Grey", widthMode: TextWidthMode.TextWidth, widthRatio:.35f, fontSize: 70, colorMask: new(200,200,200), heightMode: TextHeightMode.TextHeight),
+            new Text(displayText: "Gui", widthMode: TextWidthMode.TextWidth, widthRatio:.35f, fontSize: 70, colorMask: new(255,255,255), heightMode: TextHeightMode.TextHeight),
+            new Text(displayText: "   ?", widthMode: TextWidthMode.TextWidth, widthRatio:1f, fontSize: 40, colorMask: new(206, 221, 237), textYOffset:24),
+            new RowPanel(widthMode: WidthMode.ParentRatio, widthRatio: 1, layoutMode: RowLayoutMode.Justify, childGap:10).SetChildren([
+                new Button(colorMask: new (47, 96, 145), size:new(365, 64), borderRadius: 10, borderColor: new (47, 96, 145), borderWidth: 4).SetChild(
+                    new Text(displayText: "Maybe?", fontSize: 50, widthMode: TextWidthMode.TextWidth, heightMode: TextHeightMode.TextHeight, textYOffset: -6, colorMask: Color.White)
+                ),
+                new Button(colorMask: new (47, 96, 145), size:new(365, 64), borderRadius: 10, borderColor: new (200,200,200), borderWidth: 4).SetChild(
+                    new Text(displayText: "YES", fontSize: 50, widthMode: TextWidthMode.TextWidth, heightMode: TextHeightMode.TextHeight, textYOffset: -6, colorMask: Color.White)
+                ),
+
+
+            ]),
+        ]);
+        return result;
     }
 }

@@ -1,9 +1,9 @@
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-
 namespace GreyGui;
 
-public class RowPanel : GreyGuiElement, IContainer, IRatioElement
+public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocusable
 {
     public override Vector2 Size
     {
@@ -127,6 +127,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     private int _zIndex;
     private RowLayoutMode _layoutMode;
     private float _childGap;
+    private float _rowGap;
     private Vector2 _containerSize;
     private bool _isLayoutDirty;
     private bool _isChildrenZIndexDirty;
@@ -134,14 +135,22 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     private List<Point> _childrenPosition = [];
     private List<int> _drawOrder = [];
 
+    // scroll bar
+    private float _scrollBarWidth = 16;
+    private float _scrollButtonHeight;
+    private int _buttonYOffset;
+    private int _startScrollingMouseYPos;
+    private float _contentHeight;
+    private int _contentOffset;
+
+
     // Render
     protected Texture2D _imageTexture = GreyGui.Atlas;
     protected Rectangle _imageSrcRect;
 
-    public RowPanel() { }
-    public RowPanel(
+    public ListScrollPanel(
         Color? colorMask = null, Color borderColor = default, int borderRadius = default, int borderWidth = default,
-        Vector2 size = default, WidthMode widthMode = WidthMode.Fixed, HeightMode heightMode = HeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, float childGap = default, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, ICollection<GreyGuiElement>? children = null)
+        Vector2 size = default, WidthMode widthMode = WidthMode.Fixed, HeightMode heightMode = HeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, float childGap = default, float rowGap = default, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, ICollection<GreyGuiElement>? children = null)
     {
         ColorMask = (colorMask, imageTexture) switch
         {
@@ -149,12 +158,13 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             (null, not null) => Color.White,
             _ => Color.Gray
         };
+
         BorderColor = borderColor;
         BorderRadius = borderRadius;
         BorderWidth = borderWidth;
         _size = size;
-        _widthMode = widthMode;
         _heightMode = heightMode;
+        _widthMode = widthMode;
         _widthRatio = widthRatio;
         _heightRatio = heightRatio;
         _heightWidthRatio = heightWidthRatio;
@@ -163,6 +173,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         PaddingSide = paddingSide;
         LayoutMode = layoutMode;
         _childGap = childGap;
+        _rowGap = rowGap;
         _zIndex = zIndex;
         _imageTexture = imageTexture ?? GreyGui.Atlas;
         _imageSrcRect = (imageTexture, imageSrcRect.IsEmpty) switch
@@ -181,11 +192,13 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     public void AppendChild(GreyGuiElement child)
     {
         child.Parent?.RemoveChild(child);
+
         _children.Add(child);
         child.ChangeParentButParentWillNotKnow(this);
 
         _isChildrenZIndexDirty = true;
         _isLayoutDirty = true;
+
     }
 
     public void AppendChildren(ICollection<GreyGuiElement> children)
@@ -197,12 +210,12 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     }
     public void RemoveChild(GreyGuiElement child)
     {
-
         _children.Remove(child);
         child.ChangeParentButParentWillNotKnow(null);
 
         _isChildrenZIndexDirty = true;
         _isLayoutDirty = true;
+
     }
 
     public void RemoveChildren(ICollection<GreyGuiElement> children)
@@ -224,7 +237,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         _isChildrenZIndexDirty = true;
     }
 
-    public RowPanel SetChildren(ICollection<GreyGuiElement> children)
+    public ListScrollPanel SetChildren(ICollection<GreyGuiElement> children)
     {
         RemoveAllChildren();
         AppendChildren(children);
@@ -239,6 +252,10 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         }
     }
 
+    public void TriggerOnBlurred() { }
+
+    public void TriggerOnFocused() { }
+
     private void RecalculateSize()
     {
         // As an IRatioElement
@@ -249,6 +266,8 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             _finalSize.X = _parent.ContainerSize.X * _widthRatio;
             sizeChanged = true;
         }
+
+        // UseHeightRatio has a higher priority then UseHeightWidthRatio
         if (_heightMode == HeightMode.ParentRatio)
         {
             if (_parent != null)
@@ -262,6 +281,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             _finalSize.Y = _finalSize.X * _heightWidthRatio;
             sizeChanged = true;
         }
+
         if (sizeChanged && _parent is not null)
         {
             _parent.IsLayoutDirty = true;
@@ -269,8 +289,8 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
 
         // As an IContainer
         _containerSize = _finalSize - new Vector2(BorderRadius * (Constant.SQRT2 - 1) * 2);
-        _containerSize.X -= PaddingSide * 2 + _childGap * MathF.Max(0, _children.Count - 1);
-        _containerSize.Y -= PaddingTop + PaddingBottom;
+        _containerSize.X -= PaddingSide * 2 + _scrollBarWidth;
+        _containerSize.Y -= PaddingTop;
         foreach (GreyGuiElement child in _children)
         {
             child.IsSizeDirty = true;
@@ -279,39 +299,104 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         _isLayoutDirty = _isLayoutDirty || sizeChanged;
     }
 
-    private void RecalculateLayout()
+    private void ResolveLayoutDirty()
     {
-        float elementTotalWidth = 0f;
-        for (int i = 0; i < _children.Count; ++i)
-        {
-            elementTotalWidth += _children[i].FinalSize.X;
-        }
+        float xPadding = (BorderRadius * (Constant.SQRT2 - 1)) + PaddingSide;
         float xLayoutMulti = _layoutMode switch
         {
             RowLayoutMode.Center => .5f,
             RowLayoutMode.Right => 1f,
             _ => 0
         };
-        float emptySpace = _containerSize.X - elementTotalWidth;
-        float borderRadiusPad = BorderRadius * (Constant.SQRT2 - 1);
+        void InsertRow(float y, float rowElementTotalWidth, float rowHeight, int elementBegin, int elementEnd)
+        {
+            int gapCount = elementEnd - elementBegin - 1;
+            float emptySpace;
+            float childGapWidth;
+            if (_layoutMode == RowLayoutMode.Justify)
+            {
+                emptySpace = _containerSize.X - rowElementTotalWidth;
+                childGapWidth = gapCount == 0 ? 0 : emptySpace / gapCount;
+            }
+            else
+            {
+                emptySpace = _containerSize.X - rowElementTotalWidth - gapCount * _childGap;
+                childGapWidth = _childGap;
+            }
+            float x = xLayoutMulti * emptySpace + xPadding;
 
-        float x = borderRadiusPad + PaddingSide + emptySpace * xLayoutMulti;
-        float y = borderRadiusPad + PaddingTop;
-        float childGap = (_layoutMode == RowLayoutMode.Justify && _children.Count > 1) ?
-            emptySpace / (_children.Count - 1) + _childGap
-            : _childGap;
-
-        // update layout cache  
+            for (int i = elementBegin; i < elementEnd; ++i)
+            {
+                _childrenPosition.Add(new Point((int)MathF.Round(x), (int)MathF.Round(y)));
+                x += _children[i].FinalSize.X + childGapWidth;
+            }
+        }
+        // update layout cache
         _childrenPosition.Clear();
+        float totalWidth = 0;
+        float rowHeight = 0;
+        float y = BorderRadius * (Constant.SQRT2 - 1) + PaddingTop;
+
+        int notInsertedIndex = 0;
+        float gapWidth = 0;
         for (int i = 0; i < _children.Count; ++i)
         {
-            _childrenPosition.Add(new Point((int)x, (int)y));
-            x += _children[i].FinalSize.X + childGap;
+            GreyGuiElement child = _children[i];
+            Vector2 childSize = child.FinalSize;
+            if (totalWidth + gapWidth + childSize.X > _containerSize.X)
+            {
+                int count = i - notInsertedIndex;
+                InsertRow(y, totalWidth, rowHeight, notInsertedIndex, i);
+                notInsertedIndex = i;
+                totalWidth = 0;
+                gapWidth = 0;
+                y += rowHeight + (count > 0 ? _rowGap : 0);
+                rowHeight = 0;
+            }
+            totalWidth += childSize.X;
+            gapWidth += _childGap;
+            rowHeight = Math.Max(childSize.Y, rowHeight);
         }
+        {
+            InsertRow(y, totalWidth, rowHeight, notInsertedIndex, _children.Count);
+        }
+
+        // scroll bar
+        _contentHeight = y + rowHeight;
+        _scrollButtonHeight = (int)(_finalSize.Y / _contentHeight * _containerSize.Y);
+        _scrollButtonHeight = Math.Min(_finalSize.Y, _scrollButtonHeight);
+
+        // reposition scrollbar and content
+        float contentHeightDiff = Math.Max(0, _contentHeight - _finalSize.Y);
+        float scrollSpace = _finalSize.Y - _scrollButtonHeight;
+        // _contentOffset / contentHeightDiff = the percentage to fully scrolled down
+        // scrollSpace is how far can scroll button go. so scrollSpace * percentage is where the button should be .
+        _buttonYOffset = Math.Clamp((int)(scrollSpace * _contentOffset / contentHeightDiff), 0, (int)scrollSpace);
+
+        // if the scroll panel gets bigger, than there might be not that many space to scroll, so the maximum of _contentOffset is contentHeightDiff, therefore use Math.Min to clamp it
+        _contentOffset = Math.Min(_contentOffset, (int)contentHeightDiff);
+
         _isLayoutDirty = false;
+    }
+    private void CalculateScrollButtonHeight()
+    {
+
     }
     public override void Update()
     {
+        if (GuiUpdate.FocusedElement == this)
+        {
+            if (GuiUpdate.Mouse.IsLeftHold && _finalSize.Y > _scrollButtonHeight)
+            {
+                int diff = GuiUpdate.Mouse.Position.Y - _startScrollingMouseYPos;
+                _buttonYOffset = Math.Clamp(diff, 0, (int)(_finalSize.Y - _scrollButtonHeight));
+                _contentOffset = (int)((_contentHeight - _finalSize.Y) * _buttonYOffset / (_finalSize.Y - _scrollButtonHeight));
+            }
+            else
+            {
+                GuiUpdate.FocusedElement = null;
+            }
+        }
         for (int i = 0; i < _drawOrder.Count; ++i)
         {
             _children[i].Update();
@@ -333,6 +418,15 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             BorderWidth,
             screenScissor
         );
+        position.X += (int)(_finalSize.X - _scrollBarWidth);
+        context.FillRect(
+            new Rectangle(position, new((int)_scrollBarWidth, (int)_finalSize.Y)),
+            new(1, 1, 1, .2f),
+            Color.Transparent,
+            BorderRadius,
+            0,
+            screenScissor
+        );
     }
     public void DrawChildren(Point position, RenderContext context, Rectangle screenScissor)
     {
@@ -342,7 +436,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         }
         if (_isLayoutDirty)
         {
-            RecalculateLayout();
+            ResolveLayoutDirty();
         }
         if (_isChildrenZIndexDirty)
         {
@@ -356,20 +450,41 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             _isChildrenZIndexDirty = false;
         }
 
-        // DFS Draw children
+        Point scissorPos = new Point((int)(BorderRadius * (Constant.SQRT2 - 1) + PaddingTop));
+        Rectangle selfScissor = new(position + scissorPos, _containerSize.ToPoint());
+        Rectangle.Intersect(ref selfScissor, ref screenScissor, out Rectangle newScreenScissor);
+
+        Point childPosition = position;
+        childPosition.Y -= _contentOffset;
         for (int i = 0; i < _drawOrder.Count; i++)
         {
             int drawOrder = _drawOrder[i];
-            _children[drawOrder].Draw(position + _childrenPosition[drawOrder], context, screenScissor);
+            _children[drawOrder].Draw(childPosition + _childrenPosition[drawOrder], context, newScreenScissor);
             if (_children[drawOrder] is IContainer container)
             {
-                container.DrawChildren(position + _childrenPosition[drawOrder], context, screenScissor);
+                container.DrawChildren(childPosition + _childrenPosition[drawOrder], context, newScreenScissor);
             }
         }
+
+        //draw scroll button
+        position.X += (int)(_finalSize.X - _scrollBarWidth);
+        position.Y += _buttonYOffset;
+        context.FillRect(
+            new Rectangle(position, new((int)_scrollBarWidth, (int)_scrollButtonHeight)),
+            GuiUpdate.FocusedElement == this ? new(.8f, .8f, .8f, 1f) : new(.8f, .8f, .8f, .7f),
+            Color.Transparent,
+            BorderRadius,
+            0,
+            screenScissor
+        );
     }
 
     public override GreyGuiElement? GetMouseHandler()
     {
+        if (new Rectangle(OnScreenPos + new Point((int)(_finalSize.X - _scrollBarWidth), _buttonYOffset), new((int)_scrollBarWidth, (int)_scrollButtonHeight)).Contains(GuiUpdate.Mouse.Position))
+        {
+            return this;
+        }
         for (int i = 0; i < _drawOrder.Count; ++i)
         {
             GreyGuiElement? result = _children[i].GetMouseHandler();
@@ -381,5 +496,13 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         Rectangle lastAppliedScissor = LastScissor;
         Rectangle.Intersect(ref selfRect, ref lastAppliedScissor, out Rectangle detectingRect);
         return detectingRect.Contains(GuiUpdate.Mouse.Position) ? this : null;
+    }
+    public override void HandleMouseEvent()
+    {
+        if (GuiUpdate.Mouse.IsLeftButtonDown && new Rectangle(OnScreenPos + new Point((int)(_finalSize.X - _scrollBarWidth), _buttonYOffset), new((int)_scrollBarWidth, (int)_scrollButtonHeight)).Contains(GuiUpdate.Mouse.Position))
+        {
+            _startScrollingMouseYPos = GuiUpdate.Mouse.Position.Y - _buttonYOffset;
+            GuiUpdate.FocusedElement = this;
+        }
     }
 }

@@ -14,6 +14,7 @@ public class Game1 : Game
     private SpriteBatch _spriteBatch;
 
     private GreyGuiElement root;
+    private GreyGuiElement root2;
     private Point _drawPos = new Point(50, 50);
     private RenderContext renderContext = new();
     private GuiBatch _guiBatch;
@@ -22,6 +23,8 @@ public class Game1 : Game
     private Texture2D _buttonTexture;
 
     private bool oneTimeTicket = true;
+    private Stopwatch _stopwatch = new Stopwatch();
+
 
     public Game1()
     {
@@ -48,7 +51,8 @@ public class Game1 : Game
 
         _guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GenerateTextInputDemoPanel();
+        root = GenerateButtonPanel();
+        root2 = GenerateButtonPanel();
 
 
         // TODO: use this.Content to load your game content here
@@ -61,6 +65,7 @@ public class Game1 : Game
         // TODO: Add your update logic here
         GuiUpdate.StartFrame(gameTime, Mouse.GetState(), Keyboard.GetState());
         GuiUpdate.Update(root);
+        // GuiUpdate.Update(root2);
 
         if (GuiUpdate.FocusedElement == null)
         {
@@ -89,7 +94,7 @@ public class Game1 : Game
 
             if (keyboardState.IsKeyDown(Keys.R))
             {
-                root = GenerateTextInputDemoPanel();
+                root = GenerateGitHubBanner();
             }
         }
 
@@ -106,9 +111,12 @@ public class Game1 : Game
         _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
         _spriteBatch.End();
 
+        // _stopwatch.Restart();
         _guiBatch.ReceiveFrameInfo(gameTime);
+        // _guiBatch.Draw(root2, renderContext, new Point(950, 50));
         _guiBatch.Draw(root, renderContext, new Point(50, 50));
         _guiBatch.Flush(renderContext);
+        // Console.WriteLine(_stopwatch.Elapsed.TotalMicroseconds);
 
         // Measure draw calls
         // var metrics = GraphicsDevice.Metrics;
@@ -196,8 +204,9 @@ public class Game1 : Game
     private GreyGuiElement GenerateButtonPanel()
     {
 
-        return new ListPanel(size: new(500, 135), borderRadius: 40, colorMask: Color.White, borderColor: Color.Black, borderWidth: 5).SetChildren([
+        return new ListPanel(size: new(300, 200), borderRadius: 10, colorMask: new(48, 121, 161), borderColor: Color.Black, borderWidth: 5).SetChildren([
             GenerateButton(),
+            new Text(fontSize: 20, displayText:"This panel is here to showcase the correctness of mouse detection", size: new(170, 200), autoEndLine: true, colorMask: Color.Black)
         ]);
     }
     private Button GenerateButton()
@@ -206,6 +215,7 @@ public class Game1 : Game
         Action<Button, Point, RenderContext, Rectangle> buttonDrawMethod = (button, position, renderContext, scissor) =>
         {
             button.OnScreenPos = position;
+            button.LastScissor = scissor;
             timer = (button.State, timer) switch
             {
                 (GreyGuiButtonState.Active, _) => -.3f,
@@ -225,7 +235,7 @@ public class Game1 : Game
             {
                 child.IsSizeDirty = true;
             }
-            Vector2 size = button.Size - minify;
+            Vector2 size = button.FinalSize - minify;
             size.Round();
             renderContext.RenderTexture(
                 button.ImageTexture,
@@ -238,9 +248,9 @@ public class Game1 : Game
                 scissor
             );
         };
-        Text buttonText = new Text(fontSize: 32, widthRatio: 1, widthMode: TextWidthMode.ParentRatio, displayText: "0", fontSizeScalingMode: FontSizeScalingMode.UseWidthRatio, size: new(230, 50), alignMode: TextAlignment.Center, heightMode: TextHeightMode.TextHeight);
+        Text buttonText = new Text(fontSize: 32, widthRatio: 1, widthMode: TextWidthMode.ParentRatio, displayText: "0", size: new(230, 50), alignMode: TextAlignment.Center, heightMode: TextHeightMode.TextHeight);
 
-        Button resultButton = new(useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: .2f, borderColor: Color.Black, borderRadius: 5, borderWidth: 5);
+        Button resultButton = new(useWidthRatio: true, widthRatio: .3f, useHeightWidthRatio: true, heightWidthRatio: .8f, borderColor: new(44, 91, 138), borderRadius: 10, borderWidth: 5, colorMask: Color.SkyBlue);
         resultButton.DrawMethod = buttonDrawMethod;
         resultButton.AppendChild(buttonText);
         resultButton.OnLeftClicked += () =>
@@ -286,6 +296,10 @@ public class Game1 : Game
         //  borderRadius: 10,
         //  borderWidth : 3
          );
+        rootText.OnClicked += (_) => { Console.WriteLine("display text clicked"); };
+        rootText.OnBlurred += (_) => { Console.WriteLine("display text blurred"); };
+        rootText.OnTextChanged += (_, _) => { Console.WriteLine("display text textChanged"); };
+
 
         Button[] widthDefiners;
         void ChangeWidthDefiner(string definer)
@@ -418,7 +432,7 @@ public class Game1 : Game
         alignModeButtons[2].OnLeftClicked += () => { ChangeAlignMode(TextAlignment.Right); };
         alignModeButtons[3].OnLeftClicked += () => { ChangeAlignMode(TextAlignment.Justify); };
 
-        return new ListPanel(colorMask: new Color(87, 125, 91), size: new(1200, 800), paddingSide: 10, paddingTop: 10, borderRadius: 10, layoutMode: RowLayoutMode.Center).SetChildren([
+        return new ListScrollPanel(colorMask: new Color(87, 125, 91), size: new(1200, 800), paddingSide: 10, paddingTop: 10, borderRadius: 10, layoutMode: RowLayoutMode.Center).SetChildren([
             new RowPanel(colorMask: Color.Transparent, widthMode: WidthMode.ParentRatio, widthRatio: 1f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([
                 new Text(colorMask: Color.White, widthMode: TextWidthMode.ParentRatio, widthRatio: .33f, heightMode: TextHeightMode.TextHeight, fontSize: 26f, displayText: "Element Width Definer"),
                 new RowPanel(colorMask: Color.Transparent, widthMode: WidthMode.ParentRatio, widthRatio: .67f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([
@@ -463,5 +477,25 @@ public class Game1 : Game
             ]),
             rootText
         ]);
+    }
+    private GreyGuiElement GenerateGitHubBanner()
+    {
+        ListPanel result = new ListPanel(size: new(800, 180), colorMask: new(91, 136, 181), borderRadius: 10, layoutMode: RowLayoutMode.Left, borderWidth: 4, paddingSide: 20, rowGap: 25, borderColor: new(200,200,200)).SetChildren([
+            new Text(displayText: "Do you want", widthMode: TextWidthMode.TextWidth, widthRatio:.5f, fontSize: 40, colorMask: new(206, 221, 237), textYOffset:24),
+            new Text(displayText: " Grey", widthMode: TextWidthMode.TextWidth, widthRatio:.35f, fontSize: 70, colorMask: new(200,200,200), heightMode: TextHeightMode.TextHeight),
+            new Text(displayText: "Gui", widthMode: TextWidthMode.TextWidth, widthRatio:.35f, fontSize: 70, colorMask: new(255,255,255), heightMode: TextHeightMode.TextHeight),
+            new Text(displayText: "   ?", widthMode: TextWidthMode.TextWidth, widthRatio:1f, fontSize: 40, colorMask: new(206, 221, 237), textYOffset:24),
+            new RowPanel(widthMode: WidthMode.ParentRatio, widthRatio: 1, layoutMode: RowLayoutMode.Justify, childGap:10).SetChildren([
+                new Button(colorMask: new (47, 96, 145), size:new(365, 64), borderRadius: 10, borderColor: new (47, 96, 145), borderWidth: 4).SetChild(
+                    new Text(displayText: "maybe?", fontSize: 50, widthMode: TextWidthMode.TextWidth, heightMode: TextHeightMode.TextHeight, textYOffset: -6, colorMask: Color.White)
+                ),
+                new Button(colorMask: new (47, 96, 145), size:new(365, 64), borderRadius: 10, borderColor: new (200,200,200), borderWidth: 4).SetChild(
+                    new Text(displayText: "YES", fontSize: 50, widthMode: TextWidthMode.TextWidth, heightMode: TextHeightMode.TextHeight, textYOffset: -6, colorMask: Color.White)
+                ),
+
+
+            ]),
+        ]);
+        return result;
     }
 }

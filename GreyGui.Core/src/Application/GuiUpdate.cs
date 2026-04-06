@@ -9,7 +9,18 @@ public static class GuiUpdate
 {
     public static int FrameId { get; set; }
     public static double ElapsedTimeSecond { get; set; }
-    public static GreyGuiElement? FocusedElement { get; set; }
+    public static IFocusable? FocusedElement
+    {
+        get => _focusedElement;
+        set
+        {
+            if (_focusedElement == value)
+                return;
+            FocusedElement?.TriggerOnBlurred(); // blur the current focusing element first
+            _focusedElement = value;
+            _focusedElement?.TriggerOnFocused();
+        }
+    }
     public static bool IsMouseHandled { get; private set; }
     public static GreyGuiElement? MouseHandler { get; set; }
     public static void StartFrame(GameTime gameTime, MouseState mouseState, KeyboardState keyboardState)
@@ -31,7 +42,7 @@ public static class GuiUpdate
     public static void Update(GreyGuiElement root)
     {
         // If the mouse has not been handled yet
-        if (MouseHandler == null)
+        if (GreyGui.GameInstance.IsActive && MouseHandler == null)
         {
             MouseHandler = root.GetMouseHandler();
             MouseHandler?.HandleMouseEvent();
@@ -63,6 +74,7 @@ public static class GuiUpdate
     }
 
     private const int maxInputBufferSize = 64;
+    private static IFocusable? _focusedElement = null;
     private static MouseState prevMouseState;
     private static MouseState currMouseState;
     private static KeyboardState prevKeyboardState;

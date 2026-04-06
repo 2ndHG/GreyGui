@@ -7,7 +7,8 @@ public class Text : GreyGuiElement, IRatioElement
 {
     public override Vector2 Size
     {
-        get => _size; set
+        get => _size;
+        set
         {
             if (_size == value)
             {
@@ -17,6 +18,8 @@ public class Text : GreyGuiElement, IRatioElement
             _isSizeDirty = true;
         }
     }
+    public override Vector2 FinalSize => _finalSize;
+    public Color BackgroundColor { get; set; }
     public override int ZIndex
     {
         get => _zIndex; set
@@ -198,6 +201,7 @@ public class Text : GreyGuiElement, IRatioElement
     }
 
     private Vector2 _size;
+    private Vector2 _finalSize;
     private int _zIndex;
     private TextWidthMode _widthMode;
     private TextHeightMode _heightMode;
@@ -218,15 +222,21 @@ public class Text : GreyGuiElement, IRatioElement
     private readonly List<int> _displayTextCharIndices = [];
     private readonly List<Vector2> _segmentOffsetCache = [];
     private bool _autoEndLine;
-    private int _rowCount = 1;    
+    private int _rowCount = 1;
     private float _maxWidth = 0;
 
 
-    public Text(Color? colorMask = null, Color borderColor = default, Vector2 size = default, TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default)
+    public Text(
+    Color? colorMask = null, Color? borderColor = null, Color? backgroundColor = null, Vector2 size = default, int borderRadius = default, int borderWidth = default,
+    TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default)
     {
         ColorMask = colorMask ?? Color.Black;
-        BorderColor = borderColor;
+        BorderColor = borderColor ?? Color.Transparent;
+        BackgroundColor = backgroundColor ?? Color.Transparent;
+        BorderRadius = borderRadius;
+        BorderWidth = borderWidth;
         _size = size;
+
         _widthMode = widthMode;
         _heightMode = heightMode;
         _widthRatio = widthRatio;
@@ -350,7 +360,7 @@ public class Text : GreyGuiElement, IRatioElement
 
         float fontSize = GetFinalFontSize();
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
-        float endLineThreshold = _autoEndLine ? _size.X : float.MaxValue;
+        float endLineThreshold = _autoEndLine ? _finalSize.X : float.MaxValue;
         float widthSum = 0;
         float prevSegmentSpaceWidth = 0;
         int undrewLastIndex = 0;
@@ -358,8 +368,8 @@ public class Text : GreyGuiElement, IRatioElement
         Vector2 offset = new(0, 0);
         float singleNewlineX = _alignMode switch
         {
-            TextAlignment.Center => _size.X / 2,
-            TextAlignment.Right => _size.X,
+            TextAlignment.Center => _finalSize.X / 2,
+            TextAlignment.Right => _finalSize.X,
             _ => 0
         };
 
@@ -408,7 +418,7 @@ public class Text : GreyGuiElement, IRatioElement
 
         void ComputeRow(int endIndex, bool isFullRow)
         {
-            float rowWidth = _size.X;
+            float rowWidth = _finalSize.X;
             offset.X = _alignMode switch
             {
                 TextAlignment.Center => (rowWidth - widthSum + prevSegmentSpaceWidth) / 2,
@@ -441,10 +451,11 @@ public class Text : GreyGuiElement, IRatioElement
     private void RecalculateSize()
     {
         // As an IRatioElement
-        Vector2 sizeBefore = _size;
+        Vector2 sizeBefore = _finalSize;
+        _finalSize = _size;
         if (_widthMode == TextWidthMode.ParentRatio && _parent != null)
         {
-            _size.X = _parent.ContainerSize.X * _widthRatio;
+            _finalSize.X = _parent.ContainerSize.X * _widthRatio;
         }
 
         // UseHeightRatio has a higher priority then UseHeightWidthRatio
@@ -452,12 +463,12 @@ public class Text : GreyGuiElement, IRatioElement
         {
             if (_parent != null)
             {
-                _size.Y = _parent.ContainerSize.Y * _heightRatio;
+                _finalSize.Y = _parent.ContainerSize.Y * _heightRatio;
             }
         }
         else if (_heightMode == TextHeightMode.HeightWidthRatio)
         {
-            _size.Y = _size.X * _heightWidthRatio;
+            _finalSize.Y = _finalSize.X * _heightWidthRatio;
         }
 
         // we have calculated the layout before if UseTextHeight is true
@@ -465,12 +476,12 @@ public class Text : GreyGuiElement, IRatioElement
             ResolveDisplayTextDirty();
         ResolveLayoutDirty();
         if (_widthMode == TextWidthMode.TextWidth)
-            _size.X = _maxWidth;
+            _finalSize.X = _maxWidth;
         if (_heightMode == TextHeightMode.TextHeight)
-            _size.Y = _rowCount * GetFinalFontSize();
+            _finalSize.Y = _rowCount * GetFinalFontSize();
 
 
-        if (sizeBefore != _size && _parent is not null)
+        if (sizeBefore != _finalSize && _parent is not null)
         {
             _parent.IsLayoutDirty = true;
         }
@@ -594,8 +605,8 @@ public class Text : GreyGuiElement, IRatioElement
         {
             fontSize = _fontSizeScalingMode switch
             {
-                FontSizeScalingMode.UseWidthRatio => _size.X / _fontSizeScalingBaseline * _fontSize,
-                FontSizeScalingMode.UseHeightRatio => _size.Y / _fontSizeScalingBaseline * _fontSize,
+                FontSizeScalingMode.UseWidthRatio => _finalSize.X / _fontSizeScalingBaseline * _fontSize,
+                FontSizeScalingMode.UseHeightRatio => _finalSize.Y / _fontSizeScalingBaseline * _fontSize,
                 _ => _fontSize
             };
         }
@@ -607,6 +618,11 @@ public class Text : GreyGuiElement, IRatioElement
         if (_isDisplayTextDirty)
         {
             ResolveDisplayTextDirty();
+        }
+
+        if (BackgroundColor != Color.Transparent || BorderWidth > 0)
+        {
+            renderContext.FillRect(new Rectangle(pos, _finalSize.ToPoint()), BackgroundColor, BorderColor, BorderRadius, BorderWidth, screenScissor);
         }
 
         float fontSize = GetFinalFontSize();

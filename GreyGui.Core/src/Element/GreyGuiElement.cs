@@ -5,14 +5,16 @@ namespace GreyGui;
 
 public abstract class GreyGuiElement
 {
-    public bool Enabled { get; set; } = true;
+    // public bool Enabled { get; set; } = true;
     public Color ColorMask { get; set; } = Color.Gray;
     public Color BorderColor { get; set; } = Color.Gray;
     public Point OnScreenPos { get; set; }
+    public Rectangle LastScissor { get; set; }
     public int BorderRadius { get; set; }
     public int BorderWidth { get; set; }
     public IContainer? Parent { get => _parent; }
     public abstract Vector2 Size { get; set; }
+    public abstract Vector2 FinalSize { get; }
     /// <summary>
     /// Smaller draw first
     /// </summary>

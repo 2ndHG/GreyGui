@@ -4,19 +4,24 @@ using Microsoft.Xna.Framework.Input;
 
 namespace GreyGui.Core;
 
-public class TextInput : GreyGuiElement, IRatioElement
+public class TextInput : GreyGuiElement, IRatioElement, IFocusable
 {
     public override Vector2 Size
     {
-        get => _size; set
+        get => _size; 
+        set
         {
             if (_size == value)
             {
                 return;
             }
-            _size = value;
+            _finalSize = _size = value;
             _isSizeDirty = true;
         }
+    }
+    public override Vector2 FinalSize
+    {
+        get => _finalSize;
     }
     public Color BackgroundColor { get; set; }
     public override int ZIndex
@@ -220,6 +225,11 @@ public class TextInput : GreyGuiElement, IRatioElement
     private FontSizeScalingMode _fontSizeScalingMode;
     private float _fontSizeScalingBaseline;
 
+    // events
+    public event Action<TextInput>? OnBlurred;
+    public event Action<TextInput>? OnClicked;
+    public event Action<TextInput, string>? OnTextChanged;
+
     // cursor
     private int _cursorIndex = 0;
     private double _cursorBlinkFactor;
@@ -239,7 +249,7 @@ public class TextInput : GreyGuiElement, IRatioElement
     private float _maxWidth = 0;
 
     public TextInput(Color? colorMask = null, Color? borderColor = null, Color? backgroundColor = null, Vector2 size = default, int borderRadius = default, int borderWidth = default,
-    TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default, Color? focusedColor = null)
+    TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default, Color? focusedColor = null, Action<TextInput>? onClicked = null, Action<TextInput>? onBlurred = null, Action<TextInput, string>? onTextChanged = null)
     {
         ColorMask = colorMask ?? Color.Black;
         BackgroundColor = backgroundColor ?? Color.Transparent;
@@ -271,6 +281,9 @@ public class TextInput : GreyGuiElement, IRatioElement
             _ => fontSize,
         };
         _autoEndLine = autoEndLine;
+        OnBlurred = onBlurred;
+        OnClicked = onClicked;
+        OnTextChanged = onTextChanged;
 
         _isSizeDirty = true;
         _isDisplayTextDirty = true;
@@ -280,6 +293,15 @@ public class TextInput : GreyGuiElement, IRatioElement
         _cursorMoveKeys = [Keys.Up, Keys.Down, Keys.Left, Keys.Right];
         _cursorMoveMethods = [CursorMoveUp, CursorMoveDown, CursorMoveLeft, CursorMoveRight];
     }
+    public void TriggerOnBlurred()
+    {
+        OnBlurred?.Invoke(this);
+    }
+    public void TriggerOnFocused()
+    {
+        OnClicked?.Invoke(this);
+    }
+
     private void ResolveLayoutDirty()
     {
         if (_widthMode != TextWidthMode.TextWidth)
@@ -377,7 +399,7 @@ public class TextInput : GreyGuiElement, IRatioElement
 
         float fontSize = GetFinalFontSize();
         float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
-        float endLineThreshold = _autoEndLine ? _size.X : float.MaxValue;
+        float endLineThreshold = _autoEndLine ? _finalSize.X : float.MaxValue;
         float widthSum = 0;
         float prevSegmentSpaceWidth = 0;
         int undrewLastIndex = 0;
@@ -385,8 +407,8 @@ public class TextInput : GreyGuiElement, IRatioElement
         Vector2 offset = new(0, 0);
         float singleNewlineX = _alignMode switch
         {
-            TextAlignment.Center => _size.X / 2,
-            TextAlignment.Right => _size.X,
+            TextAlignment.Center => _finalSize.X / 2,
+            TextAlignment.Right => _finalSize.X,
             _ => 0
         };
 
@@ -435,7 +457,7 @@ public class TextInput : GreyGuiElement, IRatioElement
 
         void ComputeRow(int endIndex, bool isFullRow)
         {
-            float rowWidth = _size.X;
+            float rowWidth = _finalSize.X;
             offset.X = _alignMode switch
             {
                 TextAlignment.Center => (rowWidth - widthSum + prevSegmentSpaceWidth) / 2,
@@ -562,10 +584,11 @@ public class TextInput : GreyGuiElement, IRatioElement
     private void RecalculateSize()
     {
         // As an IRatioElement
-        Vector2 sizeBefore = _size;
+        Vector2 sizeBefore = _finalSize;
+        _finalSize = _size;
         if (_widthMode == TextWidthMode.ParentRatio && _parent != null)
         {
-            _size.X = _parent.ContainerSize.X * _widthRatio;
+            _finalSize.X = _parent.ContainerSize.X * _widthRatio;
         }
 
         // UseHeightRatio has a higher priority then UseHeightWidthRatio
@@ -573,12 +596,12 @@ public class TextInput : GreyGuiElement, IRatioElement
         {
             if (_parent != null)
             {
-                _size.Y = _parent.ContainerSize.Y * _heightRatio;
+                _finalSize.Y = _parent.ContainerSize.Y * _heightRatio;
             }
         }
         else if (_heightMode == TextHeightMode.HeightWidthRatio)
         {
-            _size.Y = _size.X * _heightWidthRatio;
+            _finalSize.Y = _finalSize.X * _heightWidthRatio;
         }
 
         // we have calculated the layout before if UseTextHeight is true
@@ -586,12 +609,12 @@ public class TextInput : GreyGuiElement, IRatioElement
             ResolveDisplayTextDirty();
         ResolveLayoutDirty();
         if (_widthMode == TextWidthMode.TextWidth)
-            _size.X = _maxWidth;
+            _finalSize.X = _maxWidth;
         if (_heightMode == TextHeightMode.TextHeight)
-            _size.Y = _rowCount * GetFinalFontSize();
+            _finalSize.Y = _rowCount * GetFinalFontSize();
 
 
-        if (sizeBefore != _size && _parent is not null)
+        if (sizeBefore != _finalSize && _parent is not null)
         {
             _parent.IsLayoutDirty = true;
         }
@@ -768,8 +791,8 @@ public class TextInput : GreyGuiElement, IRatioElement
         {
             fontSize = _fontSizeScalingMode switch
             {
-                FontSizeScalingMode.UseWidthRatio => _size.X / _fontSizeScalingBaseline * _fontSize,
-                FontSizeScalingMode.UseHeightRatio => _size.Y / _fontSizeScalingBaseline * _fontSize,
+                FontSizeScalingMode.UseWidthRatio => _finalSize.X / _fontSizeScalingBaseline * _fontSize,
+                FontSizeScalingMode.UseHeightRatio => _finalSize.Y / _fontSizeScalingBaseline * _fontSize,
                 _ => _fontSize
             };
         }
@@ -778,7 +801,10 @@ public class TextInput : GreyGuiElement, IRatioElement
 
     public override GreyGuiElement? GetMouseHandler()
     {
-        return new Rectangle(OnScreenPos, _size.ToPoint()).Contains(GuiUpdate.Mouse.Position) ? this : null;
+        Rectangle selfRect = new(OnScreenPos, _finalSize.ToPoint());
+        Rectangle lastAppliedScissor = LastScissor;
+        Rectangle.Intersect(ref selfRect, ref lastAppliedScissor, out Rectangle detectingRect);
+        return detectingRect.Contains(GuiUpdate.Mouse.Position) ? this : null;
     }
     public override void HandleMouseEvent()
     {
@@ -794,18 +820,23 @@ public class TextInput : GreyGuiElement, IRatioElement
             }
             _cursorBlinkFactor = .5;
             GuiUpdate.FocusedElement = this;
+
         }
     }
 
     public override void Draw(Point pos, RenderContext renderContext, Rectangle screenScissor)
     {
         OnScreenPos = pos;
+        LastScissor = screenScissor;
         if (_isDisplayTextDirty)
         {
             ResolveDisplayTextDirty();
         }
 
-        renderContext.FillRect(new Rectangle(pos, _size.ToPoint()), BackgroundColor, BorderColor, BorderRadius, BorderWidth, screenScissor);
+        if (BackgroundColor != Color.Transparent || BorderWidth > 0)
+        {
+            renderContext.FillRect(new Rectangle(pos, _finalSize.ToPoint()), BackgroundColor, BorderColor, BorderRadius, BorderWidth, screenScissor);
+        }
 
         float fontSize = GetFinalFontSize();
         Vector2 position = pos.ToVector2();
@@ -856,6 +887,7 @@ public class TextInput : GreyGuiElement, IRatioElement
         }
 
         ReadOnlySpan<char> inputBuffer = GuiUpdate.Keyboard.GetTextInputBuffer();
+        bool displayTextChanged = false;
 
         // when using 'DisplayText = ' assignment, the _cursorIndex field will be set to _displayText.Length, hence we need to record the original index first
         int cursorIndex = _cursorIndex;
@@ -867,11 +899,13 @@ public class TextInput : GreyGuiElement, IRatioElement
                 if (cursorIndex > 0)
                 {
                     DisplayText = _displayText.Remove((cursorIndex--) - 1, 1);
+                    displayTextChanged = true;
                 }
             }
             else
             {
                 DisplayText = _displayText.Insert(cursorIndex++, c.ToString());
+                displayTextChanged = true;
             }
             _cursorBlinkFactor = .5;
         }
@@ -910,6 +944,11 @@ public class TextInput : GreyGuiElement, IRatioElement
             fastMoving = 0;
         }
         _cursorIndex = Math.Clamp(_cursorIndex, 0, _displayText.Length);
+
+        if (displayTextChanged)
+        {
+            OnTextChanged?.Invoke(this, _displayText);
+        }
     }
 
     private void CursorMoveUp()

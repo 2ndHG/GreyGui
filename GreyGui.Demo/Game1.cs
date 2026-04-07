@@ -51,7 +51,7 @@ public class Game1 : Game
 
         _guiBatch = new GuiBatch(GraphicsDevice);
 
-        root = GenerateButtonPanel();
+        root = GenerateTextInputDemoPanel();
         root2 = GenerateButtonPanel();
 
 
@@ -250,7 +250,7 @@ public class Game1 : Game
         };
         Text buttonText = new Text(fontSize: 32, widthRatio: 1, widthMode: TextWidthMode.ParentRatio, displayText: "0", size: new(230, 50), alignMode: TextAlignment.Center, heightMode: TextHeightMode.TextHeight);
 
-        Button resultButton = new(useWidthRatio: true, widthRatio: .3f, useHeightWidthRatio: true, heightWidthRatio: .8f, borderColor: new(44, 91, 138), borderRadius: 10, borderWidth: 5, colorMask: Color.SkyBlue);
+        Button resultButton = new(widthMode: WidthMode.ParentRatio, widthRatio: .3f, heightMode: HeightMode.HeightWidthRatio, heightWidthRatio: .8f, borderColor: new(44, 91, 138), borderRadius: 10, borderWidth: 5, colorMask: Color.SkyBlue);
         resultButton.DrawMethod = buttonDrawMethod;
         resultButton.AppendChild(buttonText);
         resultButton.OnLeftClicked += () =>
@@ -269,7 +269,7 @@ public class Game1 : Game
     {
         return new ListPanel(colorMask: new(20, 20, 20), size: new(500, 135), borderRadius: 15, borderColor: Color.White, borderWidth: 0).SetChildren([
             // new Button(colorMask: Color.White, useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: 1f, imageTexture: _buttonTexture, imageSrcRect: new(0, 0, 8, 8)),
-            new Button(colorMask:Color.DarkGreen, useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: 1f),
+            new Button(colorMask:Color.DarkGreen, widthMode: WidthMode.ParentRatio, widthRatio: .5f, heightMode: HeightMode.HeightWidthRatio, heightWidthRatio: 1f),
         ]);
     }
 
@@ -277,7 +277,7 @@ public class Game1 : Game
     {
         static Button TextButtonFactory(string displayText)
         {
-            return new Button(colorMask: new Color(133, 199, 140), borderColor: Color.White, size: new(0, 50), useWidthRatio: true, widthRatio: .23f, borderRadius: 10).SetChild(
+            return new Button(colorMask: new Color(133, 199, 140), borderColor: Color.White, size: new(0, 50), widthMode: WidthMode.ParentRatio, widthRatio: .23f, borderRadius: 10).SetChild(
                 new Text(colorMask: Color.White, fontSize: 22, widthMode: TextWidthMode.ParentRatio, heightMode: TextHeightMode.TextHeight, widthRatio: 1, alignMode: TextAlignment.Center, displayText: displayText, autoEndLine: true, textYOffset: -4)
             );
         }

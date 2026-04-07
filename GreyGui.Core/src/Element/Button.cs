@@ -36,37 +36,26 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
 
     public Vector2 ContainerSize { get => _containerSize - new Vector2(PaddingSide * 2, PaddingVertical * 2); }
 
-    public bool UseWidthRatio
+    public WidthMode WidthMode
     {
-        get => _useWidthRatio;
+        get => _widthMode;
         set
         {
-            if (_useWidthRatio == value)
+            if (_widthMode == value)
                 return;
-            _useWidthRatio = value;
+            _widthMode = value;
             _isSizeDirty = true;
         }
     }
-    public bool UseHeightRatio
+    public HeightMode HeightMode
     {
-        get => _useHeightRatio;
+        get => _heightMode;
         set
         {
-            if (value == _useHeightRatio)
+            if (_heightMode == value)
                 return;
+            _heightMode = value;
             _isSizeDirty = true;
-            _useHeightRatio = value;
-        }
-    }
-    public bool UseHeightWidthRatio
-    {
-        get => _useHeightWidthRatio;
-        set
-        {
-            if (_useHeightWidthRatio == value)
-                return;
-            _isSizeDirty = true;
-            _useHeightWidthRatio = value;
         }
     }
 
@@ -117,9 +106,8 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     public event Action? OnRightClicked;
 
 
-    protected bool _useWidthRatio;
-    protected bool _useHeightRatio;
-    protected bool _useHeightWidthRatio;
+    protected WidthMode _widthMode;
+    protected HeightMode _heightMode;
     protected float _widthRatio;
     protected float _heightRatio;
     protected float _heightWidthRatio;
@@ -145,7 +133,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     protected Texture2D _imageTexture;
     protected Rectangle _imageSrcRect;
 
-    public Button(Color? colorMask = null, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, int paddingVertical = 0, int paddingSide = 0, int borderRadius = 0, int borderWidth = 0, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, Action? onLeftClicked = null)
+    public Button(Color? colorMask = null, Color borderColor = default, Vector2 size = default, WidthMode widthMode = WidthMode.Fixed, HeightMode heightMode = HeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, int paddingVertical = 0, int paddingSide = 0, int borderRadius = 0, int borderWidth = 0, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, Action? onLeftClicked = null)
     {
         ColorMask = (colorMask, imageTexture) switch
         {
@@ -155,9 +143,8 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         };
         BorderColor = borderColor;
         _size = size;
-        _useWidthRatio = useWidthRatio;
-        _useHeightRatio = useHeightRatio;
-        _useHeightWidthRatio = useHeightWidthRatio;
+        _widthMode = widthMode;
+        _heightMode = heightMode;
         _widthRatio = widthRatio;
         _heightRatio = heightRatio;
         _heightWidthRatio = heightWidthRatio;
@@ -221,12 +208,12 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
 
         // As an IRatioElement
         bool sizeChanged = false;
-        if (UseWidthRatio && _parent != null)
+        if (_widthMode == WidthMode.ParentRatio && _parent != null)
         {
             _finalSize.X = _parent.ContainerSize.X * _widthRatio;
             sizeChanged = true;
         }
-        if (UseHeightRatio)
+        if (_heightMode == HeightMode.ParentRatio)
         {
             if (_parent != null)
             {
@@ -234,7 +221,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
                 sizeChanged = true;
             }
         }
-        else if (UseHeightWidthRatio)
+        else if (_heightMode == HeightMode.HeightWidthRatio)
         {
             _finalSize.Y = _finalSize.X * _heightWidthRatio;
             sizeChanged = true;

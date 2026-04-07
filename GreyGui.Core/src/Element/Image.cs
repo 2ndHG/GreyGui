@@ -17,6 +17,7 @@ public class Image : GreyGuiElement, IRatioElement
             _isSizeDirty = true;
         }
     }
+    public override Vector2 FinalSize => _finalSize;
     public override int ZIndex
     {
         get => _zIndex; set
@@ -32,37 +33,26 @@ public class Image : GreyGuiElement, IRatioElement
         }
     }
 
-    public bool UseWidthRatio
+    public WidthMode WidthMode
     {
-        get => _useWidthRatio;
+        get => _widthMode;
         set
         {
-            if (_useWidthRatio == value)
+            if (_widthMode == value)
                 return;
-            _useWidthRatio = value;
+            _widthMode = value;
             _isSizeDirty = true;
         }
     }
-    public bool UseHeightRatio
+    public HeightMode HeightMode
     {
-        get => _useHeightRatio;
+        get => _heightMode;
         set
         {
-            if (value == _useHeightRatio)
+            if (_heightMode == value)
                 return;
+            _heightMode = value;
             _isSizeDirty = true;
-            _useHeightRatio = value;
-        }
-    }
-    public bool UseHeightWidthRatio
-    {
-        get => _useHeightWidthRatio;
-        set
-        {
-            if (_useHeightWidthRatio == value)
-                return;
-            _isSizeDirty = true;
-            _useHeightWidthRatio = value;
         }
     }
 
@@ -100,13 +90,13 @@ public class Image : GreyGuiElement, IRatioElement
         }
     }
 
-    protected bool _useWidthRatio;
-    protected bool _useHeightRatio;
-    protected bool _useHeightWidthRatio;
-    protected float _widthRatio;
-    protected float _heightRatio;
-    protected float _heightWidthRatio;
+    private WidthMode _widthMode;
+    private HeightMode _heightMode;
+    private float _widthRatio;
+    private float _heightRatio;
+    private float _heightWidthRatio;
     protected Vector2 _size;
+    protected Vector2 _finalSize;
     protected int _zIndex;
 
 
@@ -114,19 +104,13 @@ public class Image : GreyGuiElement, IRatioElement
     protected Texture2D _imageTexture;
     protected Rectangle _imageSrcRect;
 
-    public Image(Color? colorMask = null, Color borderColor = default, Vector2 size = default, bool useWidthRatio = default, bool useHeightRatio = default, bool useHeightWidthRatio = default, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, int borderRadius = 0, int borderWidth = 0, Texture2D? imageTexture = null, Rectangle imageSrcRect = default)
+    public Image(Color? colorMask = null, Color borderColor = default, Vector2 size = default, WidthMode widthMode = WidthMode.Fixed, HeightMode heightMode = HeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, int borderRadius = 0, int borderWidth = 0, Texture2D? imageTexture = null, Rectangle imageSrcRect = default)
     {
-        ColorMask = (colorMask, imageTexture) switch
-        {
-            (not null, _) => (Color)colorMask,
-            (null, not null) => Color.White,
-            _ => Color.Gray
-        };
+        ColorMask = colorMask ?? Color.White;
         BorderColor = borderColor;
         _size = size;
-        _useWidthRatio = useWidthRatio;
-        _useHeightRatio = useHeightRatio;
-        _useHeightWidthRatio = useHeightWidthRatio;
+        _widthMode = widthMode;
+        _heightMode = heightMode;
         _widthRatio = widthRatio;
         _heightRatio = heightRatio;
         _heightWidthRatio = heightWidthRatio;
@@ -151,26 +135,30 @@ public class Image : GreyGuiElement, IRatioElement
         {
             return;
         }
+
+        _finalSize = _size;
+
         // As an IRatioElement
         bool sizeChanged = false;
-        if (UseWidthRatio && _parent != null)
+        if (_widthMode == WidthMode.ParentRatio && _parent != null)
         {
-            _size.X = _parent.ContainerSize.X * _widthRatio;
+            _finalSize.X = _parent.ContainerSize.X * _widthRatio;
             sizeChanged = true;
         }
-        if (UseHeightRatio)
+        if (_heightMode == HeightMode.ParentRatio)
         {
             if (_parent != null)
             {
-                _size.Y = _parent.ContainerSize.Y * _heightRatio;
+                _finalSize.Y = _parent.ContainerSize.Y * _heightRatio;
                 sizeChanged = true;
             }
         }
-        else if (UseHeightWidthRatio)
+        else if (_heightMode == HeightMode.HeightWidthRatio)
         {
-            _size.Y = _size.X * _heightWidthRatio;
+            _finalSize.Y = _finalSize.X * _heightWidthRatio;
             sizeChanged = true;
         }
+        
         if (sizeChanged && _parent is not null)
         {
             _parent.IsLayoutDirty = true;
@@ -187,7 +175,7 @@ public class Image : GreyGuiElement, IRatioElement
     {
         renderContext.RenderTexture(
             _imageTexture,
-            new Rectangle(position, _size.ToPoint()),
+            new Rectangle(position, _finalSize.ToPoint()),
             _imageSrcRect,
             ColorMask,
             BorderColor,
@@ -199,7 +187,7 @@ public class Image : GreyGuiElement, IRatioElement
 
     public override GreyGuiElement? GetMouseHandler()
     {
-        return new Rectangle(OnScreenPos, _size.ToPoint()).Contains(GuiUpdate.Mouse.Position) ? this : null;
+        return new Rectangle(OnScreenPos, _finalSize.ToPoint()).Contains(GuiUpdate.Mouse.Position) ? this : null;
     }
     public override void HandleMouseEvent()
     {

@@ -39,11 +39,22 @@ public static class GreyGui
 
         // Initialize GuiUpdate
         GuiUpdate.Initialize(game);
+
+        Rectangle gameViewportRect = game.GraphicsDevice.Viewport.Bounds;
+        NullParentWidth = gameViewportRect.Width;
+        NullParentHeight = gameViewportRect.Height;
+    }
+    public static void SetVirtualParentSize(int width, int height)
+    {
+        NullParentWidth = width;
+        NullParentHeight = height;
     }
 
     public static Texture2D Atlas { get; private set; }
     public static Effect Shader { get; private set; }
     public static TextSystem TextSystem { get; private set; }
     public static Vector2 AtlasPixelUv { get; private set; }
-    public static Game GameInstance {get; private set;}
+    public static Game GameInstance { get; private set; }
+    public static int NullParentWidth { get; private set; }
+    public static int NullParentHeight { get; private set; }
 }

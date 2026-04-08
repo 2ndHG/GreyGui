@@ -249,23 +249,33 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
 
     private void RecalculateSize()
     {
-        // As an IRatioElement
         bool sizeChanged = false;
         _finalSize = _size;
-        if (_widthMode == WidthMode.ParentRatio && _parent != null)
+        // As an IRatioElement
+        if (_widthMode == WidthMode.ParentRatio)
         {
-            _finalSize.X = _parent.ContainerSize.X * _widthRatio;
+            if (_parent == null)
+            {
+                _finalSize.X = GreyGui.NullParentWidth * _widthRatio;
+            }
+            else
+            {
+                _finalSize.X = _parent.ContainerSize.X * _widthRatio;
+            }
             sizeChanged = true;
         }
-
         // UseHeightRatio has a higher priority then UseHeightWidthRatio
         if (_heightMode == HeightMode.ParentRatio)
         {
-            if (_parent != null)
+            if (_parent == null)
+            {
+                _finalSize.Y = GreyGui.NullParentHeight * _heightRatio;
+            }
+            else
             {
                 _finalSize.Y = _parent.ContainerSize.Y * _heightRatio;
-                sizeChanged = true;
             }
+            sizeChanged = true;
         }
         else if (_heightMode == HeightMode.HeightWidthRatio)
         {

@@ -450,18 +450,29 @@ public class Text : GreyGuiElement, IRatioElement
 
     private void RecalculateSize()
     {
-        // As an IRatioElement
         Vector2 sizeBefore = _finalSize;
         _finalSize = _size;
-        if (_widthMode == TextWidthMode.ParentRatio && _parent != null)
+        // As an IRatioElement
+        if (_widthMode == TextWidthMode.ParentRatio)
         {
-            _finalSize.X = _parent.ContainerSize.X * _widthRatio;
+            if (_parent == null)
+            {
+                _finalSize.X = GreyGui.NullParentWidth * _widthRatio;
+            }
+            else
+            {
+                _finalSize.X = _parent.ContainerSize.X * _widthRatio;
+            }
         }
 
         // UseHeightRatio has a higher priority then UseHeightWidthRatio
         if (_heightMode == TextHeightMode.ParentRatio)
         {
-            if (_parent != null)
+            if (_parent == null)
+            {
+                _finalSize.Y = GreyGui.NullParentHeight * _heightRatio;
+            }
+            else
             {
                 _finalSize.Y = _parent.ContainerSize.Y * _heightRatio;
             }

@@ -208,18 +208,29 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
 
         // As an IRatioElement
         bool sizeChanged = false;
-        if (_widthMode == WidthMode.ParentRatio && _parent != null)
+        if (_widthMode == WidthMode.ParentRatio)
         {
-            _finalSize.X = _parent.ContainerSize.X * _widthRatio;
+            if (_parent == null)
+            {
+                _finalSize.X = GreyGui.NullParentWidth * _widthRatio;
+            }
+            else
+            {
+                _finalSize.X = _parent.ContainerSize.X * _widthRatio;
+            }
             sizeChanged = true;
         }
         if (_heightMode == HeightMode.ParentRatio)
         {
-            if (_parent != null)
+            if (_parent == null)
+            {
+                _finalSize.Y = GreyGui.NullParentHeight * _heightRatio;
+            }
+            else
             {
                 _finalSize.Y = _parent.ContainerSize.Y * _heightRatio;
-                sizeChanged = true;
             }
+            sizeChanged = true;
         }
         else if (_heightMode == HeightMode.HeightWidthRatio)
         {

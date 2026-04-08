@@ -96,7 +96,7 @@ public class Game1 : Game
 
             if (keyboardState.IsKeyDown(Keys.R))
             {
-                root = GenerateGitHubBanner();
+                root = GenerateText2();
             }
             if (keyboardState.IsKeyDown(Keys.P) && oneTimeTicket)
             {
@@ -122,16 +122,16 @@ public class Game1 : Game
         _spriteBatch.End();
 
         // _stopwatch.Restart();
-        GraphicsDevice.SetRenderTarget(_bannerRt);
+        // GraphicsDevice.SetRenderTarget(_bannerRt);
         _guiBatch.ReceiveFrameInfo(gameTime);
         // _guiBatch.Draw(root2, renderContext, new Point(950, 50));
         _guiBatch.Draw(root, renderContext, new Point(0, 0));
         _guiBatch.Flush(renderContext);
 
-        GraphicsDevice.SetRenderTarget(null);
-        _spriteBatch.Begin();
-        _spriteBatch.Draw(_bannerRt, new Vector2(0, 0), Color.White);
-        _spriteBatch.End();
+        // GraphicsDevice.SetRenderTarget(null);
+        // _spriteBatch.Begin();
+        // _spriteBatch.Draw(_bannerRt, new Vector2(0, 0), Color.White);
+        // _spriteBatch.End();
 
         // Console.WriteLine(_stopwatch.Elapsed.TotalMicroseconds);
 
@@ -215,7 +215,7 @@ public class Game1 : Game
     }
     private GreyGuiElement GenerateText2()
     {
-        return new Text(colorMask: Color.PaleGoldenrod, size: new(1000, 100));
+        return new Text(colorMask: Color.PaleGoldenrod, size: new(1000, 100), displayText: "WHAT", heightRatio: .3f, fontSize: 1, fontSizeScalingMode: FontSizeScalingMode.UseHeightRatio, fontSizeScalingBaseline: 1);
     }
 
     private GreyGuiElement GenerateButtonPanel()
@@ -284,9 +284,9 @@ public class Game1 : Game
 
     private GreyGuiElement GenerateImageButtonPanel()
     {
-        return new ListPanel(colorMask: new(20, 20, 20), size: new(500, 135), borderRadius: 15, borderColor: Color.White, borderWidth: 0).SetChildren([
-            // new Button(colorMask: Color.White, useWidthRatio: true, widthRatio: .5f, useHeightWidthRatio: true, heightWidthRatio: 1f, imageTexture: _buttonTexture, imageSrcRect: new(0, 0, 8, 8)),
-            new Button(colorMask:Color.DarkGreen, widthMode: WidthMode.ParentRatio, widthRatio: .5f, heightMode: HeightMode.HeightWidthRatio, heightWidthRatio: 1f),
+        return new ListPanel(colorMask: new(80, 80, 80), size: new(500, 135), borderRadius: 15, borderColor: Color.White, borderWidth: 0).SetChildren([
+            new Button(colorMask: Color.White,widthMode: WidthMode.ParentRatio, heightMode: HeightMode.HeightWidthRatio, widthRatio: .3f, heightWidthRatio: 1f, imageTexture: _buttonTexture, imageSrcRect: new(0, 0, 8, 8)),
+            new Button(colorMask:Color.DarkGreen, widthMode: WidthMode.ParentRatio, widthRatio: .3f, heightMode: HeightMode.HeightWidthRatio, heightWidthRatio: 1f),
         ]);
     }
 
@@ -449,7 +449,7 @@ public class Game1 : Game
         alignModeButtons[2].OnLeftClicked += () => { ChangeAlignMode(TextAlignment.Right); };
         alignModeButtons[3].OnLeftClicked += () => { ChangeAlignMode(TextAlignment.Justify); };
 
-        return new ListScrollPanel(colorMask: new Color(87, 125, 91), size: new(1200, 800), paddingSide: 10, paddingTop: 10, borderRadius: 10, layoutMode: RowLayoutMode.Center).SetChildren([
+        return new ListScrollPanel(colorMask: new Color(87, 125, 91), widthMode: WidthMode.ParentRatio, widthRatio: .8f, heightMode: HeightMode.ParentRatio, heightRatio: .8f, paddingSide: 10, paddingTop: 10, borderRadius: 10, layoutMode: RowLayoutMode.Center).SetChildren([
             new RowPanel(colorMask: Color.Transparent, widthMode: WidthMode.ParentRatio, widthRatio: 1f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([
                 new Text(colorMask: Color.White, widthMode: TextWidthMode.ParentRatio, widthRatio: .33f, heightMode: TextHeightMode.TextHeight, fontSize: 26f, displayText: "Element Width Definer"),
                 new RowPanel(colorMask: Color.Transparent, widthMode: WidthMode.ParentRatio, widthRatio: .67f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([

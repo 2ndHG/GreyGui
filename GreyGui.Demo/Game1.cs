@@ -21,6 +21,7 @@ public class Game1 : Game
     private TextInput rootText;
     private Button experimentingButton;
     private Texture2D _buttonTexture;
+    private RenderTarget2D _bannerRt;
 
     private bool oneTimeTicket = true;
     private Stopwatch _stopwatch = new Stopwatch();
@@ -45,6 +46,7 @@ public class Game1 : Game
     protected override void LoadContent()
     {
         _buttonTexture = Content.Load<Texture2D>("SampleImage/ButtonSample");
+        _bannerRt = new RenderTarget2D(GraphicsDevice, 800, 180);
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         GreyGui.Initialize(this);
         GreyGui.TextSystem.LoadFont("huninn", "huninn.ttf");
@@ -96,6 +98,14 @@ public class Game1 : Game
             {
                 root = GenerateGitHubBanner();
             }
+            if (keyboardState.IsKeyDown(Keys.P) && oneTimeTicket)
+            {
+                oneTimeTicket = false;
+                using (FileStream fs = File.OpenWrite("Banner.png"))
+                {
+                    _bannerRt.SaveAsPng(fs, _bannerRt.Width, _bannerRt.Height);
+                }
+            }
         }
 
 
@@ -112,10 +122,17 @@ public class Game1 : Game
         _spriteBatch.End();
 
         // _stopwatch.Restart();
+        GraphicsDevice.SetRenderTarget(_bannerRt);
         _guiBatch.ReceiveFrameInfo(gameTime);
         // _guiBatch.Draw(root2, renderContext, new Point(950, 50));
-        _guiBatch.Draw(root, renderContext, new Point(50, 50));
+        _guiBatch.Draw(root, renderContext, new Point(0, 0));
         _guiBatch.Flush(renderContext);
+
+        GraphicsDevice.SetRenderTarget(null);
+        _spriteBatch.Begin();
+        _spriteBatch.Draw(_bannerRt, new Vector2(0, 0), Color.White);
+        _spriteBatch.End();
+
         // Console.WriteLine(_stopwatch.Elapsed.TotalMicroseconds);
 
         // Measure draw calls
@@ -480,9 +497,9 @@ public class Game1 : Game
     }
     private GreyGuiElement GenerateGitHubBanner()
     {
-        ListPanel result = new ListPanel(size: new(800, 180), colorMask: new(91, 136, 181), borderRadius: 10, layoutMode: RowLayoutMode.Left, borderWidth: 4, paddingSide: 20, rowGap: 25, borderColor: new(200,200,200)).SetChildren([
+        ListPanel result = new ListPanel(size: new(800, 180), colorMask: new(91, 136, 181), borderRadius: 10, layoutMode: RowLayoutMode.Left, borderWidth: 4, paddingSide: 20, rowGap: 25, borderColor: new(202, 226, 250)).SetChildren([
             new Text(displayText: "Do you want", widthMode: TextWidthMode.TextWidth, widthRatio:.5f, fontSize: 40, colorMask: new(206, 221, 237), textYOffset:24),
-            new Text(displayText: " Grey", widthMode: TextWidthMode.TextWidth, widthRatio:.35f, fontSize: 70, colorMask: new(200,200,200), heightMode: TextHeightMode.TextHeight),
+            new Text(displayText: " Grey", widthMode: TextWidthMode.TextWidth, widthRatio:.35f, fontSize: 70, colorMask: new(200, 204, 210), heightMode: TextHeightMode.TextHeight),
             new Text(displayText: "Gui", widthMode: TextWidthMode.TextWidth, widthRatio:.35f, fontSize: 70, colorMask: new(255,255,255), heightMode: TextHeightMode.TextHeight),
             new Text(displayText: "   ?", widthMode: TextWidthMode.TextWidth, widthRatio:1f, fontSize: 40, colorMask: new(206, 221, 237), textYOffset:24),
             new RowPanel(widthMode: WidthMode.ParentRatio, widthRatio: 1, layoutMode: RowLayoutMode.Justify, childGap:10).SetChildren([

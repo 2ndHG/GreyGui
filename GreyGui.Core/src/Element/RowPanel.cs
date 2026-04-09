@@ -100,6 +100,17 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             IsLayoutDirty = true;
         }
     }
+    public VerticalAlignment VerticalAlignment
+    {
+        get => _verticalAlignment;
+        set
+        {
+            if (_verticalAlignment == value)
+                return;
+            _verticalAlignment = value;
+            IsLayoutDirty = true;
+        }
+    }
     public bool IsLayoutDirty { get => _isLayoutDirty; set => _isLayoutDirty = value; }
     public bool IsChildrenZIndexDirty { get => _isChildrenZIndexDirty; set => _isChildrenZIndexDirty = value; }
     public override int ZIndex
@@ -126,6 +137,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     private Vector2 _finalSize;
     private int _zIndex;
     private RowLayoutMode _layoutMode;
+    private VerticalAlignment _verticalAlignment;
     private float _childGap;
     private Vector2 _containerSize;
     private bool _isLayoutDirty;
@@ -141,7 +153,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     public RowPanel() { }
     public RowPanel(
         Color? colorMask = null, Color borderColor = default, int borderRadius = default, int borderWidth = default,
-        Vector2 size = default, WidthMode widthMode = WidthMode.Fixed, HeightMode heightMode = HeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, float childGap = default, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, ICollection<GreyGuiElement>? children = null)
+        Vector2 size = default, WidthMode widthMode = WidthMode.Fixed, HeightMode heightMode = HeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, VerticalAlignment verticalAlignment = VerticalAlignment.Top, float childGap = default, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, ICollection<GreyGuiElement>? children = null)
     {
         ColorMask = (colorMask, imageTexture) switch
         {
@@ -162,6 +174,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         PaddingBottom = paddingBottom;
         PaddingSide = paddingSide;
         LayoutMode = layoutMode;
+        _verticalAlignment = verticalAlignment;
         _childGap = childGap;
         _zIndex = zIndex;
         _imageTexture = imageTexture ?? GreyGui.Atlas;
@@ -292,7 +305,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         _isLayoutDirty = _isLayoutDirty || sizeChanged;
     }
 
-    private void RecalculateLayout()
+    private void ResolveLayoutDirty()
     {
         float elementTotalWidth = 0f;
         for (int i = 0; i < _children.Count; ++i)
@@ -303,6 +316,12 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         {
             RowLayoutMode.Center => .5f,
             RowLayoutMode.Right => 1f,
+            _ => 0
+        };
+        float yLayoutMulti = _verticalAlignment switch
+        {
+            VerticalAlignment.Center => .5f,
+            VerticalAlignment.Bottom => 1f,
             _ => 0
         };
         float emptySpace = _containerSize.X - elementTotalWidth;
@@ -318,8 +337,9 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         _childrenPosition.Clear();
         for (int i = 0; i < _children.Count; ++i)
         {
-            _childrenPosition.Add(new Point((int)x, (int)y));
-            x += _children[i].FinalSize.X + childGap;
+            Vector2 childSize = _children[i].FinalSize;
+            _childrenPosition.Add(new Point((int)x, (int)(y + (_containerSize.Y - childSize.Y) * yLayoutMulti)));
+            x += childSize.X + childGap;
         }
         _isLayoutDirty = false;
     }
@@ -355,7 +375,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         }
         if (_isLayoutDirty)
         {
-            RecalculateLayout();
+            ResolveLayoutDirty();
         }
         if (_isChildrenZIndexDirty)
         {
@@ -389,7 +409,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             if (result != null)
                 return result;
         }
-        
+
         Rectangle selfRect = new(OnScreenPos, _finalSize.ToPoint());
         Rectangle lastAppliedScissor = LastScissor;
         Rectangle.Intersect(ref selfRect, ref lastAppliedScissor, out Rectangle detectingRect);

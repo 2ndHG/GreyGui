@@ -6,6 +6,16 @@ namespace GreyGui;
 
 public static class GreyGui
 {
+    /// <summary>
+    /// Initialize GreyGui. Need to be called before any usage of this library. 
+    /// </summary>
+    /// <remarks>
+    /// You can specify the width and height of the backing atlas that used by all GreyGuiElement
+    /// </remarks>
+    /// <param name="game">The Running Game instance</param>
+    /// <param name="atlasWidth">Width of the backing atlas</param>
+    /// <param name="atlasHeight">Height of the backing atlas</param>
+    /// <exception cref="Exception"></exception>
     public static void Initialize(Game game, int atlasWidth = 2048, int atlasHeight = 2048)
     {
         Assembly assembly = Assembly.GetExecutingAssembly();
@@ -44,6 +54,15 @@ public static class GreyGui
         NullParentWidth = gameViewportRect.Width;
         NullParentHeight = gameViewportRect.Height;
     }
+    
+    /// <summary>
+    /// Set the size of the virtual parent, i.e., <see cref="NullParentWidth"/> and <see cref="NullParentHeight"/>.
+    /// </summary>
+    /// <remarks>
+    /// In GreyGui, a lot of elements can scale itself according to their parent's size, they will reference to <see cref="NullParentWidth"/> and <see cref="NullParentHeight"/> when parent is null.
+    /// </remarks>
+    /// <param name="width"></param>
+    /// <param name="height"></param>
     public static void SetVirtualParentSize(int width, int height)
     {
         NullParentWidth = width;

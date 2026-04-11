@@ -65,7 +65,7 @@ public class GuiBatch
     }
 
     /// <summary>
-    /// Consume accumulated draw commands of a RenderContext to draw to the screen 
+    /// Consume accumulated draw commands of a RenderContext and render to the screen 
     /// </summary>
     /// <param name="context"></param>
     public void Flush(RenderContext context)

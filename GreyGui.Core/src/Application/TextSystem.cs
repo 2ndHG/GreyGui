@@ -29,13 +29,24 @@ public class TextSystem
     private readonly object syncRoot = new();
     private ArrayPool<Color> _colorDataArrayPool = ArrayPool<Color>.Shared;
 
-
+    /// <summary>
+    /// Set the parameters for SDF glyph generation.
+    /// </summary>
+    /// <param name="glyphPixelSize">Base pixel size</param>
+    /// <param name="glyphPadding">Empty space around the character, in pixel. <br/><remarks>The value of glyphPadding should be greater than 2 * glyphRange, otherwise the gradient produced by glyphRange will be clipped.</remarks></param>
+    /// <param name="glyphRange">The range factor for SDF glyph generation, affecting the pixelizing effect of the final glyph. </param>
     public void SetTextParameters(float glyphPixelSize, int glyphPadding, float glyphRange)
     {
         GlyphPixelSize = glyphPixelSize;
         GlyphPadding = glyphPadding;
         GlyphRange = glyphRange;
     }
+
+    /// <summary>
+    /// Load a font information from a .ttf file, set the default font to this font if its the first time calling this method.
+    /// </summary>
+    /// <param name="fontName">Font name</param>
+    /// <param name="fontTtfPath">The related path of the .ttf file</param>
     public void LoadFont(string fontName, string fontTtfPath)
     {
         if (_fontInfoMap.TryAdd(fontName, new FontInfo(fontTtfPath)))
@@ -47,6 +58,15 @@ public class TextSystem
             DefaultFont = fontName;
         }
     }
+
+    /// <summary>
+    /// Set the default font. 
+    /// </summary>
+    /// <remarks>
+    /// Text-related elements will use the default font when not specifying a font name.
+    /// </remarks>
+    /// <param name="fontName"></param>
+    /// <exception cref="Exception"></exception>
     public void SetDefaultFont(string fontName)
     {
         if (_fontInfoMap.ContainsKey(fontName))
@@ -58,10 +78,21 @@ public class TextSystem
             throw new Exception($"No font with font name {fontName} is loaded");
         }
     }
+    /// <summary>
+    /// Get fontInfo of a font name.
+    /// </summary>
+    /// <param name="fontName"></param>
+    /// <returns></returns>
     public FontInfo GetFontInfo(string fontName)
     {
         return _fontInfoMap[fontName];
     }
+
+    /// <summary>
+    /// Start generating the demanding characters in the background. 
+    /// </summary>
+    /// <param name="fontName">Target font name</param>
+    /// <param name="chars">Requiring characters</param>
     public void ReserveChars(string fontName, ReadOnlySpan<char> chars)
     {
         FontInfo fontInfo = _fontInfoMap[fontName];
@@ -107,7 +138,6 @@ public class TextSystem
         }
     }
 
-
     public bool TryPutGlyphPlaceholder(SdfRenderInfo sdfRenderInfo, out Rectangle srcRect)
     {
         if (_x + sdfRenderInfo.BitmapWidth > GreyGui.Atlas.Width)
@@ -152,7 +182,7 @@ public class TextSystem
     }
 
     /// <summary>
-    /// Using this emthod to reserve character will freeze the game until all reserving characters are generated.
+    /// Generate the demanding characters. Using this method to reserve character will freeze the game until all reserving characters are generated.
     /// </summary>
     /// <param name="fontName">The font name of characters</param>
     /// <param name="chars">Reserving characters</param>
@@ -193,6 +223,7 @@ public class TextSystem
             }
         }
     }
+    
     public bool TryInsertGlyph(SimpleSdfResult sdfResult, out Rectangle srcRect)
     {
         if (_x + sdfResult.BitmapWidth > GreyGui.Atlas.Width)
@@ -227,6 +258,11 @@ public class TextSystem
         _currentHeight = Math.Max(sdfResult.BitmapHeight, _currentHeight);
         return true;
     }
+
+    /// <summary>
+    /// Set anti-aliasing factor in the shader. The higher the value, the sharper edge of text.
+    /// </summary>
+    /// <param name="value">Value of anti-aliasing factor</param>
     public void SetAntiAliasingRange(float value)
     {
         GreyGui.Shader.Parameters["antiAliasingRange"].SetValue(value);

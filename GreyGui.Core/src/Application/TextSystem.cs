@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Text.Json;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
 using SimpleSdf;
 using Typography.OpenFont;
 
@@ -211,7 +212,7 @@ public class TextSystem
             char c = chars[i];
             SimpleSdfResult result = SimpleSdf.SimpleSdf.GenerateSdfBitmap(typeface, c, GlyphPixelSize, GlyphPadding, GlyphPadding);
 
-            if (!fontInfo.GlyphInfoMap.ContainsKey(c))
+            if (!fontInfo.GlyphInfoIndexMap.ContainsKey(c))
             {
                 if (result.BitmapWidth == 0 || result.BitmapHeight == 0)
                 {
@@ -228,7 +229,10 @@ public class TextSystem
                             Origin = result.Origin,
                             GlyphRange = result.Range
                         };
-                        fontInfo.GlyphInfoMap.TryAdd(c, glyphInfo);
+
+                        // record the index
+                        fontInfo.GlyphInfoIndexMap[c] = (ushort)GlyphInfoList.Count;
+                        GlyphInfoList.Add(glyphInfo);
                     }
                     else
                     {
@@ -248,7 +252,7 @@ public class TextSystem
         GreyGui.Shader.Parameters["antiAliasingRange"].SetValue(value);
     }
 
-    public void ExportAtlasToStorage()
+    public void ExportAtlasAndInfoToStorage()
     {
         string savingPath = Path.Combine(CachePath, "GreyGui");
         Directory.CreateDirectory(savingPath);
@@ -262,9 +266,14 @@ public class TextSystem
             GreyGui.Atlas.SaveAsPng(fs, rect.Width, rect.Height);
         }
 
+        Dictionary<string, Dictionary<char, ushort>> fontInfoMapWithoutTypeFace = [];
+        foreach ((string fontName, FontInfo fontInfo) in _fontInfoMap)
+        {
+            fontInfoMapWithoutTypeFace.Add(fontName, fontInfo.GlyphInfoIndexMap);
+        }
         AtlasInfo atlasInfo = new()
         {
-            FontInfoMap = _fontInfoMap,
+            FontInfoMap = fontInfoMapWithoutTypeFace,
             GlyphInfoList = GlyphInfoList,
             NextGlyphX = _nextGlyphX,
             NextGlyphY = _nextGlyphY,
@@ -272,11 +281,27 @@ public class TextSystem
         };
         string jsonPath = Path.Combine(savingPath, "CachedAtlas.json");
         File.WriteAllText(jsonPath, JsonSerializer.Serialize(atlasInfo));
-        Console.WriteLine("Exported");
+        Console.WriteLine($"Exported 2 files:\n{pngPath}\n{jsonPath}");
     }
-    public void LoadAtlas()
+    public void LoadAtlasAndInfo()
     {
+        _reservedChars.Clear();
 
+        string savingPath = Path.Combine(CachePath, "GreyGui");
+        string pngPath = Path.Combine(savingPath, "CachedAtlas.png");
+        string jsonPath = Path.Combine(savingPath, "CachedAtlas.json");
+        GreyGui.Atlas?.Dispose();
+        GreyGui.SetAtlas(Texture2D.FromFile(GreyGui.GameInstance.GraphicsDevice, pngPath));
+        AtlasInfo atlasInfo = JsonSerializer.Deserialize<AtlasInfo>(File.ReadAllText(jsonPath));
+        foreach ((string fontName, Dictionary<char, ushort> indexMap) in atlasInfo.FontInfoMap)
+        {
+            _fontInfoMap[fontName].GlyphInfoIndexMap = indexMap;
+        }
+        GlyphInfoList.Clear();
+        GlyphInfoList.AddRange(atlasInfo.GlyphInfoList);
+        _nextGlyphX = atlasInfo.NextGlyphX;
+        _nextGlyphY = atlasInfo.NextGlyphY;
+        _currentRowHeight = atlasInfo.CurrentRowHeight;
     }
 
     private bool TryInsertGlyph(SimpleSdfResult sdfResult, out Rectangle srcRect)

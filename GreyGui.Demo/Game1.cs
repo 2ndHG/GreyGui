@@ -50,6 +50,9 @@ public class Game1 : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         GreyGui.Initialize(this);
         GreyGui.TextSystem.LoadFont("huninn", "huninn.ttf");
+        // GreyGui.TextSystem.ReserveChars("huninn", Constant.VisibleAsciiVerbatim);
+        // GreyGui.TextSystem.ReserveChars("kanit", Constant.VisibleAsciiVerbatim);
+        GreyGui.TextSystem.LoadAtlasAndInfo();
 
         _guiBatch = new GuiBatch(GraphicsDevice);
 
@@ -100,7 +103,7 @@ public class Game1 : Game
             }
             if (GuiUpdate.Keyboard.IsKeyDown(Keys.P))
             {
-                GreyGui.TextSystem.ExportAtlasToStorage();
+                GreyGui.TextSystem.ExportAtlasAndInfoToStorage();
                 // using (FileStream fs = File.OpenWrite("Banner.png"))
                 // {
                 //     _bannerRt.SaveAsPng(fs, _bannerRt.Width, _bannerRt.Height);
@@ -125,7 +128,7 @@ public class Game1 : Game
         // GraphicsDevice.SetRenderTarget(_bannerRt);
         _guiBatch.ReceiveFrameInfo(gameTime);
         // _guiBatch.Draw(root2, renderContext, new Point(950, 50));
-        _guiBatch.Draw(root, renderContext, new Point(0, 0));
+        _guiBatch.Draw(root, renderContext, new Point(50, 50));
         _guiBatch.Flush(renderContext);
 
         // GraphicsDevice.SetRenderTarget(null);
@@ -307,7 +310,8 @@ public class Game1 : Game
          fontSizeScalingMode: FontSizeScalingMode.None,
          widthRatio: .5f,
          widthMode: TextWidthMode.ParentRatio,
-         fontSize: 40
+         fontSize: 20,
+         fontName:"huninn"
         //  borderColor: Color.AntiqueWhite,
         //  backgroundColor: new Color(184, 217, 253, 120),
         //  borderRadius: 10,

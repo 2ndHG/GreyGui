@@ -8,7 +8,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
 {
     public override Vector2 Size
     {
-        get => _size; 
+        get => _size;
         set
         {
             if (_size == value)
@@ -637,9 +637,18 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     private void ParseText()
     {
         FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
-        float spaceAdvanceWidth = fontInfo.GlyphInfoMap.TryGetValue(' ', out var spaceGlyphInfo) ?
-            spaceGlyphInfo.AdvanceWidth :
-            GreyGui.TextSystem.GlyphPixelSize / 4; // Normally any font should contains ' ' when initialized
+        // float spaceAdvanceWidth = fontInfo.GlyphInfoMap.TryGetValue(' ', out var spaceGlyphInfo) ?
+        //     spaceGlyphInfo.AdvanceWidth :
+        //     GreyGui.TextSystem.GlyphPixelSize / 4; 
+        float spaceAdvanceWidth;
+        if (fontInfo.GlyphInfoIndexMap.TryGetValue(' ', out ushort spaceGlyphInfoIndex))
+        {
+            spaceAdvanceWidth = GreyGui.TextSystem.GlyphInfoList[spaceGlyphInfoIndex].AdvanceWidth;
+        }
+        else
+        {
+            spaceAdvanceWidth = GreyGui.TextSystem.GlyphPixelSize / 4;
+        }
 
         _displayTextCharIndices.Clear();
         _textSegments.Clear();

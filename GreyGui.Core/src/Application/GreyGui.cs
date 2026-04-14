@@ -54,7 +54,7 @@ public static class GreyGui
         NullParentWidth = gameViewportRect.Width;
         NullParentHeight = gameViewportRect.Height;
     }
-    
+
     /// <summary>
     /// Set the size of the virtual parent, i.e., <see cref="NullParentWidth"/> and <see cref="NullParentHeight"/>.
     /// </summary>
@@ -69,6 +69,10 @@ public static class GreyGui
         NullParentHeight = height;
     }
 
+    public static void SetAtlas(Texture2D atlas)
+    {
+        Atlas = atlas;
+    }
     public static Texture2D Atlas { get; private set; }
     public static Effect Shader { get; private set; }
     public static TextSystem TextSystem { get; private set; }

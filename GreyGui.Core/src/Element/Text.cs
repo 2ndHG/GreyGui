@@ -503,9 +503,18 @@ public class Text : GreyGuiElement, IRatioElement
     private void ParseText()
     {
         FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
-        float spaceAdvanceWidth = fontInfo.GlyphInfoMap.TryGetValue(' ', out var spaceGlyphInfo) ?
-            spaceGlyphInfo.AdvanceWidth :
-            GreyGui.TextSystem.GlyphPixelSize / 4; // Normally any font should contains ' ' when initialized
+        // float spaceAdvanceWidth = fontInfo.GlyphInfoMap.TryGetValue(' ', out var spaceGlyphInfo) ?
+        //     spaceGlyphInfo.AdvanceWidth :
+        //     GreyGui.TextSystem.GlyphPixelSize / 4; // Normally any font should contains ' ' when initialized
+        float spaceAdvanceWidth;
+        if (fontInfo.GlyphInfoIndexMap.TryGetValue(' ', out ushort spaceGlyphInfoIndex))
+        {
+            spaceAdvanceWidth = GreyGui.TextSystem.GlyphInfoList[spaceGlyphInfoIndex].AdvanceWidth;
+        }
+        else
+        {
+            spaceAdvanceWidth = GreyGui.TextSystem.GlyphPixelSize / 4;
+        }
 
         _displayTextCharIndices.Clear();
         _textSegments.Clear();

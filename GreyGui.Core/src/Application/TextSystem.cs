@@ -16,7 +16,7 @@ public class TextSystem
     public int GlyphPadding { get; private set; } = 4;
     public float GlyphRange { get; private set; } = 4f;
     public float DefaultFontSize { get; set; } = 24;
-    public int MaxReservingCharCount { get; set; } = 2048;
+    public int MaxReservingCharCount { get; set; } = 8192;
     public int FontInfoVersion
     {
         get => _fontInfoVersion;

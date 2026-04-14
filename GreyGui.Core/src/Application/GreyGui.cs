@@ -16,7 +16,7 @@ public static class GreyGui
     /// <param name="atlasWidth">Width of the backing atlas</param>
     /// <param name="atlasHeight">Height of the backing atlas</param>
     /// <exception cref="Exception"></exception>
-    public static void Initialize(Game game, int atlasWidth = 2048, int atlasHeight = 2048)
+    public static void Initialize(Game game, int atlasWidth = 4096, int atlasHeight = 4096)
     {
         Assembly assembly = Assembly.GetExecutingAssembly();
         string[] resourceNames = assembly.GetManifestResourceNames();

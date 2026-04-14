@@ -1,5 +1,7 @@
 using System.Buffers;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Text.Json;
 using Microsoft.Xna.Framework;
 using SimpleSdf;
 using Typography.OpenFont;
@@ -14,13 +16,23 @@ public class TextSystem
     public float GlyphRange { get; private set; } = 4f;
     public float DefaultFontSize { get; set; } = 24;
     public int MaxReservingCharCount { get; set; } = 2048;
+    public int FontInfoVersion
+    {
+        get => _fontInfoVersion;
+        private set
+        {
+            _fontInfoVersion = value;
+        }
+    }
+
+    public string CachePath { get; set; } = "Content";
 
     private Dictionary<string, FontInfo> _fontInfoMap = [];
-    public List<GlyphInfo> GlyphInfoList {get; private init; }= [];
+    public List<GlyphInfo> GlyphInfoList { get; private init; } = [];
 
-    private int _x = 2; // this is for default gui texture that has 2*2 white pixels
-    private int _y = 0;
-    private int _currentHeight = 2;
+    private int _nextGlyphX = 2; // this is for default gui texture that has 2*2 white pixels
+    private int _nextGlyphY = 0;
+    private int _currentRowHeight = 2;
 
     // Multi-thread SDF bitmap generation
     private ConcurrentQueue<(Rectangle destRect, Typeface typeface, char c)> _reservedChars = [];
@@ -28,6 +40,9 @@ public class TextSystem
     private volatile bool _isGeneratingSdf = false;
     private readonly object syncRoot = new();
     private ArrayPool<Color> _colorDataArrayPool = ArrayPool<Color>.Shared;
+
+    // Bitmap png catch
+    private int _fontInfoVersion;
 
     /// <summary>
     /// Set the parameters for SDF glyph generation.
@@ -140,21 +155,21 @@ public class TextSystem
 
     public bool TryPutGlyphPlaceholder(SdfRenderInfo sdfRenderInfo, out Rectangle srcRect)
     {
-        if (_x + sdfRenderInfo.BitmapWidth > GreyGui.Atlas.Width)
+        if (_nextGlyphX + sdfRenderInfo.BitmapWidth > GreyGui.Atlas.Width)
         {
-            _x = 0;
-            _y += _currentHeight + 1;
-            _currentHeight = 0;
+            _nextGlyphX = 0;
+            _nextGlyphY += _currentRowHeight + 1;
+            _currentRowHeight = 0;
         }
-        if (_y + sdfRenderInfo.BitmapHeight > GreyGui.Atlas.Height)
+        if (_nextGlyphY + sdfRenderInfo.BitmapHeight > GreyGui.Atlas.Height)
         {
             srcRect = Rectangle.Empty;
             return false;
         }
-        srcRect = new(_x, _y, sdfRenderInfo.BitmapWidth, sdfRenderInfo.BitmapHeight);
+        srcRect = new(_nextGlyphX, _nextGlyphY, sdfRenderInfo.BitmapWidth, sdfRenderInfo.BitmapHeight);
         // Update _x and _currentHeight for the next insertion
-        _x += sdfRenderInfo.BitmapWidth + 1;
-        _currentHeight = Math.Max(sdfRenderInfo.BitmapHeight, _currentHeight);
+        _nextGlyphX += sdfRenderInfo.BitmapWidth + 1;
+        _currentRowHeight = Math.Max(sdfRenderInfo.BitmapHeight, _currentRowHeight);
         return true;
     }
 
@@ -223,21 +238,61 @@ public class TextSystem
             }
         }
     }
-    
-    public bool TryInsertGlyph(SimpleSdfResult sdfResult, out Rectangle srcRect)
+
+    /// <summary>
+    /// Set anti-aliasing factor in the shader. The higher the value, the sharper edge of text.
+    /// </summary>
+    /// <param name="value">Value of anti-aliasing factor</param>
+    public void SetAntiAliasingRange(float value)
     {
-        if (_x + sdfResult.BitmapWidth > GreyGui.Atlas.Width)
+        GreyGui.Shader.Parameters["antiAliasingRange"].SetValue(value);
+    }
+
+    public void ExportAtlasToStorage()
+    {
+        string savingPath = Path.Combine(CachePath, "GreyGui");
+        Directory.CreateDirectory(savingPath);
+        string pngPath = Path.Combine(savingPath, "CachedAtlas.png");
+        using FileStream fs = File.OpenWrite(pngPath);
         {
-            _x = 0;
-            _y += _currentHeight + 1;
-            _currentHeight = 0;
+            Rectangle rect = GreyGui.Atlas.Bounds;
+            // Color[] color = new Color[rect.Width * rect.Height];
+            // GreyGui.Atlas.GetData(0, 0, rect, color, 0, rect.Width * rect.Height);
+
+            GreyGui.Atlas.SaveAsPng(fs, rect.Width, rect.Height);
         }
-        if (_y + sdfResult.BitmapHeight > GreyGui.Atlas.Height)
+
+        AtlasInfo atlasInfo = new()
+        {
+            FontInfoMap = _fontInfoMap,
+            GlyphInfoList = GlyphInfoList,
+            NextGlyphX = _nextGlyphX,
+            NextGlyphY = _nextGlyphY,
+            CurrentRowHeight = _currentRowHeight
+        };
+        string jsonPath = Path.Combine(savingPath, "CachedAtlas.json");
+        File.WriteAllText(jsonPath, JsonSerializer.Serialize(atlasInfo));
+        Console.WriteLine("Exported");
+    }
+    public void LoadAtlas()
+    {
+
+    }
+
+    private bool TryInsertGlyph(SimpleSdfResult sdfResult, out Rectangle srcRect)
+    {
+        if (_nextGlyphX + sdfResult.BitmapWidth > GreyGui.Atlas.Width)
+        {
+            _nextGlyphX = 0;
+            _nextGlyphY += _currentRowHeight + 1;
+            _currentRowHeight = 0;
+        }
+        if (_nextGlyphY + sdfResult.BitmapHeight > GreyGui.Atlas.Height)
         {
             srcRect = Rectangle.Empty;
             return false;
         }
-        srcRect = new(_x, _y, sdfResult.BitmapWidth, sdfResult.BitmapHeight);
+        srcRect = new(_nextGlyphX, _nextGlyphY, sdfResult.BitmapWidth, sdfResult.BitmapHeight);
 
         Color[] data = new Color[sdfResult.BitmapWidth * sdfResult.BitmapHeight];
         for (int y = 0; y < sdfResult.BitmapHeight; y++)
@@ -254,18 +309,9 @@ public class TextSystem
         GreyGui.Atlas.SetData(0, srcRect, data, 0, data.Length);
 
         // Update _x and _currentHeight for the next insertion
-        _x += sdfResult.BitmapWidth + 1;
-        _currentHeight = Math.Max(sdfResult.BitmapHeight, _currentHeight);
+        _nextGlyphX += sdfResult.BitmapWidth + 1;
+        _currentRowHeight = Math.Max(sdfResult.BitmapHeight, _currentRowHeight);
         return true;
-    }
-
-    /// <summary>
-    /// Set anti-aliasing factor in the shader. The higher the value, the sharper edge of text.
-    /// </summary>
-    /// <param name="value">Value of anti-aliasing factor</param>
-    public void SetAntiAliasingRange(float value)
-    {
-        GreyGui.Shader.Parameters["antiAliasingRange"].SetValue(value);
     }
 
     private void StartGenerateSdfResultInSideThread()

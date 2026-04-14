@@ -14,3 +14,15 @@ GreyGui provides minimalism visuals with the following features.
 
 ## Getting Started
 🛠️ This README is still under constructing... 🛠️
+
+
+## How To Make A GreyGuiElement
+
+### Focus
+Focus is a global state remarks what element is the system currently focusing. It is stored in a static field, `GuiUpdate.FocusedElement`, so only one of all elements can be the focused element.
+
+1. Clear the currently focusing element:
+
+    a. Logically, set `GuiUpdate.FocusedElement` to `null`
+
+    b. Think of **whether this action terminates other element's focus**, 

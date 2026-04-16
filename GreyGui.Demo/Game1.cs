@@ -52,7 +52,7 @@ public class Game1 : Game
         GreyGui.TextSystem.LoadFont("huninn", "huninn.ttf");
         // GreyGui.TextSystem.ReserveChars("huninn", Constant.VisibleAsciiVerbatim);
         // GreyGui.TextSystem.ReserveChars("kanit", Constant.VisibleAsciiVerbatim);
-        GreyGui.TextSystem.LoadAtlasAndInfo();
+        // GreyGui.TextSystem.LoadAtlasAndInfo();
 
         _guiBatch = new GuiBatch(GraphicsDevice);
 
@@ -103,7 +103,7 @@ public class Game1 : Game
             }
             if (GuiUpdate.Keyboard.IsKeyDown(Keys.P))
             {
-                GreyGui.TextSystem.ExportAtlasAndInfoToStorage();
+                GreyGui.TextSystem.ExportAtlasAndInfoToStorage("CachedAtlas");
                 // using (FileStream fs = File.OpenWrite("Banner.png"))
                 // {
                 //     _bannerRt.SaveAsPng(fs, _bannerRt.Width, _bannerRt.Height);

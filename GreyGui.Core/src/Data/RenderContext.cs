@@ -187,9 +187,10 @@ public class RenderContext
 
             GlyphInfo glyphInfo = GreyGui.TextSystem.GlyphInfoList[indices[i]];
             Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
+            // rectParams.X = text weight, default 0, increase it make the text thicker (-0.5f ~0.5f)
             // rectParams.Z = fontSize to tell what the anti-aliasing distant value should be
             // rectParams.W = -1 tells the shader we are rendering text
-            Vector4 rectParams = new(finalSize.X, finalSize.Y, fontSize, -1);
+            Vector4 rectParams = new(0.0f, finalSize.Y, fontSize, -1);
             (float left, float top) = cursor - glyphInfo.Origin * scale;
             float right = left + finalSize.X;
             float bottom = top + finalSize.Y;
@@ -234,7 +235,7 @@ public class RenderContext
             Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
             // rectParams.Z = fontSize to tell what the anti-aliasing distant value should be
             // rectParams.W = -1 tells the shader we are rendering text
-            Vector4 rectParams = new(finalSize.X, finalSize.Y, fontSize, -1);
+            Vector4 rectParams = new(0.0f, finalSize.Y, fontSize, -1);
             (float left, float top) = cursor - glyphInfo.Origin * scale;
             float right = left + finalSize.X;
             float bottom = top + finalSize.Y;

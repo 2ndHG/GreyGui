@@ -221,6 +221,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     private string _displayText;
     private float _fontSize;
     private bool _isDisplayTextDirty;
+    private int _fontInfoVersion;
     private float _textYOffset;
     private FontSizeScalingMode _fontSizeScalingMode;
     private float _fontSizeScalingBaseline;
@@ -742,6 +743,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         GreyGui.TextSystem.ReserveChars(_fontName, DisplayText);
         ParseText();
 
+        _fontInfoVersion = GreyGui.TextSystem.FontInfoVersion;
         _isDisplayTextDirty = false;
     }
 
@@ -849,7 +851,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     {
         OnScreenPos = pos;
         LastScissor = screenScissor;
-        if (_isDisplayTextDirty)
+        if (_isDisplayTextDirty || _fontInfoVersion != GreyGui.TextSystem.FontInfoVersion)
         {
             ResolveDisplayTextDirty();
         }

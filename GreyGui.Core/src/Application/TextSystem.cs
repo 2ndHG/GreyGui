@@ -20,10 +20,6 @@ public class TextSystem
     public int FontInfoVersion
     {
         get => _fontInfoVersion;
-        private set
-        {
-            _fontInfoVersion = value;
-        }
     }
 
     public string CachePath { get; set; } = "Content";
@@ -36,8 +32,8 @@ public class TextSystem
     private int _currentRowHeight = 2;
 
     // Multi-thread SDF bitmap generation
-    private ConcurrentQueue<(Rectangle destRect, Typeface typeface, char c)> _reservedChars = [];
-    private ConcurrentQueue<(Rectangle destRect, float[] bitmap)> _sdfResultProductBuffer = [];
+    private ConcurrentQueue<(Rectangle destRect, Typeface typeface, char c, int version)> _reservedChars = [];
+    private ConcurrentQueue<(Rectangle destRect, float[] bitmap, int version)> _sdfResultProductBuffer = [];
     private volatile bool _isGeneratingSdf = false;
     private readonly object syncRoot = new();
     private ArrayPool<Color> _colorDataArrayPool = ArrayPool<Color>.Shared;
@@ -136,7 +132,7 @@ public class TextSystem
                     GlyphInfoList.Add(glyphInfo);
 
                     // add c to reservation queue, then the SDF bitmap will be generated in a separated thread
-                    _reservedChars.Enqueue((glyphSrcRect, typeface, c));
+                    _reservedChars.Enqueue((glyphSrcRect, typeface, c, _fontInfoVersion));
                     reservedAny = true;
                 }
             }
@@ -177,8 +173,13 @@ public class TextSystem
 
     public void SetGeneratedSdfBitmapToAtlas()
     {
-        while (_sdfResultProductBuffer.TryDequeue(out (Rectangle destRect, float[] bitmap) result))
+        while (_sdfResultProductBuffer.TryDequeue(out (Rectangle destRect, float[] bitmap, int fontInfoVersion) result))
         {
+            if (result.fontInfoVersion != _fontInfoVersion)
+            {
+                Console.WriteLine($"Discard obsolete sdf result");
+                continue;
+            }
             Rectangle destRect = result.destRect;
             Color[] data = _colorDataArrayPool.Rent(destRect.Width * destRect.Height);
             for (int y = 0; y < destRect.Height; y++)
@@ -252,11 +253,11 @@ public class TextSystem
         GreyGui.Shader.Parameters["antiAliasingRange"].SetValue(value);
     }
 
-    public void ExportAtlasAndInfoToStorage()
+    public void ExportAtlasAndInfoToStorage(string fileName)
     {
         string savingPath = Path.Combine(CachePath, "GreyGui");
         Directory.CreateDirectory(savingPath);
-        string pngPath = Path.Combine(savingPath, "CachedAtlas.png");
+        string pngPath = Path.Combine(savingPath, fileName + ".png");
         using FileStream fs = File.OpenWrite(pngPath);
         {
             Rectangle rect = GreyGui.Atlas.Bounds;
@@ -279,19 +280,29 @@ public class TextSystem
             NextGlyphY = _nextGlyphY,
             CurrentRowHeight = _currentRowHeight
         };
-        string jsonPath = Path.Combine(savingPath, "CachedAtlas.json");
+        string jsonPath = Path.Combine(savingPath, fileName + ".json");
         File.WriteAllText(jsonPath, JsonSerializer.Serialize(atlasInfo));
         Console.WriteLine($"Exported 2 files:\n{pngPath}\n{jsonPath}");
     }
-    public void LoadAtlasAndInfo()
+    public void LoadAtlasAndInfo(string fileName)
     {
         _reservedChars.Clear();
 
         string savingPath = Path.Combine(CachePath, "GreyGui");
-        string pngPath = Path.Combine(savingPath, "CachedAtlas.png");
-        string jsonPath = Path.Combine(savingPath, "CachedAtlas.json");
-        GreyGui.Atlas?.Dispose();
-        GreyGui.SetAtlas(Texture2D.FromFile(GreyGui.GameInstance.GraphicsDevice, pngPath));
+        string pngPath = Path.Combine(savingPath, fileName + ".png");
+        string jsonPath = Path.Combine(savingPath, fileName + ".json");
+        // Load the texture and set the data to global texture
+        Texture2D incomingAtlas = Texture2D.FromFile(GreyGui.GameInstance.GraphicsDevice, pngPath);
+        Color[] incomingColorData = new Color[incomingAtlas.Width * incomingAtlas.Height];
+        incomingAtlas.GetData(0, new(0, 0, incomingAtlas.Width, incomingAtlas.Height), incomingColorData, 0, incomingColorData.Length);
+        incomingAtlas.Dispose();
+        GreyGui.Atlas.SetData(incomingColorData);
+
+        // Need to clear original FontInfo's index map, because the new atlas might not containing some fonts, those fontInfo's index map will not be replaced by new value and will become an error
+        foreach (FontInfo fontInfo in _fontInfoMap.Values)
+        {
+            fontInfo.GlyphInfoIndexMap.Clear();
+        }
         AtlasInfo atlasInfo = JsonSerializer.Deserialize<AtlasInfo>(File.ReadAllText(jsonPath));
         foreach ((string fontName, Dictionary<char, ushort> indexMap) in atlasInfo.FontInfoMap)
         {
@@ -302,6 +313,8 @@ public class TextSystem
         _nextGlyphX = atlasInfo.NextGlyphX;
         _nextGlyphY = atlasInfo.NextGlyphY;
         _currentRowHeight = atlasInfo.CurrentRowHeight;
+
+        _fontInfoVersion++;
     }
 
     private bool TryInsertGlyph(SimpleSdfResult sdfResult, out Rectangle srcRect)
@@ -350,10 +363,10 @@ public class TextSystem
                 while (_isGeneratingSdf)
                 {
                     // Console.WriteLine($"Remaining bitmap to generate: {_reservedChars.Count}");
-                    if (_reservedChars.TryDequeue(out (Rectangle destRect, Typeface typeface, char c) request))
+                    if (_reservedChars.TryDequeue(out (Rectangle destRect, Typeface typeface, char c, int fontInfoVersion) request))
                     {
                         SimpleSdfResult result = SimpleSdf.SimpleSdf.GenerateSdfBitmap(request.typeface, request.c, GlyphPixelSize, GlyphPadding, GlyphPadding);
-                        _sdfResultProductBuffer.Enqueue((request.destRect, result.Bitmap));
+                        _sdfResultProductBuffer.Enqueue((request.destRect, result.Bitmap, request.fontInfoVersion));
 
                         Thread.Sleep(1);
                     }

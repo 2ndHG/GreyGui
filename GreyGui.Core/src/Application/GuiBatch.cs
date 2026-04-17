@@ -44,7 +44,7 @@ public class GuiBatch
     }
 
     /// <summary>
-    /// Draw s GUI tree from a GreyGuiElement root.
+    /// Collect drawing information from a GUI tree of a given GreyGuiElement root.
     /// </summary>
     /// <remarks>
     /// Like SpriteBatch.Draw, this method does NOT immediately draw to the current render target, instead, it add draw commands into the RenderContext.<br/> Use GuiBatch.Flush() to actually render the pixels to the render target.

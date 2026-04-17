@@ -253,6 +253,10 @@ public class TextSystem
         GreyGui.Shader.Parameters["antiAliasingRange"].SetValue(value);
     }
 
+    /// <summary>
+    /// Export the atlas png file and the json of the state of TextSystem to TextSystem.CachePath (relative path). They can be loaded using LoadAtlasInfo
+    /// </summary>
+    /// <param name="fileName">The file name of the exported png and json</param>
     public void ExportAtlasAndInfoToStorage(string fileName)
     {
         string savingPath = Path.Combine(CachePath, "GreyGui");
@@ -284,6 +288,13 @@ public class TextSystem
         File.WriteAllText(jsonPath, JsonSerializer.Serialize(atlasInfo));
         Console.WriteLine($"Exported 2 files:\n{pngPath}\n{jsonPath}");
     }
+    /// <summary>
+    /// Load previously stored Atlas and information from TextSystem.CachePath.
+    /// </summary>
+    /// <remarks>
+    /// This will try to read <fileName>.png and <fileName>.json and discard the current atlas.
+    /// </remarks>
+    /// <param name="fileName">The file name of the loading png and json</param>
     public void LoadAtlasAndInfo(string fileName)
     {
         _reservedChars.Clear();

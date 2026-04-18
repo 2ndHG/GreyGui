@@ -2,13 +2,13 @@ using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
-namespace GreyGui.Core;
+namespace GreyGui;
 
 public class TextInput : GreyGuiElement, IRatioElement, IFocusable
 {
     public override Vector2 Size
     {
-        get => _size; 
+        get => _size;
         set
         {
             if (_size == value)
@@ -221,6 +221,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     private string _displayText;
     private float _fontSize;
     private bool _isDisplayTextDirty;
+    private int _fontInfoVersion;
     private float _textYOffset;
     private FontSizeScalingMode _fontSizeScalingMode;
     private float _fontSizeScalingBaseline;
@@ -637,9 +638,18 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     private void ParseText()
     {
         FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
-        float spaceAdvanceWidth = fontInfo.GlyphInfoMap.TryGetValue(' ', out var spaceGlyphInfo) ?
-            spaceGlyphInfo.AdvanceWidth :
-            GreyGui.TextSystem.GlyphPixelSize / 4; // Normally any font should contains ' ' when initialized
+        // float spaceAdvanceWidth = fontInfo.GlyphInfoMap.TryGetValue(' ', out var spaceGlyphInfo) ?
+        //     spaceGlyphInfo.AdvanceWidth :
+        //     GreyGui.TextSystem.GlyphPixelSize / 4; 
+        float spaceAdvanceWidth;
+        if (fontInfo.GlyphInfoIndexMap.TryGetValue(' ', out ushort spaceGlyphInfoIndex))
+        {
+            spaceAdvanceWidth = GreyGui.TextSystem.GlyphInfoList[spaceGlyphInfoIndex].AdvanceWidth;
+        }
+        else
+        {
+            spaceAdvanceWidth = GreyGui.TextSystem.GlyphPixelSize / 4;
+        }
 
         _displayTextCharIndices.Clear();
         _textSegments.Clear();
@@ -733,6 +743,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         GreyGui.TextSystem.ReserveChars(_fontName, DisplayText);
         ParseText();
 
+        _fontInfoVersion = GreyGui.TextSystem.FontInfoVersion;
         _isDisplayTextDirty = false;
     }
 
@@ -840,7 +851,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     {
         OnScreenPos = pos;
         LastScissor = screenScissor;
-        if (_isDisplayTextDirty)
+        if (_isDisplayTextDirty || _fontInfoVersion != GreyGui.TextSystem.FontInfoVersion)
         {
             ResolveDisplayTextDirty();
         }

@@ -47,7 +47,7 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     float4 fillColor = input.Color / 255.0; 
     float4 borderColor = input.BorderColor / 255.0;
 
-    float2 size = input.RectParams.xy;
+    float2 size = input.RectParams.xy; // x is the thickness, increase it make the text bold
     float radius = input.RectParams.z;
     float borderWidth = input.RectParams.w;
 
@@ -58,7 +58,7 @@ float4 MainPS(VertexShaderOutput input) : COLOR
         float cutOff = 0.5;
         float antiAliasingDistant = antiAliasingFactor / radius; // radius is font size
 
-        float alpha = smoothstep(cutOff - antiAliasingDistant, cutOff + antiAliasingDistant, distance);
+        float alpha = smoothstep(cutOff - antiAliasingDistant - size.x, cutOff + antiAliasingDistant- size.x, distance);
         
         float4 finalColor = fillColor;
         finalColor.a *= alpha;

@@ -4,6 +4,14 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+
+    <Description>An HTML-inspired GUI Library for MonoGame</Description>
+    <PackageTags>monogame;.net core;core;.net standard;standard;gui</PackageTags>
+    <PackageId>GreyGui</PackageId>
+    <Version>0.1.0</Version>
+    <Authors>Norphel Lynn</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -16,5 +24,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\External\SimpleSdf\SimpleSdf\SimpleSdf.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/"/>
   </ItemGroup>
 </Project>

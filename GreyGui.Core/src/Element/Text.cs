@@ -213,6 +213,7 @@ public class Text : GreyGuiElement, IRatioElement
     private string _displayText;
     private float _fontSize;
     private bool _isDisplayTextDirty;
+    private int _fontInfoVersion;
     private float _textYOffset;
     private FontSizeScalingMode _fontSizeScalingMode;
     private float _fontSizeScalingBaseline;
@@ -503,9 +504,15 @@ public class Text : GreyGuiElement, IRatioElement
     private void ParseText()
     {
         FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
-        float spaceAdvanceWidth = fontInfo.GlyphInfoMap.TryGetValue(' ', out var spaceGlyphInfo) ?
-            spaceGlyphInfo.AdvanceWidth :
-            GreyGui.TextSystem.GlyphPixelSize / 4; // Normally any font should contains ' ' when initialized
+        float spaceAdvanceWidth;
+        if (fontInfo.GlyphInfoIndexMap.TryGetValue(' ', out ushort spaceGlyphInfoIndex))
+        {
+            spaceAdvanceWidth = GreyGui.TextSystem.GlyphInfoList[spaceGlyphInfoIndex].AdvanceWidth;
+        }
+        else
+        {
+            spaceAdvanceWidth = GreyGui.TextSystem.GlyphPixelSize / 4;
+        }
 
         _displayTextCharIndices.Clear();
         _textSegments.Clear();
@@ -601,6 +608,7 @@ public class Text : GreyGuiElement, IRatioElement
         ParseText();
 
         _isDisplayTextDirty = false;
+        _fontInfoVersion = GreyGui.TextSystem.FontInfoVersion;
     }
 
     private float GetFinalFontSize()
@@ -626,7 +634,7 @@ public class Text : GreyGuiElement, IRatioElement
 
     public override void Draw(Point pos, RenderContext renderContext, Rectangle screenScissor)
     {
-        if (_isDisplayTextDirty)
+        if (_isDisplayTextDirty || _fontInfoVersion != GreyGui.TextSystem.FontInfoVersion)
         {
             ResolveDisplayTextDirty();
         }

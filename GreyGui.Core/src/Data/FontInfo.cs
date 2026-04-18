@@ -5,8 +5,7 @@ namespace GreyGui;
 public class FontInfo
 {
     public Typeface Typeface { get; private set; }
-    public Dictionary<char, GlyphInfo> GlyphInfoMap { get; private set; } = [];
-    public Dictionary<char, ushort> GlyphInfoIndexMap { get; private set; } = [];
+    public Dictionary<char, ushort> GlyphInfoIndexMap { get; set; } = [];
 
     public FontInfo(string ttfPath)
     {

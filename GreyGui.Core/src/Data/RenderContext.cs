@@ -18,6 +18,9 @@ public class RenderContext
     private int[] _indices = new int[MAX_INDEX_COUNT];
     public double ElapsedTimeSecond { get; set; }
 
+    /// <summary>
+    /// Clear the stored vertices and indices. Typically called by GuiBatch.Flush().
+    /// </summary>
     public void Clear()
     {
         VertexCount = 0;
@@ -26,6 +29,14 @@ public class RenderContext
         Batches.Add(new DrawBatch());
     }
 
+    /// <summary>
+    /// Copy vertices and indices from other vertex and index arrays. 
+    /// This need to be test and is not used by the current library 
+    /// </summary>
+    /// <param name="texture">Texture2D to draw</param>
+    /// <param name="vertices">Vertex array</param>
+    /// <param name="indices">Index array</param>
+    /// <param name="scissor">Scissor rectangle</param>
     public void AddCommand_Unstable(Texture2D texture, UiVertex[] vertices, int[] indices, Rectangle scissor)
     {
         // full
@@ -45,6 +56,15 @@ public class RenderContext
         IndexCount += indices.Length;
     }
 
+    /// <summary>
+    /// Add vertices and indices for rendering a rectangle.
+    /// </summary>
+    /// <param name="dest">The rectangle you want to draw</param>
+    /// <param name="color">Fill color</param>
+    /// <param name="borderColor">Border color</param>
+    /// <param name="borderRadius">Border radius</param>
+    /// <param name="borderWidth">Border width</param>
+    /// <param name="scissor">Scissor rectangle</param>
     public void FillRect(Rectangle dest, Color color, Color borderColor, float borderRadius, float borderWidth, Rectangle scissor)
     {
         EnsureCapacity(4, 6);
@@ -67,7 +87,9 @@ public class RenderContext
         _indices[IndexCount++] = vOffset + 3;
         _indices[IndexCount++] = vOffset + 0;
     }
-
+    /// <summary>
+    /// Add vertices and indices for rendering rectangle with gradient colors.
+    /// </summary>
     public void FillRect(Rectangle dest, Color colorTl, Color colorTr, Color colorBl, Color colorBr, Color borderColorTl, Color borderColorTr, Color borderColorBl, Color borderColorBr, float borderRadius, float borderWidth, Rectangle scissor)
     {
         EnsureCapacity(4, 6);
@@ -90,6 +112,17 @@ public class RenderContext
         _indices[IndexCount++] = vOffset + 0;
     }
 
+    /// <summary>
+    /// Add vertices and indices  for rendering a rectangle with specific texture.
+    /// </summary>
+    /// <param name="texture">Drawing Texture2D</param>
+    /// <param name="destRect">Destination rectangle on the screen </param>
+    /// <param name="srcRect">Source rectangle partition of the drawing texture</param>
+    /// <param name="color">Color mask applied to the image</param>
+    /// <param name="borderColor">Border color applied to the border of the image</param>
+    /// <param name="borderRadius">Border radius</param>
+    /// <param name="borderWidth">Border width</param>
+    /// <param name="scissor">Scissor rectangle</param>
     public void RenderTexture(Texture2D texture, Rectangle destRect, Rectangle srcRect, Color color, Color borderColor, float borderRadius, float borderWidth, Rectangle scissor)
     {
         EnsureCapacity(4, 6);
@@ -119,6 +152,10 @@ public class RenderContext
         _indices[IndexCount++] = vOffset + 0;
     }
 
+    /// <summary>
+    /// Generate vertices and indices for rendering a rectangle with specific texture. Get these 4 vertices after generating.
+    /// </summary>
+    /// <returns>The vertices Span can be modified outside</returns>
     public Span<UiVertex> RequireRectVertices(Texture2D texture, Rectangle destRect, Rectangle srcRect, Color color, Color borderColor, float borderRadius, float borderWidth, Rectangle scissor)
     {
         EnsureCapacity(4, 6);
@@ -148,6 +185,12 @@ public class RenderContext
         return new Span<UiVertex>(_vertices, vOffset, 4);
     }
 
+    /// <summary>
+    /// Get the latest added vertices.
+    /// </summary>
+    /// <param name="count">The requesting amount of vertices, this value cannot exceeds total count of the vertices</param>
+    /// <returns>Latest added vertices</returns>
+    /// <exception cref="ArgumentOutOfRangeException"></exception>
     public Span<UiVertex> GetLastAddedVertices(int count)
     {
         if (count > VertexCount)
@@ -163,7 +206,7 @@ public class RenderContext
         RenderTextUsingCharIndices(indices, startIndex, length, position, fontSize, color, scissor);
     }
     /// <summary>
-    /// 
+    /// Generate vertices and indices for rendering text by using indices pointing to <see cref="GreyGui.TextSystem.GlyphInfoList">.
     /// </summary>
     /// <param name="indices">List of rendering characters indices in GreyGui.TextSystem.GlyphInfoList</param>
     /// <param name="startIndex">Starting index of indices</param>
@@ -187,9 +230,10 @@ public class RenderContext
 
             GlyphInfo glyphInfo = GreyGui.TextSystem.GlyphInfoList[indices[i]];
             Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
+            // rectParams.X = text weight, default 0, increase it make the text thicker (-0.5f ~0.5f)
             // rectParams.Z = fontSize to tell what the anti-aliasing distant value should be
             // rectParams.W = -1 tells the shader we are rendering text
-            Vector4 rectParams = new(finalSize.X, finalSize.Y, fontSize, -1);
+            Vector4 rectParams = new(0.0f, finalSize.Y, fontSize, -1);
             (float left, float top) = cursor - glyphInfo.Origin * scale;
             float right = left + finalSize.X;
             float bottom = top + finalSize.Y;
@@ -213,6 +257,15 @@ public class RenderContext
             cursor.X += glyphInfo.AdvanceWidth * scale;
         }
     }
+
+    /// <summary>
+    /// Generate vertices and indices to render text from a List<GlyphInfo>
+    /// </summary>
+    /// <param name="glyphInfoList">GlyphInfo List stores glyph information to be drew.</param>
+    /// <param name="position">Position of the first character</param>
+    /// <param name="fontSize">Font size</param>
+    /// <param name="color">Text color</param>
+    /// <param name="scissor">Scissor Rectangle</param>
     public void RenderText(List<GlyphInfo> glyphInfoList, Vector2 position, float fontSize, Color color, Rectangle scissor)
     {
         RenderText(CollectionsMarshal.AsSpan(glyphInfoList), 0, glyphInfoList.Count, position, fontSize, color, scissor);
@@ -234,7 +287,7 @@ public class RenderContext
             Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
             // rectParams.Z = fontSize to tell what the anti-aliasing distant value should be
             // rectParams.W = -1 tells the shader we are rendering text
-            Vector4 rectParams = new(finalSize.X, finalSize.Y, fontSize, -1);
+            Vector4 rectParams = new(0.0f, finalSize.Y, fontSize, -1);
             (float left, float top) = cursor - glyphInfo.Origin * scale;
             float right = left + finalSize.X;
             float bottom = top + finalSize.Y;
@@ -286,6 +339,13 @@ public class RenderContext
         _indices[IndexCount++] = vOffset + 0;
     }
 
+    /// <summary>
+    /// Generate vertices and indices for rendering a circle
+    /// </summary>
+    /// <param name="center">Center position of the circle</param>
+    /// <param name="radius">Radius of the circle</param>
+    /// <param name="color">Color</param>
+    /// <param name="scissor">Scissor rectangle</param>
     public void FillCircle(Vector2 center, float radius, Color color, Rectangle scissor)
     {
         EnsureCapacity(4, 6);
@@ -311,6 +371,15 @@ public class RenderContext
         _indices[IndexCount++] = vOffset + 3;
         _indices[IndexCount++] = vOffset + 0;
     }
+
+    /// <summary>
+    /// Generate vertices and indices for rendering a straight line
+    /// </summary>
+    /// <param name="start">Start point</param>
+    /// <param name="end">End point</param>
+    /// <param name="thickness">Thickness of the line</param>
+    /// <param name="color">Line color</param>
+    /// <param name="scissor">Scissor rectangle</param>
     public void RenderLine(Vector2 start, Vector2 end, float thickness, Color color, Rectangle scissor)
     {
         EnsureCapacity(4, 6);

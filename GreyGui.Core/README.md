@@ -1,5 +1,5 @@
 # GreyGui - An HTML-inspired GUI Library for MonoGame
-![GreyGui Banner](/Github/Banner.png)
+![GreyGui Banner](Banner.png)
 
 With GreyGui, you can create graphical user interface (GUI) in MonoGame with familiar HTML-like syntax.
 

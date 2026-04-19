@@ -8,7 +8,7 @@
     <Description>An HTML-inspired GUI Library for MonoGame</Description>
     <PackageTags>monogame;.net core;core;.net standard;standard;gui</PackageTags>
     <PackageId>GreyGui</PackageId>
-    <Version>0.1.0</Version>
+    <Version>0.1.2</Version>
     <Authors>Norphel Lynn</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -23,10 +23,26 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\External\SimpleSdf\SimpleSdf\SimpleSdf.csproj" />
+    <ProjectReference Include="..\External\SimpleSdf\SimpleSdf\SimpleSdf.csproj">
+      <!-- Add these attributes so SimpleSdf will be packed into GreyGui too, otherwise the dotnet add will want to download them from the internet -->
+      <ReferenceOutputAssembly>true</ReferenceOutputAssembly> 
+      <PrivateAssets>all</PrivateAssets>
+    </ProjectReference>
   </ItemGroup>
 
+  <PropertyGroup>
+    <TargetsForTfmSpecificBuildOutput>
+      $(TargetsForTfmSpecificBuildOutput);CopyProjectReferencesToPackage</TargetsForTfmSpecificBuildOutput>
+  </PropertyGroup>
+
+  <Target Name="CopyProjectReferencesToPackage" DependsOnTargets="ResolveReferences">
+    <ItemGroup>
+      <BuildOutputInPackage
+        Include="@(ReferenceCopyLocalPaths->WithMetadataValue('ReferenceSourceTarget', 'ProjectReference'))" />
+    </ItemGroup>
+  </Target>
+
   <ItemGroup>
-    <None Include="README.md" Pack="true" PackagePath="/"/>
+    <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 </Project>

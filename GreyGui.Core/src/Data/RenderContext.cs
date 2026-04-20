@@ -7,15 +7,15 @@ namespace GreyGui;
 public class RenderContext
 {
     const int MAX_VERTEX_COUNT = 2048;
-    const int MAX_INDEX_COUNT = 2048;
+    const int MAX_INDEX_COUNT = 4096;
     public UiVertex[] Vertices => _vertices;
-    public int[] Indices => _indices;
+    public ushort[] Indices => _indices;
     public int VertexCount { get; private set; } = 0;
     public int IndexCount { get; private set; } = 0;
     public readonly List<DrawBatch> Batches = [new DrawBatch()];
 
     private UiVertex[] _vertices = new UiVertex[MAX_VERTEX_COUNT];
-    private int[] _indices = new int[MAX_INDEX_COUNT];
+    private ushort[] _indices = new ushort[MAX_INDEX_COUNT];
     public double ElapsedTimeSecond { get; set; }
 
     /// <summary>
@@ -37,7 +37,7 @@ public class RenderContext
     /// <param name="vertices">Vertex array</param>
     /// <param name="indices">Index array</param>
     /// <param name="scissor">Scissor rectangle</param>
-    public void AddCommand_Unstable(Texture2D texture, UiVertex[] vertices, int[] indices, Rectangle scissor)
+    public void AddCommand_Unstable(Texture2D texture, UiVertex[] vertices, ushort[] indices, Rectangle scissor)
     {
         // full
         EnsureCapacity(vertices.Length, indices.Length);
@@ -51,7 +51,7 @@ public class RenderContext
 
         for (int i = 0; i < indices.Length; i++)
         {
-            _indices[IndexCount + i] = indices[i] + offset;
+            _indices[IndexCount + i] = (ushort)(indices[i] + offset);
         }
         IndexCount += indices.Length;
     }
@@ -80,12 +80,12 @@ public class RenderContext
         SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), color, borderColor, GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
         SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), color, borderColor, GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
 
-        _indices[IndexCount++] = vOffset + 0;
-        _indices[IndexCount++] = vOffset + 1;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 3;
-        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
     }
     /// <summary>
     /// Add vertices and indices for rendering rectangle with gradient colors.
@@ -104,12 +104,12 @@ public class RenderContext
         SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), colorBr, borderColorBr, GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
         SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), colorBl, borderColorBl, GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
 
-        _indices[IndexCount++] = vOffset + 0;
-        _indices[IndexCount++] = vOffset + 1;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 3;
-        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
     }
 
     /// <summary>
@@ -144,12 +144,12 @@ public class RenderContext
         SetVertex(VertexCount++, new Vector3(destRect.Right, destRect.Bottom, 0), color, borderColor, new Vector2(right, bottom), new Vector2(1, 1), rectParams);
         SetVertex(VertexCount++, new Vector3(destRect.Left, destRect.Bottom, 0), color, borderColor, new(left, bottom), new Vector2(0, 1), rectParams);
 
-        _indices[IndexCount++] = vOffset + 0;
-        _indices[IndexCount++] = vOffset + 1;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 3;
-        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
     }
 
     /// <summary>
@@ -176,12 +176,12 @@ public class RenderContext
         SetVertex(VertexCount++, new Vector3(destRect.Right, destRect.Bottom, 0), color, borderColor, new Vector2(right, bottom), new Vector2(1, 1), rectParams);
         SetVertex(VertexCount++, new Vector3(destRect.Left, destRect.Bottom, 0), color, borderColor, new(left, bottom), new Vector2(0, 1), rectParams);
 
-        _indices[IndexCount++] = vOffset + 0;
-        _indices[IndexCount++] = vOffset + 1;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 3;
-        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
         return new Span<UiVertex>(_vertices, vOffset, 4);
     }
 
@@ -248,12 +248,12 @@ public class RenderContext
             SetVertex(VertexCount++, new Vector3(right, bottom, 0), color, color, new(uvRight, ubBottom), new(1, 1), rectParams);
             SetVertex(VertexCount++, new Vector3(left, bottom, 0), color, color, new(uvLeft, ubBottom), new(0, 1), rectParams);
 
-            _indices[IndexCount++] = vOffset + 0;
-            _indices[IndexCount++] = vOffset + 1;
-            _indices[IndexCount++] = vOffset + 2;
-            _indices[IndexCount++] = vOffset + 2;
-            _indices[IndexCount++] = vOffset + 3;
-            _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
             cursor.X += glyphInfo.AdvanceWidth * scale;
         }
     }
@@ -302,12 +302,12 @@ public class RenderContext
             SetVertex(VertexCount++, new Vector3(right, bottom, 0), color, color, new(uvRight, ubBottom), new(1, 1), rectParams);
             SetVertex(VertexCount++, new Vector3(left, bottom, 0), color, color, new(uvLeft, ubBottom), new(0, 1), rectParams);
 
-            _indices[IndexCount++] = vOffset + 0;
-            _indices[IndexCount++] = vOffset + 1;
-            _indices[IndexCount++] = vOffset + 2;
-            _indices[IndexCount++] = vOffset + 2;
-            _indices[IndexCount++] = vOffset + 3;
-            _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
             cursor.X += glyphInfo.AdvanceWidth * scale;
         }
 
@@ -331,12 +331,12 @@ public class RenderContext
         SetVertex(VertexCount++, new Vector3(right, bottom, 0), colorBr, borderColorBr, GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
         SetVertex(VertexCount++, new Vector3(left, bottom, 0), colorBl, borderColorBl, GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
 
-        _indices[IndexCount++] = vOffset + 0;
-        _indices[IndexCount++] = vOffset + 1;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 3;
-        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
     }
 
     /// <summary>
@@ -364,12 +364,12 @@ public class RenderContext
         SetVertex(VertexCount++, new Vector3(right, bottom, 0), color, color, GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
         SetVertex(VertexCount++, new Vector3(left, bottom, 0), color, color, GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
 
-        _indices[IndexCount++] = vOffset + 0;
-        _indices[IndexCount++] = vOffset + 1;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 3;
-        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
     }
 
     /// <summary>
@@ -404,12 +404,12 @@ public class RenderContext
         SetVertex(VertexCount++, new Vector3(end - offset, 0), color, Color.Transparent, GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
         SetVertex(VertexCount++, new Vector3(end + offset, 0), color, Color.Transparent, GreyGui.AtlasPixelUv, new Vector2(1, 0), rectParams);
 
-        _indices[IndexCount++] = vOffset + 0;
-        _indices[IndexCount++] = vOffset + 1;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 3;
-        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
 
     }
 

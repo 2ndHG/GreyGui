@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace GreyGui;
 
-public class GuiBatch
+public class GuiBatch :IDisposable
 {
     private const int DEFAULT_VERTEX_COUNT = 2048;
     private const int DEFAULT_INDEX_COUNT = 4096;
@@ -151,5 +151,12 @@ public class GuiBatch
             _indexBufferSize = newSize;
             Console.WriteLine($"Resized index buffer to {newSize}");
         }
+    }
+
+    public void Dispose()
+    {
+        _vertexBuffer.Dispose();
+        _indexBuffer.Dispose();
+        GC.SuppressFinalize(this);
     }
 }

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -248,12 +249,12 @@ public class RenderContext
             SetVertex(VertexCount++, new Vector3(right, bottom, 0), color, color, new(uvRight, ubBottom), new(1, 1), rectParams);
             SetVertex(VertexCount++, new Vector3(left, bottom, 0), color, color, new(uvLeft, ubBottom), new(0, 1), rectParams);
 
-        _indices[IndexCount++] = (ushort)(vOffset + 0);
-        _indices[IndexCount++] = (ushort)(vOffset + 1);
-        _indices[IndexCount++] = (ushort)(vOffset + 2);
-        _indices[IndexCount++] = (ushort)(vOffset + 2);
-        _indices[IndexCount++] = (ushort)(vOffset + 3);
-        _indices[IndexCount++] = (ushort)(vOffset + 0);
+            _indices[IndexCount++] = (ushort)(vOffset + 0);
+            _indices[IndexCount++] = (ushort)(vOffset + 1);
+            _indices[IndexCount++] = (ushort)(vOffset + 2);
+            _indices[IndexCount++] = (ushort)(vOffset + 2);
+            _indices[IndexCount++] = (ushort)(vOffset + 3);
+            _indices[IndexCount++] = (ushort)(vOffset + 0);
             cursor.X += glyphInfo.AdvanceWidth * scale;
         }
     }
@@ -302,12 +303,12 @@ public class RenderContext
             SetVertex(VertexCount++, new Vector3(right, bottom, 0), color, color, new(uvRight, ubBottom), new(1, 1), rectParams);
             SetVertex(VertexCount++, new Vector3(left, bottom, 0), color, color, new(uvLeft, ubBottom), new(0, 1), rectParams);
 
-        _indices[IndexCount++] = (ushort)(vOffset + 0);
-        _indices[IndexCount++] = (ushort)(vOffset + 1);
-        _indices[IndexCount++] = (ushort)(vOffset + 2);
-        _indices[IndexCount++] = (ushort)(vOffset + 2);
-        _indices[IndexCount++] = (ushort)(vOffset + 3);
-        _indices[IndexCount++] = (ushort)(vOffset + 0);
+            _indices[IndexCount++] = (ushort)(vOffset + 0);
+            _indices[IndexCount++] = (ushort)(vOffset + 1);
+            _indices[IndexCount++] = (ushort)(vOffset + 2);
+            _indices[IndexCount++] = (ushort)(vOffset + 2);
+            _indices[IndexCount++] = (ushort)(vOffset + 3);
+            _indices[IndexCount++] = (ushort)(vOffset + 0);
             cursor.X += glyphInfo.AdvanceWidth * scale;
         }
 
@@ -413,14 +414,16 @@ public class RenderContext
 
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetVertex(int index, Vector3 pos, Color col, Color borderCol, Vector2 uv, Vector2 local, Vector4 rParams)
     {
-        _vertices[index].Position = pos;
-        _vertices[index].Color = col;
-        _vertices[index].BorderColor = borderCol;
-        _vertices[index].TexCoord = uv;
-        _vertices[index].LocalCoord = local;
-        _vertices[index].RectParams = rParams;
+        ref UiVertex vertex = ref _vertices[index];
+        vertex.Position = pos;
+        vertex.Color = col;
+        vertex.BorderColor = borderCol;
+        vertex.TexCoord = uv;
+        vertex.LocalCoord = local;
+        vertex.RectParams = rParams;
     }
 
     public void EnsureCapacity(int newVertexCount, int newIndexCount)

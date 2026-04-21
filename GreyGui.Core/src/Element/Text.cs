@@ -209,7 +209,7 @@ public class Text : GreyGuiElement, IRatioElement
     private float _heightRatio;
     private float _heightWidthRatio;
     private TextAlignment _alignMode;
-    private string _fontName = GreyGui.TextSystem.DefaultFont;
+    private string _fontName = GreyGuiCore.TextSystem.DefaultFont;
     private string _displayText;
     private float _fontSize;
     private bool _isDisplayTextDirty;
@@ -245,9 +245,9 @@ public class Text : GreyGuiElement, IRatioElement
         _heightWidthRatio = heightWidthRatio;
         _zIndex = zIndex;
         _alignMode = alignMode;
-        _fontName = fontName ?? GreyGui.TextSystem.DefaultFont;
+        _fontName = fontName ?? GreyGuiCore.TextSystem.DefaultFont;
         _displayText = displayText;
-        fontSize = fontSize < 0 ? GreyGui.TextSystem.DefaultFontSize : fontSize;
+        fontSize = fontSize < 0 ? GreyGuiCore.TextSystem.DefaultFontSize : fontSize;
         _fontSize = fontSize;
         _textYOffset = textYOffset;
         _fontSizeScalingMode = fontSizeScalingMode;
@@ -282,7 +282,7 @@ public class Text : GreyGuiElement, IRatioElement
         if (_textSegments.Count == 0) { return; }
 
         float fontSize = GetFinalFontSize();
-        float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        float scale = fontSize / GreyGuiCore.TextSystem.GlyphPixelSize;
         float widthSum = 0;
         int rowCount = 0;
         Vector2 offset = new(0, 0);
@@ -360,7 +360,7 @@ public class Text : GreyGuiElement, IRatioElement
         if (_textSegments.Count == 0) { return; }
 
         float fontSize = GetFinalFontSize();
-        float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        float scale = fontSize / GreyGuiCore.TextSystem.GlyphPixelSize;
         float endLineThreshold = _autoEndLine ? _finalSize.X : float.MaxValue;
         float widthSum = 0;
         float prevSegmentSpaceWidth = 0;
@@ -458,7 +458,7 @@ public class Text : GreyGuiElement, IRatioElement
         {
             if (_parent == null)
             {
-                _finalSize.X = GreyGui.NullParentWidth * _widthRatio;
+                _finalSize.X = GreyGuiCore.NullParentWidth * _widthRatio;
             }
             else
             {
@@ -471,7 +471,7 @@ public class Text : GreyGuiElement, IRatioElement
         {
             if (_parent == null)
             {
-                _finalSize.Y = GreyGui.NullParentHeight * _heightRatio;
+                _finalSize.Y = GreyGuiCore.NullParentHeight * _heightRatio;
             }
             else
             {
@@ -503,15 +503,15 @@ public class Text : GreyGuiElement, IRatioElement
 
     private void ParseText()
     {
-        FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
+        FontInfo fontInfo = GreyGuiCore.TextSystem.GetFontInfo(_fontName);
         float spaceAdvanceWidth;
         if (fontInfo.GlyphInfoIndexMap.TryGetValue(' ', out ushort spaceGlyphInfoIndex))
         {
-            spaceAdvanceWidth = GreyGui.TextSystem.GlyphInfoList[spaceGlyphInfoIndex].AdvanceWidth;
+            spaceAdvanceWidth = GreyGuiCore.TextSystem.GlyphInfoList[spaceGlyphInfoIndex].AdvanceWidth;
         }
         else
         {
-            spaceAdvanceWidth = GreyGui.TextSystem.GlyphPixelSize / 4;
+            spaceAdvanceWidth = GreyGuiCore.TextSystem.GlyphPixelSize / 4;
         }
 
         _displayTextCharIndices.Clear();
@@ -532,7 +532,7 @@ public class Text : GreyGuiElement, IRatioElement
             char c = _displayText[i];
             int charIndex = fontInfo.GetCharIndex(c);
             _displayTextCharIndices.Add(charIndex);
-            float charWidth = GreyGui.TextSystem.GlyphInfoList[charIndex].AdvanceWidth;
+            float charWidth = GreyGuiCore.TextSystem.GlyphInfoList[charIndex].AdvanceWidth;
 
             if (c == ' ')
             {
@@ -604,11 +604,11 @@ public class Text : GreyGuiElement, IRatioElement
 
     private void ResolveDisplayTextDirty()
     {
-        GreyGui.TextSystem.ReserveChars(_fontName, DisplayText);
+        GreyGuiCore.TextSystem.ReserveChars(_fontName, DisplayText);
         ParseText();
 
         _isDisplayTextDirty = false;
-        _fontInfoVersion = GreyGui.TextSystem.FontInfoVersion;
+        _fontInfoVersion = GreyGuiCore.TextSystem.FontInfoVersion;
     }
 
     private float GetFinalFontSize()
@@ -634,7 +634,7 @@ public class Text : GreyGuiElement, IRatioElement
 
     public override void Draw(Point pos, RenderContext renderContext, Rectangle screenScissor)
     {
-        if (_isDisplayTextDirty || _fontInfoVersion != GreyGui.TextSystem.FontInfoVersion)
+        if (_isDisplayTextDirty || _fontInfoVersion != GreyGuiCore.TextSystem.FontInfoVersion)
         {
             ResolveDisplayTextDirty();
         }

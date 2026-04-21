@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace GreyGui;
 
-public static class GreyGui
+public static class GreyGuiCore
 {
     /// <summary>
     /// Initialize GreyGui. Need to be called before any usage of this library. 

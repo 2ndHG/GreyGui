@@ -48,8 +48,8 @@ public class Game1 : Game
         _buttonTexture = Content.Load<Texture2D>("SampleImage/ButtonSample");
         _bannerRt = new RenderTarget2D(GraphicsDevice, 800, 180);
         _spriteBatch = new SpriteBatch(GraphicsDevice);
-        GreyGui.Initialize(this);
-        GreyGui.TextSystem.LoadFont("huninn", "huninn.ttf");
+        GreyGuiCore.Initialize(this);
+        GreyGuiCore.TextSystem.LoadFont("huninn", "huninn.ttf");
         // GreyGui.TextSystem.ReserveChars("huninn", Constant.VisibleAsciiVerbatim);
         // GreyGui.TextSystem.ReserveChars("kanit", Constant.VisibleAsciiVerbatim);
         // GreyGui.TextSystem.LoadAtlasAndInfo();
@@ -103,7 +103,7 @@ public class Game1 : Game
             }
             if (GuiUpdate.Keyboard.IsKeyDown(Keys.P))
             {
-                GreyGui.TextSystem.ExportAtlasAndInfoToStorage("CachedAtlas");
+                GreyGuiCore.TextSystem.ExportAtlasAndInfoToStorage("CachedAtlas");
                 // using (FileStream fs = File.OpenWrite("Banner.png"))
                 // {
                 //     _bannerRt.SaveAsPng(fs, _bannerRt.Width, _bannerRt.Height);
@@ -121,7 +121,7 @@ public class Game1 : Game
         GraphicsDevice.Clear(new Color(0, 0, 0));
         // Point point = Mouse.GetState().Position;
         _spriteBatch.Begin();
-        _spriteBatch.Draw(GreyGui.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
+        _spriteBatch.Draw(GreyGuiCore.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
         _spriteBatch.End();
 
         // GraphicsDevice.SetRenderTarget(_bannerRt);

@@ -34,7 +34,7 @@ public class GuiBatch
     public GuiBatch(GraphicsDevice device)
     {
         _device = device;
-        _uiShader = GreyGui.Shader;
+        _uiShader = GreyGuiCore.Shader;
         _gameTime = new GameTime();
 
         _renderContext = new RenderContext();
@@ -79,18 +79,18 @@ public class GuiBatch
     public void Flush(RenderContext context)
     {
         // Check if there are generated SDF bitmaps that haven't be drawn to the atlas
-        GreyGui.TextSystem.SetGeneratedSdfBitmapToAtlas();
+        GreyGuiCore.TextSystem.SetGeneratedSdfBitmapToAtlas();
 
         if (context.Batches.Count == 0)
         {
             return;
         }
 
-        GreyGui.EnsureGpuBufferCapacity(context.VertexCount, context.IndexCount);
-        GreyGui.VertexBuffer.SetData(context.Vertices, 0, context.VertexCount, SetDataOptions.Discard);
-        GreyGui.IndexBuffer.SetData(context.Indices, 0, context.IndexCount, SetDataOptions.Discard);
-        _device.SetVertexBuffer(GreyGui.VertexBuffer);
-        _device.Indices = GreyGui.IndexBuffer;
+        GreyGuiCore.EnsureGpuBufferCapacity(context.VertexCount, context.IndexCount);
+        GreyGuiCore.VertexBuffer.SetData(context.Vertices, 0, context.VertexCount, SetDataOptions.Discard);
+        GreyGuiCore.IndexBuffer.SetData(context.Indices, 0, context.IndexCount, SetDataOptions.Discard);
+        _device.SetVertexBuffer(GreyGuiCore.VertexBuffer);
+        _device.Indices = GreyGuiCore.IndexBuffer;
 
         Matrix projection = Matrix.CreateOrthographicOffCenter(0, _device.Viewport.Width, _device.Viewport.Height, 0, 0, 1);
 
@@ -102,7 +102,7 @@ public class GuiBatch
         {
             if (batch.IndexCount == 0) continue;
 
-            _device.SamplerStates[0] = batch.Texture == GreyGui.Atlas ? SamplerState.LinearClamp : SamplerState.PointClamp;
+            _device.SamplerStates[0] = batch.Texture == GreyGuiCore.Atlas ? SamplerState.LinearClamp : SamplerState.PointClamp;
             _device.ScissorRectangle = batch.Scissor;
             _uiShader.Parameters["Texture"].SetValue(batch.Texture);
 
@@ -148,18 +148,18 @@ public class GuiBatch
     public void Flush()
     {
         // Check if there are generated SDF bitmaps that haven't be drawn to the atlas
-        GreyGui.TextSystem.SetGeneratedSdfBitmapToAtlas();
+        GreyGuiCore.TextSystem.SetGeneratedSdfBitmapToAtlas();
 
         if (_renderContext.Batches.Count == 0)
         {
             return;
         }
 
-        GreyGui.EnsureGpuBufferCapacity(_renderContext.VertexCount, _renderContext.IndexCount);
-        GreyGui.VertexBuffer.SetData(_renderContext.Vertices, 0, _renderContext.VertexCount, SetDataOptions.Discard);
-        GreyGui.IndexBuffer.SetData(_renderContext.Indices, 0, _renderContext.IndexCount, SetDataOptions.Discard);
-        _device.SetVertexBuffer(GreyGui.VertexBuffer);
-        _device.Indices = GreyGui.IndexBuffer;
+        GreyGuiCore.EnsureGpuBufferCapacity(_renderContext.VertexCount, _renderContext.IndexCount);
+        GreyGuiCore.VertexBuffer.SetData(_renderContext.Vertices, 0, _renderContext.VertexCount, SetDataOptions.Discard);
+        GreyGuiCore.IndexBuffer.SetData(_renderContext.Indices, 0, _renderContext.IndexCount, SetDataOptions.Discard);
+        _device.SetVertexBuffer(GreyGuiCore.VertexBuffer);
+        _device.Indices = GreyGuiCore.IndexBuffer;
 
         Matrix projection = Matrix.CreateOrthographicOffCenter(0, _device.Viewport.Width, _device.Viewport.Height, 0, 0, 1);
 
@@ -171,7 +171,7 @@ public class GuiBatch
         {
             if (batch.IndexCount == 0) continue;
 
-            _device.SamplerStates[0] = batch.Texture == GreyGui.Atlas ? SamplerState.LinearClamp : SamplerState.PointClamp;
+            _device.SamplerStates[0] = batch.Texture == GreyGuiCore.Atlas ? SamplerState.LinearClamp : SamplerState.PointClamp;
             _device.ScissorRectangle = batch.Scissor;
             _uiShader.Parameters["Texture"].SetValue(batch.Texture);
 

@@ -139,7 +139,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
 
 
     // Render
-    protected Texture2D _imageTexture = GreyGui.Atlas;
+    protected Texture2D _imageTexture = GreyGuiCore.Atlas;
     protected Rectangle _imageSrcRect;
 
     public ListPanel() { }
@@ -170,7 +170,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         _childGap = childGap;
         _rowGap = rowGap;
         _zIndex = zIndex;
-        _imageTexture = imageTexture ?? GreyGui.Atlas;
+        _imageTexture = imageTexture ?? GreyGuiCore.Atlas;
         _imageSrcRect = (imageTexture, imageSrcRect.IsEmpty) switch
         {
             (null, _) => new Rectangle(0, 0, 1, 1),
@@ -256,7 +256,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         {
             if (_parent == null)
             {
-                _finalSize.X = GreyGui.NullParentWidth * _widthRatio;
+                _finalSize.X = GreyGuiCore.NullParentWidth * _widthRatio;
             }
             else
             {
@@ -269,7 +269,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         {
             if (_parent == null)
             {
-                _finalSize.Y = GreyGui.NullParentHeight * _heightRatio;
+                _finalSize.Y = GreyGuiCore.NullParentHeight * _heightRatio;
             }
             else
             {

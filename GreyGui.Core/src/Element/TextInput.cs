@@ -217,7 +217,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     private float _heightRatio;
     private float _heightWidthRatio;
     private TextAlignment _alignMode;
-    private string _fontName = GreyGui.TextSystem.DefaultFont;
+    private string _fontName = GreyGuiCore.TextSystem.DefaultFont;
     private string _displayText;
     private float _fontSize;
     private bool _isDisplayTextDirty;
@@ -266,9 +266,9 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         _heightWidthRatio = heightWidthRatio;
         _zIndex = zIndex;
         _alignMode = alignMode;
-        _fontName = fontName ?? GreyGui.TextSystem.DefaultFont;
+        _fontName = fontName ?? GreyGuiCore.TextSystem.DefaultFont;
         _displayText = displayText;
-        fontSize = fontSize < 0 ? GreyGui.TextSystem.DefaultFontSize : fontSize;
+        fontSize = fontSize < 0 ? GreyGuiCore.TextSystem.DefaultFontSize : fontSize;
         _fontSize = fontSize;
         _textYOffset = textYOffset;
         _fontSizeScalingMode = fontSizeScalingMode;
@@ -319,7 +319,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         if (_textSegments.Count == 0) { return; }
 
         float fontSize = GetFinalFontSize();
-        float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        float scale = fontSize / GreyGuiCore.TextSystem.GlyphPixelSize;
         float widthSum = 0;
         int rowCount = 0;
         Vector2 offset = new(0, 0);
@@ -399,7 +399,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         if (_textSegments.Count == 0) { return; }
 
         float fontSize = GetFinalFontSize();
-        float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        float scale = fontSize / GreyGuiCore.TextSystem.GlyphPixelSize;
         float endLineThreshold = _autoEndLine ? _finalSize.X : float.MaxValue;
         float widthSum = 0;
         float prevSegmentSpaceWidth = 0;
@@ -489,7 +489,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     private int GetCharIndexAtMouse(Point mousePosition)
     {
         float fontSize = GetFinalFontSize();
-        float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        float scale = fontSize / GreyGuiCore.TextSystem.GlyphPixelSize;
         if (mousePosition.Y < OnScreenPos.Y)
         {
             return 0;
@@ -568,7 +568,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         for (int i = segment.startIndex; i < segment.startIndex + segment.CharCount; i++)
         {
             int charIndex = _displayTextCharIndices[i];
-            float charWidth = GreyGui.TextSystem.GlyphInfoList[charIndex].AdvanceWidth * scale;
+            float charWidth = GreyGuiCore.TextSystem.GlyphInfoList[charIndex].AdvanceWidth * scale;
 
             if (mousePosition.X < currentX + charWidth / 2)
             {
@@ -592,7 +592,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         {
             if (_parent == null)
             {
-                _finalSize.X = GreyGui.NullParentWidth * _widthRatio;
+                _finalSize.X = GreyGuiCore.NullParentWidth * _widthRatio;
             }
             else
             {
@@ -605,7 +605,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         {
             if (_parent == null)
             {
-                _finalSize.Y = GreyGui.NullParentHeight * _heightRatio;
+                _finalSize.Y = GreyGuiCore.NullParentHeight * _heightRatio;
             }
             else
             {
@@ -637,18 +637,18 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     }
     private void ParseText()
     {
-        FontInfo fontInfo = GreyGui.TextSystem.GetFontInfo(_fontName);
+        FontInfo fontInfo = GreyGuiCore.TextSystem.GetFontInfo(_fontName);
         // float spaceAdvanceWidth = fontInfo.GlyphInfoMap.TryGetValue(' ', out var spaceGlyphInfo) ?
         //     spaceGlyphInfo.AdvanceWidth :
         //     GreyGui.TextSystem.GlyphPixelSize / 4; 
         float spaceAdvanceWidth;
         if (fontInfo.GlyphInfoIndexMap.TryGetValue(' ', out ushort spaceGlyphInfoIndex))
         {
-            spaceAdvanceWidth = GreyGui.TextSystem.GlyphInfoList[spaceGlyphInfoIndex].AdvanceWidth;
+            spaceAdvanceWidth = GreyGuiCore.TextSystem.GlyphInfoList[spaceGlyphInfoIndex].AdvanceWidth;
         }
         else
         {
-            spaceAdvanceWidth = GreyGui.TextSystem.GlyphPixelSize / 4;
+            spaceAdvanceWidth = GreyGuiCore.TextSystem.GlyphPixelSize / 4;
         }
 
         _displayTextCharIndices.Clear();
@@ -669,7 +669,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
             char c = _displayText[i];
             int charIndex = fontInfo.GetCharIndex(c);
             _displayTextCharIndices.Add(charIndex);
-            float charWidth = GreyGui.TextSystem.GlyphInfoList[charIndex].AdvanceWidth;
+            float charWidth = GreyGuiCore.TextSystem.GlyphInfoList[charIndex].AdvanceWidth;
 
             if (c == ' ')
             {
@@ -740,10 +740,10 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
 
     private void ResolveDisplayTextDirty()
     {
-        GreyGui.TextSystem.ReserveChars(_fontName, DisplayText);
+        GreyGuiCore.TextSystem.ReserveChars(_fontName, DisplayText);
         ParseText();
 
-        _fontInfoVersion = GreyGui.TextSystem.FontInfoVersion;
+        _fontInfoVersion = GreyGuiCore.TextSystem.FontInfoVersion;
         _isDisplayTextDirty = false;
     }
 
@@ -795,9 +795,9 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         float originalWidth = 0;
         for (int i = cursorSegment.startIndex; i < _cursorIndex; ++i)
         {
-            originalWidth += GreyGui.TextSystem.GlyphInfoList[_displayTextCharIndices[i]].AdvanceWidth;
+            originalWidth += GreyGuiCore.TextSystem.GlyphInfoList[_displayTextCharIndices[i]].AdvanceWidth;
         }
-        result.X += originalWidth * fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        result.X += originalWidth * fontSize / GreyGuiCore.TextSystem.GlyphPixelSize;
         return result;
     }
 
@@ -851,7 +851,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     {
         OnScreenPos = pos;
         LastScissor = screenScissor;
-        if (_isDisplayTextDirty || _fontInfoVersion != GreyGui.TextSystem.FontInfoVersion)
+        if (_isDisplayTextDirty || _fontInfoVersion != GreyGuiCore.TextSystem.FontInfoVersion)
         {
             ResolveDisplayTextDirty();
         }

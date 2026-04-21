@@ -149,7 +149,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         _heightRatio = heightRatio;
         _heightWidthRatio = heightWidthRatio;
         _zIndex = zIndex;
-        _imageTexture = imageTexture == null ? GreyGui.Atlas : imageTexture;
+        _imageTexture = imageTexture == null ? GreyGuiCore.Atlas : imageTexture;
         _imageSrcRect = (imageTexture, imageSrcRect.IsEmpty) switch
         {
             (null, _) => new Rectangle(0, 0, 1, 1),
@@ -212,7 +212,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         {
             if (_parent == null)
             {
-                _finalSize.X = GreyGui.NullParentWidth * _widthRatio;
+                _finalSize.X = GreyGuiCore.NullParentWidth * _widthRatio;
             }
             else
             {
@@ -224,7 +224,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         {
             if (_parent == null)
             {
-                _finalSize.Y = GreyGui.NullParentHeight * _heightRatio;
+                _finalSize.Y = GreyGuiCore.NullParentHeight * _heightRatio;
             }
             else
             {

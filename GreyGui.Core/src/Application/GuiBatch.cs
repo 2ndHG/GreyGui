@@ -3,10 +3,8 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace GreyGui;
 
-public class GuiBatch :IDisposable
+public class GuiBatch
 {
-    private const int DEFAULT_VERTEX_COUNT = 2048;
-    private const int DEFAULT_INDEX_COUNT = 4096;
     private const int MAX_VERTEX_COUNT = 32768; // Limited by 16-bit index buffer
     private const int MAX_INDEX_COUNT = 65536;
     private readonly GraphicsDevice _device;
@@ -14,10 +12,8 @@ public class GuiBatch :IDisposable
     private static readonly RasterizerState ScissorState = new() { ScissorTestEnable = true };
     private GameTime _gameTime;
 
-    private DynamicVertexBuffer _vertexBuffer;
-    private int _vertexBufferSize = DEFAULT_VERTEX_COUNT;
-    private DynamicIndexBuffer _indexBuffer;
-    private int _indexBufferSize = DEFAULT_INDEX_COUNT;
+
+    private RenderContext _renderContext;
 
     /// <summary>
     /// Create a GuiBatch instance that will be using a custom shader.
@@ -41,8 +37,7 @@ public class GuiBatch :IDisposable
         _uiShader = GreyGui.Shader;
         _gameTime = new GameTime();
 
-        _vertexBuffer = new(device, UiVertex.VertexDeclaration, DEFAULT_VERTEX_COUNT, BufferUsage.WriteOnly);
-        _indexBuffer = new DynamicIndexBuffer(device, IndexElementSize.SixteenBits, DEFAULT_INDEX_COUNT, BufferUsage.WriteOnly);
+        _renderContext = new RenderContext();
     }
 
     /// <summary>
@@ -90,11 +85,11 @@ public class GuiBatch :IDisposable
             return;
         }
 
-        EnsureBufferCapacity(context.VertexCount, context.IndexCount);
-        _vertexBuffer.SetData(context.Vertices, 0, context.VertexCount, SetDataOptions.Discard);
-        _indexBuffer.SetData(context.Indices, 0, context.IndexCount, SetDataOptions.Discard);
-        _device.SetVertexBuffer(_vertexBuffer);
-        _device.Indices = _indexBuffer;
+        GreyGui.EnsureGpuBufferCapacity(context.VertexCount, context.IndexCount);
+        GreyGui.VertexBuffer.SetData(context.Vertices, 0, context.VertexCount, SetDataOptions.Discard);
+        GreyGui.IndexBuffer.SetData(context.Indices, 0, context.IndexCount, SetDataOptions.Discard);
+        _device.SetVertexBuffer(GreyGui.VertexBuffer);
+        _device.Indices = GreyGui.IndexBuffer;
 
         Matrix projection = Matrix.CreateOrthographicOffCenter(0, _device.Viewport.Width, _device.Viewport.Height, 0, 0, 1);
 
@@ -124,39 +119,4 @@ public class GuiBatch :IDisposable
         context.Clear();
     }
 
-    private void EnsureBufferCapacity(int vertexCount, int indexCount)
-    {
-        if (vertexCount > _vertexBufferSize)
-        {
-            int newSize = _vertexBufferSize;
-            while (newSize < vertexCount)
-            {
-                newSize *= 2;
-            }
-            _vertexBuffer?.Dispose();
-            _vertexBuffer = new DynamicVertexBuffer(_device, UiVertex.VertexDeclaration, newSize, BufferUsage.WriteOnly);
-            _vertexBufferSize = newSize;
-            Console.WriteLine($"Resized vertex buffer to {newSize}");
-        }
-        if (indexCount > _indexBufferSize)
-        {
-
-            int newSize = _indexBufferSize;
-            while (newSize < indexCount)
-            {
-                newSize *= 2;
-            }
-            _indexBuffer?.Dispose();
-            _indexBuffer = new DynamicIndexBuffer(_device, IndexElementSize.SixteenBits, newSize, BufferUsage.WriteOnly);
-            _indexBufferSize = newSize;
-            Console.WriteLine($"Resized index buffer to {newSize}");
-        }
-    }
-
-    public void Dispose()
-    {
-        _vertexBuffer.Dispose();
-        _indexBuffer.Dispose();
-        GC.SuppressFinalize(this);
-    }
 }

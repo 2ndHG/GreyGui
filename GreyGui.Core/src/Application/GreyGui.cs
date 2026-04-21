@@ -47,6 +47,9 @@ public static class GreyGui
         AtlasPixelUv = new Vector2(0.5f / atlasWidth, 0.5f / atlasHeight);
         TextSystem = new TextSystem();
 
+        VertexBuffer = new(game.GraphicsDevice, UiVertex.VertexDeclaration, DEFAULT_VERTEX_COUNT, BufferUsage.WriteOnly);
+        IndexBuffer = new DynamicIndexBuffer(game.GraphicsDevice, IndexElementSize.SixteenBits, DEFAULT_INDEX_COUNT, BufferUsage.WriteOnly);
+
         // Initialize GuiUpdate
         GuiUpdate.Initialize(game);
 
@@ -73,11 +76,52 @@ public static class GreyGui
     {
         Atlas = atlas;
     }
+
+    public static void EnsureGpuBufferCapacity(int vertexCount, int indexCount)
+    {
+        if (vertexCount > VertexBufferSize)
+        {
+            int newSize = VertexBufferSize;
+            while (newSize < vertexCount)
+            {
+                newSize *= 2;
+            }
+            VertexBuffer?.Dispose();
+            VertexBuffer = new DynamicVertexBuffer(GameInstance.GraphicsDevice, UiVertex.VertexDeclaration, newSize, BufferUsage.WriteOnly);
+            VertexBufferSize = newSize;
+            Console.WriteLine($"Resized vertex buffer to {newSize}");
+        }
+        if (indexCount > IndexBufferSize)
+        {
+
+            int newSize = IndexBufferSize;
+            while (newSize < indexCount)
+            {
+                newSize *= 2;
+            }
+            IndexBuffer?.Dispose();
+            IndexBuffer = new DynamicIndexBuffer(GameInstance.GraphicsDevice, IndexElementSize.SixteenBits, newSize, BufferUsage.WriteOnly);
+            IndexBufferSize = newSize;
+            Console.WriteLine($"Resized index buffer to {newSize}");
+        }
+    }
+
+    #region Rendering
     public static Texture2D Atlas { get; private set; }
     public static Effect Shader { get; private set; }
+    public static DynamicVertexBuffer VertexBuffer { get; private set; }
+    public static int VertexBufferSize { get; private set; } = DEFAULT_VERTEX_COUNT;
+    public static DynamicIndexBuffer IndexBuffer { get; private set; }
+    public static int IndexBufferSize { get; private set; } = DEFAULT_INDEX_COUNT;
+    #endregion
+
     public static TextSystem TextSystem { get; private set; }
     public static Vector2 AtlasPixelUv { get; private set; }
     public static Game GameInstance { get; private set; }
     public static int NullParentWidth { get; private set; }
     public static int NullParentHeight { get; private set; }
+
+
+    private const int DEFAULT_VERTEX_COUNT = 2048;
+    private const int DEFAULT_INDEX_COUNT = 4096;
 }

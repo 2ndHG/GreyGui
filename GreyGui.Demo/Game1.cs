@@ -129,11 +129,11 @@ public class Game1 : Game
         _stopwatch.Restart();
 
         _guiBatch.ReceiveFrameInfo(gameTime);
-        _guiBatch.Draw(root, renderContext, new Point(50, 50));
+        _guiBatch.Draw(root, new Point(50, 50));
 
         drawTime = _stopwatch.Elapsed.TotalMilliseconds;
 
-        _guiBatch.Flush(renderContext);
+        _guiBatch.Flush();
         Console.WriteLine($"Draw {drawTime.ToString("F3")}, Flush: {(_stopwatch.Elapsed.TotalMilliseconds - drawTime).ToString("F3")}, Total: {_stopwatch.Elapsed.TotalMilliseconds.ToString("F3")}");
 
 

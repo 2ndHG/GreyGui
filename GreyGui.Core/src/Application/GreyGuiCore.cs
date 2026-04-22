@@ -19,9 +19,9 @@ public static class GreyGuiCore
     public static void Initialize(Game game, int atlasWidth = 4096, int atlasHeight = 4096)
     {
         Assembly assembly = Assembly.GetExecutingAssembly();
-        string[] resourceNames = assembly.GetManifestResourceNames();
-        foreach (var name in resourceNames)
-            Console.WriteLine(name);
+        // string[] resourceNames = assembly.GetManifestResourceNames();
+        // foreach (var name in resourceNames)
+        //     Console.WriteLine(name);
         string resourcePath = "GreyGui.Core.resource.UI_SDF.mgfx";
         using Stream stream = assembly.GetManifestResourceStream(resourcePath);
         if (stream == null)
@@ -89,7 +89,7 @@ public static class GreyGuiCore
             VertexBuffer?.Dispose();
             VertexBuffer = new DynamicVertexBuffer(GameInstance.GraphicsDevice, UiVertex.VertexDeclaration, newSize, BufferUsage.WriteOnly);
             VertexBufferSize = newSize;
-            Console.WriteLine($"Resized vertex buffer to {newSize}");
+            // Console.WriteLine($"Resized vertex buffer to {newSize}");
         }
         if (indexCount > IndexBufferSize)
         {
@@ -102,7 +102,7 @@ public static class GreyGuiCore
             IndexBuffer?.Dispose();
             IndexBuffer = new DynamicIndexBuffer(GameInstance.GraphicsDevice, IndexElementSize.SixteenBits, newSize, BufferUsage.WriteOnly);
             IndexBufferSize = newSize;
-            Console.WriteLine($"Resized index buffer to {newSize}");
+            // Console.WriteLine($"Resized index buffer to {newSize}");
         }
     }
 

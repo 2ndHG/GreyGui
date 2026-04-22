@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -7,15 +8,15 @@ namespace GreyGui;
 public class RenderContext
 {
     const int MAX_VERTEX_COUNT = 2048;
-    const int MAX_INDEX_COUNT = 2048;
+    const int MAX_INDEX_COUNT = 4096;
     public UiVertex[] Vertices => _vertices;
-    public int[] Indices => _indices;
+    public ushort[] Indices => _indices;
     public int VertexCount { get; private set; } = 0;
     public int IndexCount { get; private set; } = 0;
     public readonly List<DrawBatch> Batches = [new DrawBatch()];
 
     private UiVertex[] _vertices = new UiVertex[MAX_VERTEX_COUNT];
-    private int[] _indices = new int[MAX_INDEX_COUNT];
+    private ushort[] _indices = new ushort[MAX_INDEX_COUNT];
     public double ElapsedTimeSecond { get; set; }
 
     /// <summary>
@@ -37,7 +38,7 @@ public class RenderContext
     /// <param name="vertices">Vertex array</param>
     /// <param name="indices">Index array</param>
     /// <param name="scissor">Scissor rectangle</param>
-    public void AddCommand_Unstable(Texture2D texture, UiVertex[] vertices, int[] indices, Rectangle scissor)
+    public void AddCommand_Unstable(Texture2D texture, UiVertex[] vertices, ushort[] indices, Rectangle scissor)
     {
         // full
         EnsureCapacity(vertices.Length, indices.Length);
@@ -51,7 +52,7 @@ public class RenderContext
 
         for (int i = 0; i < indices.Length; i++)
         {
-            _indices[IndexCount + i] = indices[i] + offset;
+            _indices[IndexCount + i] = (ushort)(indices[i] + offset);
         }
         IndexCount += indices.Length;
     }
@@ -69,23 +70,23 @@ public class RenderContext
     {
         EnsureCapacity(4, 6);
 
-        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor);
+        PrepareDrawBatchForTexture(GreyGuiCore.Atlas, scissor);
         AddIndicesToLastBatch(6);
 
         Vector4 rectParams = new(dest.Width, dest.Height, borderRadius, borderWidth);
         int vOffset = VertexCount;
 
-        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), color, borderColor, GreyGui.AtlasPixelUv, new Vector2(0, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), color, borderColor, GreyGui.AtlasPixelUv, new Vector2(1, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), color, borderColor, GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), color, borderColor, GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), color, borderColor, GreyGuiCore.AtlasPixelUv, new Vector2(0, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), color, borderColor, GreyGuiCore.AtlasPixelUv, new Vector2(1, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), color, borderColor, GreyGuiCore.AtlasPixelUv, new Vector2(1, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), color, borderColor, GreyGuiCore.AtlasPixelUv, new Vector2(0, 1), rectParams);
 
-        _indices[IndexCount++] = vOffset + 0;
-        _indices[IndexCount++] = vOffset + 1;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 3;
-        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
     }
     /// <summary>
     /// Add vertices and indices for rendering rectangle with gradient colors.
@@ -93,23 +94,23 @@ public class RenderContext
     public void FillRect(Rectangle dest, Color colorTl, Color colorTr, Color colorBl, Color colorBr, Color borderColorTl, Color borderColorTr, Color borderColorBl, Color borderColorBr, float borderRadius, float borderWidth, Rectangle scissor)
     {
         EnsureCapacity(4, 6);
-        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor);
+        PrepareDrawBatchForTexture(GreyGuiCore.Atlas, scissor);
         AddIndicesToLastBatch(6);
 
         Vector4 rectParams = new(dest.Width, dest.Height, borderRadius, borderWidth);
         int vOffset = VertexCount;
 
-        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), colorTl, borderColorTl, GreyGui.AtlasPixelUv, new Vector2(0, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), colorTr, borderColorTr, GreyGui.AtlasPixelUv, new Vector2(1, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), colorBr, borderColorBr, GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
-        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), colorBl, borderColorBl, GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Top, 0), colorTl, borderColorTl, GreyGuiCore.AtlasPixelUv, new Vector2(0, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Top, 0), colorTr, borderColorTr, GreyGuiCore.AtlasPixelUv, new Vector2(1, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Right, dest.Bottom, 0), colorBr, borderColorBr, GreyGuiCore.AtlasPixelUv, new Vector2(1, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(dest.Left, dest.Bottom, 0), colorBl, borderColorBl, GreyGuiCore.AtlasPixelUv, new Vector2(0, 1), rectParams);
 
-        _indices[IndexCount++] = vOffset + 0;
-        _indices[IndexCount++] = vOffset + 1;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 3;
-        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
     }
 
     /// <summary>
@@ -144,12 +145,12 @@ public class RenderContext
         SetVertex(VertexCount++, new Vector3(destRect.Right, destRect.Bottom, 0), color, borderColor, new Vector2(right, bottom), new Vector2(1, 1), rectParams);
         SetVertex(VertexCount++, new Vector3(destRect.Left, destRect.Bottom, 0), color, borderColor, new(left, bottom), new Vector2(0, 1), rectParams);
 
-        _indices[IndexCount++] = vOffset + 0;
-        _indices[IndexCount++] = vOffset + 1;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 3;
-        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
     }
 
     /// <summary>
@@ -176,12 +177,12 @@ public class RenderContext
         SetVertex(VertexCount++, new Vector3(destRect.Right, destRect.Bottom, 0), color, borderColor, new Vector2(right, bottom), new Vector2(1, 1), rectParams);
         SetVertex(VertexCount++, new Vector3(destRect.Left, destRect.Bottom, 0), color, borderColor, new(left, bottom), new Vector2(0, 1), rectParams);
 
-        _indices[IndexCount++] = vOffset + 0;
-        _indices[IndexCount++] = vOffset + 1;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 3;
-        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
         return new Span<UiVertex>(_vertices, vOffset, 4);
     }
 
@@ -206,7 +207,7 @@ public class RenderContext
         RenderTextUsingCharIndices(indices, startIndex, length, position, fontSize, color, scissor);
     }
     /// <summary>
-    /// Generate vertices and indices for rendering text by using indices pointing to <see cref="GreyGui.TextSystem.GlyphInfoList">.
+    /// Generate vertices and indices for rendering text by using indices pointing to <see cref="GreyGuiCore.TextSystem.GlyphInfoList">.
     /// </summary>
     /// <param name="indices">List of rendering characters indices in GreyGui.TextSystem.GlyphInfoList</param>
     /// <param name="startIndex">Starting index of indices</param>
@@ -218,17 +219,17 @@ public class RenderContext
     public void RenderTextUsingCharIndices(List<int> indices, int startIndex, int length, Vector2 position, float fontSize, Color color, Rectangle scissor)
     {
         EnsureCapacity(4 * length, 6 * length);
-        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor);
+        PrepareDrawBatchForTexture(GreyGuiCore.Atlas, scissor);
         AddIndicesToLastBatch(6 * length);
 
-        float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        float scale = fontSize / GreyGuiCore.TextSystem.GlyphPixelSize;
         Vector2 cursor = position;
         length += startIndex;
         for (int i = startIndex; i < length; ++i)
         {
             int vOffset = VertexCount;
 
-            GlyphInfo glyphInfo = GreyGui.TextSystem.GlyphInfoList[indices[i]];
+            GlyphInfo glyphInfo = GreyGuiCore.TextSystem.GlyphInfoList[indices[i]];
             Vector2 finalSize = glyphInfo.SrcRect.Size.ToVector2() * scale;
             // rectParams.X = text weight, default 0, increase it make the text thicker (-0.5f ~0.5f)
             // rectParams.Z = fontSize to tell what the anti-aliasing distant value should be
@@ -238,22 +239,22 @@ public class RenderContext
             float right = left + finalSize.X;
             float bottom = top + finalSize.Y;
 
-            float uvLeft = (float)glyphInfo.SrcRect.Left / GreyGui.Atlas.Width;
-            float uvRight = (float)glyphInfo.SrcRect.Right / GreyGui.Atlas.Width;
-            float uvTop = (float)glyphInfo.SrcRect.Top / GreyGui.Atlas.Height;
-            float ubBottom = (float)glyphInfo.SrcRect.Bottom / GreyGui.Atlas.Height;
+            float uvLeft = (float)glyphInfo.SrcRect.Left / GreyGuiCore.Atlas.Width;
+            float uvRight = (float)glyphInfo.SrcRect.Right / GreyGuiCore.Atlas.Width;
+            float uvTop = (float)glyphInfo.SrcRect.Top / GreyGuiCore.Atlas.Height;
+            float ubBottom = (float)glyphInfo.SrcRect.Bottom / GreyGuiCore.Atlas.Height;
 
             SetVertex(VertexCount++, new Vector3(left, top, 0), color, color, new(uvLeft, uvTop), new(0, 0), rectParams);
             SetVertex(VertexCount++, new Vector3(right, top, 0), color, color, new(uvRight, uvTop), new(1, 0), rectParams);
             SetVertex(VertexCount++, new Vector3(right, bottom, 0), color, color, new(uvRight, ubBottom), new(1, 1), rectParams);
             SetVertex(VertexCount++, new Vector3(left, bottom, 0), color, color, new(uvLeft, ubBottom), new(0, 1), rectParams);
 
-            _indices[IndexCount++] = vOffset + 0;
-            _indices[IndexCount++] = vOffset + 1;
-            _indices[IndexCount++] = vOffset + 2;
-            _indices[IndexCount++] = vOffset + 2;
-            _indices[IndexCount++] = vOffset + 3;
-            _indices[IndexCount++] = vOffset + 0;
+            _indices[IndexCount++] = (ushort)(vOffset + 0);
+            _indices[IndexCount++] = (ushort)(vOffset + 1);
+            _indices[IndexCount++] = (ushort)(vOffset + 2);
+            _indices[IndexCount++] = (ushort)(vOffset + 2);
+            _indices[IndexCount++] = (ushort)(vOffset + 3);
+            _indices[IndexCount++] = (ushort)(vOffset + 0);
             cursor.X += glyphInfo.AdvanceWidth * scale;
         }
     }
@@ -273,10 +274,10 @@ public class RenderContext
     public void RenderText(ReadOnlySpan<GlyphInfo> glyphInfoSpan, int startIndex, int length, Vector2 position, float fontSize, Color color, Rectangle scissor)
     {
         EnsureCapacity(4 * length, 6 * length);
-        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor);
+        PrepareDrawBatchForTexture(GreyGuiCore.Atlas, scissor);
         AddIndicesToLastBatch(6 * length);
 
-        float scale = fontSize / GreyGui.TextSystem.GlyphPixelSize;
+        float scale = fontSize / GreyGuiCore.TextSystem.GlyphPixelSize;
         Vector2 cursor = position;
         length += startIndex;
         for (int i = startIndex; i < length; ++i)
@@ -292,22 +293,22 @@ public class RenderContext
             float right = left + finalSize.X;
             float bottom = top + finalSize.Y;
 
-            float uvLeft = (float)glyphInfo.SrcRect.Left / GreyGui.Atlas.Width;
-            float uvRight = (float)glyphInfo.SrcRect.Right / GreyGui.Atlas.Width;
-            float uvTop = (float)glyphInfo.SrcRect.Top / GreyGui.Atlas.Height;
-            float ubBottom = (float)glyphInfo.SrcRect.Bottom / GreyGui.Atlas.Height;
+            float uvLeft = (float)glyphInfo.SrcRect.Left / GreyGuiCore.Atlas.Width;
+            float uvRight = (float)glyphInfo.SrcRect.Right / GreyGuiCore.Atlas.Width;
+            float uvTop = (float)glyphInfo.SrcRect.Top / GreyGuiCore.Atlas.Height;
+            float ubBottom = (float)glyphInfo.SrcRect.Bottom / GreyGuiCore.Atlas.Height;
 
             SetVertex(VertexCount++, new Vector3(left, top, 0), color, color, new(uvLeft, uvTop), new(0, 0), rectParams);
             SetVertex(VertexCount++, new Vector3(right, top, 0), color, color, new(uvRight, uvTop), new(1, 0), rectParams);
             SetVertex(VertexCount++, new Vector3(right, bottom, 0), color, color, new(uvRight, ubBottom), new(1, 1), rectParams);
             SetVertex(VertexCount++, new Vector3(left, bottom, 0), color, color, new(uvLeft, ubBottom), new(0, 1), rectParams);
 
-            _indices[IndexCount++] = vOffset + 0;
-            _indices[IndexCount++] = vOffset + 1;
-            _indices[IndexCount++] = vOffset + 2;
-            _indices[IndexCount++] = vOffset + 2;
-            _indices[IndexCount++] = vOffset + 3;
-            _indices[IndexCount++] = vOffset + 0;
+            _indices[IndexCount++] = (ushort)(vOffset + 0);
+            _indices[IndexCount++] = (ushort)(vOffset + 1);
+            _indices[IndexCount++] = (ushort)(vOffset + 2);
+            _indices[IndexCount++] = (ushort)(vOffset + 2);
+            _indices[IndexCount++] = (ushort)(vOffset + 3);
+            _indices[IndexCount++] = (ushort)(vOffset + 0);
             cursor.X += glyphInfo.AdvanceWidth * scale;
         }
 
@@ -316,7 +317,7 @@ public class RenderContext
     public void FillCircle(Vector2 center, float radius, Color colorTl, Color colorTr, Color colorBl, Color colorBr, Color borderColorTl, Color borderColorTr, Color borderColorBl, Color borderColorBr, float borderWidth, Rectangle scissor)
     {
         EnsureCapacity(4, 6);
-        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor);
+        PrepareDrawBatchForTexture(GreyGuiCore.Atlas, scissor);
         AddIndicesToLastBatch(6);
 
         float left = center.X - radius;
@@ -326,17 +327,17 @@ public class RenderContext
         Vector4 rectParams = new(right - left, bottom - top, radius, borderWidth);
         int vOffset = VertexCount;
 
-        SetVertex(VertexCount++, new Vector3(left, top, 0), colorTl, borderColorTl, GreyGui.AtlasPixelUv, new Vector2(0, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(right, top, 0), colorTr, borderColorTr, GreyGui.AtlasPixelUv, new Vector2(1, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(right, bottom, 0), colorBr, borderColorBr, GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
-        SetVertex(VertexCount++, new Vector3(left, bottom, 0), colorBl, borderColorBl, GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(left, top, 0), colorTl, borderColorTl, GreyGuiCore.AtlasPixelUv, new Vector2(0, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(right, top, 0), colorTr, borderColorTr, GreyGuiCore.AtlasPixelUv, new Vector2(1, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(right, bottom, 0), colorBr, borderColorBr, GreyGuiCore.AtlasPixelUv, new Vector2(1, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(left, bottom, 0), colorBl, borderColorBl, GreyGuiCore.AtlasPixelUv, new Vector2(0, 1), rectParams);
 
-        _indices[IndexCount++] = vOffset + 0;
-        _indices[IndexCount++] = vOffset + 1;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 3;
-        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
     }
 
     /// <summary>
@@ -349,7 +350,7 @@ public class RenderContext
     public void FillCircle(Vector2 center, float radius, Color color, Rectangle scissor)
     {
         EnsureCapacity(4, 6);
-        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor);
+        PrepareDrawBatchForTexture(GreyGuiCore.Atlas, scissor);
         AddIndicesToLastBatch(6);
 
         float left = center.X - radius;
@@ -359,17 +360,17 @@ public class RenderContext
         Vector4 rectParams = new(right - left, bottom - top, radius, 0);
         int vOffset = VertexCount;
 
-        SetVertex(VertexCount++, new Vector3(left, top, 0), color, color, GreyGui.AtlasPixelUv, new Vector2(0, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(right, top, 0), color, color, GreyGui.AtlasPixelUv, new Vector2(1, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(right, bottom, 0), color, color, GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
-        SetVertex(VertexCount++, new Vector3(left, bottom, 0), color, color, GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(left, top, 0), color, color, GreyGuiCore.AtlasPixelUv, new Vector2(0, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(right, top, 0), color, color, GreyGuiCore.AtlasPixelUv, new Vector2(1, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(right, bottom, 0), color, color, GreyGuiCore.AtlasPixelUv, new Vector2(1, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(left, bottom, 0), color, color, GreyGuiCore.AtlasPixelUv, new Vector2(0, 1), rectParams);
 
-        _indices[IndexCount++] = vOffset + 0;
-        _indices[IndexCount++] = vOffset + 1;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 3;
-        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
     }
 
     /// <summary>
@@ -384,7 +385,7 @@ public class RenderContext
     {
         EnsureCapacity(4, 6);
 
-        PrepareDrawBatchForTexture(GreyGui.Atlas, scissor);
+        PrepareDrawBatchForTexture(GreyGuiCore.Atlas, scissor);
         AddIndicesToLastBatch(6);
 
         Vector2 direction = end - start;
@@ -399,28 +400,30 @@ public class RenderContext
         Vector4 rectParams = new(thickness, length, 15, 0);
 
         int vOffset = VertexCount;
-        SetVertex(VertexCount++, new Vector3(start + offset, 0), color, Color.Transparent, GreyGui.AtlasPixelUv, new Vector2(0, 0), rectParams);
-        SetVertex(VertexCount++, new Vector3(start - offset, 0), color, Color.Transparent, GreyGui.AtlasPixelUv, new Vector2(0, 1), rectParams);
-        SetVertex(VertexCount++, new Vector3(end - offset, 0), color, Color.Transparent, GreyGui.AtlasPixelUv, new Vector2(1, 1), rectParams);
-        SetVertex(VertexCount++, new Vector3(end + offset, 0), color, Color.Transparent, GreyGui.AtlasPixelUv, new Vector2(1, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(start + offset, 0), color, Color.Transparent, GreyGuiCore.AtlasPixelUv, new Vector2(0, 0), rectParams);
+        SetVertex(VertexCount++, new Vector3(start - offset, 0), color, Color.Transparent, GreyGuiCore.AtlasPixelUv, new Vector2(0, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(end - offset, 0), color, Color.Transparent, GreyGuiCore.AtlasPixelUv, new Vector2(1, 1), rectParams);
+        SetVertex(VertexCount++, new Vector3(end + offset, 0), color, Color.Transparent, GreyGuiCore.AtlasPixelUv, new Vector2(1, 0), rectParams);
 
-        _indices[IndexCount++] = vOffset + 0;
-        _indices[IndexCount++] = vOffset + 1;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 2;
-        _indices[IndexCount++] = vOffset + 3;
-        _indices[IndexCount++] = vOffset + 0;
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
+        _indices[IndexCount++] = (ushort)(vOffset + 1);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 2);
+        _indices[IndexCount++] = (ushort)(vOffset + 3);
+        _indices[IndexCount++] = (ushort)(vOffset + 0);
 
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void SetVertex(int index, Vector3 pos, Color col, Color borderCol, Vector2 uv, Vector2 local, Vector4 rParams)
     {
-        _vertices[index].Position = pos;
-        _vertices[index].Color = col;
-        _vertices[index].BorderColor = borderCol;
-        _vertices[index].TexCoord = uv;
-        _vertices[index].LocalCoord = local;
-        _vertices[index].RectParams = rParams;
+        ref UiVertex vertex = ref _vertices[index];
+        vertex.Position = pos;
+        vertex.Color = col;
+        vertex.BorderColor = borderCol;
+        vertex.TexCoord = uv;
+        vertex.LocalCoord = local;
+        vertex.RectParams = rParams;
     }
 
     public void EnsureCapacity(int newVertexCount, int newIndexCount)

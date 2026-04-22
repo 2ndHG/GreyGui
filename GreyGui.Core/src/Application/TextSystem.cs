@@ -152,13 +152,13 @@ public class TextSystem
 
     public bool TryPutGlyphPlaceholder(SdfRenderInfo sdfRenderInfo, out Rectangle srcRect)
     {
-        if (_nextGlyphX + sdfRenderInfo.BitmapWidth > GreyGui.Atlas.Width)
+        if (_nextGlyphX + sdfRenderInfo.BitmapWidth > GreyGuiCore.Atlas.Width)
         {
             _nextGlyphX = 0;
             _nextGlyphY += _currentRowHeight + 1;
             _currentRowHeight = 0;
         }
-        if (_nextGlyphY + sdfRenderInfo.BitmapHeight > GreyGui.Atlas.Height)
+        if (_nextGlyphY + sdfRenderInfo.BitmapHeight > GreyGuiCore.Atlas.Height)
         {
             srcRect = Rectangle.Empty;
             return false;
@@ -193,7 +193,7 @@ public class TextSystem
                     data[index] = new Color(pixel, pixel, pixel, pixel);
                 }
             }
-            GreyGui.Atlas.SetData(0, result.destRect, data, 0, destRect.Width * destRect.Height);
+            GreyGuiCore.Atlas.SetData(0, result.destRect, data, 0, destRect.Width * destRect.Height);
             _colorDataArrayPool.Return(data);
         }
     }
@@ -250,7 +250,7 @@ public class TextSystem
     /// <param name="value">Value of anti-aliasing factor</param>
     public void SetAntiAliasingRange(float value)
     {
-        GreyGui.Shader.Parameters["antiAliasingRange"].SetValue(value);
+        GreyGuiCore.Shader.Parameters["antiAliasingRange"].SetValue(value);
     }
 
     /// <summary>
@@ -264,11 +264,11 @@ public class TextSystem
         string pngPath = Path.Combine(savingPath, fileName + ".png");
         using FileStream fs = File.OpenWrite(pngPath);
         {
-            Rectangle rect = GreyGui.Atlas.Bounds;
+            Rectangle rect = GreyGuiCore.Atlas.Bounds;
             // Color[] color = new Color[rect.Width * rect.Height];
             // GreyGui.Atlas.GetData(0, 0, rect, color, 0, rect.Width * rect.Height);
 
-            GreyGui.Atlas.SaveAsPng(fs, rect.Width, rect.Height);
+            GreyGuiCore.Atlas.SaveAsPng(fs, rect.Width, rect.Height);
         }
 
         Dictionary<string, Dictionary<char, ushort>> fontInfoMapWithoutTypeFace = [];
@@ -303,11 +303,11 @@ public class TextSystem
         string pngPath = Path.Combine(savingPath, fileName + ".png");
         string jsonPath = Path.Combine(savingPath, fileName + ".json");
         // Load the texture and set the data to global texture
-        Texture2D incomingAtlas = Texture2D.FromFile(GreyGui.GameInstance.GraphicsDevice, pngPath);
+        Texture2D incomingAtlas = Texture2D.FromFile(GreyGuiCore.GameInstance.GraphicsDevice, pngPath);
         Color[] incomingColorData = new Color[incomingAtlas.Width * incomingAtlas.Height];
         incomingAtlas.GetData(0, new(0, 0, incomingAtlas.Width, incomingAtlas.Height), incomingColorData, 0, incomingColorData.Length);
         incomingAtlas.Dispose();
-        GreyGui.Atlas.SetData(incomingColorData);
+        GreyGuiCore.Atlas.SetData(incomingColorData);
 
         // Need to clear original FontInfo's index map, because the new atlas might not containing some fonts, those fontInfo's index map will not be replaced by new value and will become an error
         foreach (FontInfo fontInfo in _fontInfoMap.Values)
@@ -330,13 +330,13 @@ public class TextSystem
 
     private bool TryInsertGlyph(SimpleSdfResult sdfResult, out Rectangle srcRect)
     {
-        if (_nextGlyphX + sdfResult.BitmapWidth > GreyGui.Atlas.Width)
+        if (_nextGlyphX + sdfResult.BitmapWidth > GreyGuiCore.Atlas.Width)
         {
             _nextGlyphX = 0;
             _nextGlyphY += _currentRowHeight + 1;
             _currentRowHeight = 0;
         }
-        if (_nextGlyphY + sdfResult.BitmapHeight > GreyGui.Atlas.Height)
+        if (_nextGlyphY + sdfResult.BitmapHeight > GreyGuiCore.Atlas.Height)
         {
             srcRect = Rectangle.Empty;
             return false;
@@ -355,7 +355,7 @@ public class TextSystem
                 data[index] = new Color(pixel, pixel, pixel, pixel);
             }
         }
-        GreyGui.Atlas.SetData(0, srcRect, data, 0, data.Length);
+        GreyGuiCore.Atlas.SetData(0, srcRect, data, 0, data.Length);
 
         // Update _x and _currentHeight for the next insertion
         _nextGlyphX += sdfResult.BitmapWidth + 1;

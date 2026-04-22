@@ -102,6 +102,8 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     public GreyGuiButtonState State => _state;
     public Texture2D ImageTexture { get => _imageTexture; set => _imageTexture = value; }
     public Rectangle ImageSrcRect { get => _imageSrcRect; set => _imageSrcRect = value; }
+
+    public bool Disabled { get; set; }
     public event Action? OnLeftClicked;
     public event Action? OnRightClicked;
 
@@ -133,7 +135,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     protected Texture2D _imageTexture;
     protected Rectangle _imageSrcRect;
 
-    public Button(Color? colorMask = null, Color borderColor = default, Vector2 size = default, WidthMode widthMode = WidthMode.Fixed, HeightMode heightMode = HeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, int paddingVertical = 0, int paddingSide = 0, int borderRadius = 0, int borderWidth = 0, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, Action? onLeftClicked = null)
+    public Button(Color? colorMask = null, Color borderColor = default, Vector2 size = default, WidthMode widthMode = WidthMode.Fixed, HeightMode heightMode = HeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, int paddingVertical = 0, int paddingSide = 0, int borderRadius = 0, int borderWidth = 0, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, bool disabled = false, Action? onLeftClicked = null, Action? onRightClicked = null)
     {
         ColorMask = (colorMask, imageTexture) switch
         {
@@ -149,7 +151,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         _heightRatio = heightRatio;
         _heightWidthRatio = heightWidthRatio;
         _zIndex = zIndex;
-        _imageTexture = imageTexture == null ? GreyGui.Atlas : imageTexture;
+        _imageTexture = imageTexture == null ? GreyGuiCore.Atlas : imageTexture;
         _imageSrcRect = (imageTexture, imageSrcRect.IsEmpty) switch
         {
             (null, _) => new Rectangle(0, 0, 1, 1),
@@ -162,7 +164,9 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         BorderRadius = borderRadius;
         BorderWidth = borderWidth;
 
+        Disabled = disabled;
         OnLeftClicked = onLeftClicked;
+        OnRightClicked = onRightClicked;
 
         DrawMethod = BasicDraw;
 
@@ -212,7 +216,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         {
             if (_parent == null)
             {
-                _finalSize.X = GreyGui.NullParentWidth * _widthRatio;
+                _finalSize.X = GreyGuiCore.NullParentWidth * _widthRatio;
             }
             else
             {
@@ -224,7 +228,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         {
             if (_parent == null)
             {
-                _finalSize.Y = GreyGui.NullParentHeight * _heightRatio;
+                _finalSize.Y = GreyGuiCore.NullParentHeight * _heightRatio;
             }
             else
             {
@@ -261,6 +265,10 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     public override void Update()
     {
         _state = GreyGuiButtonState.Normal;
+        if (Disabled)
+        {
+            return;
+        }
 
         if (GuiUpdate.FrameId == _lPressedFrame + _lHoldingFrames || GuiUpdate.FrameId == _rHoldingFrames + _rPressedFrame)
         {
@@ -293,6 +301,8 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
     public override void HandleMouseEvent()
     {
         _hoveredFrame = GuiUpdate.FrameId;
+        if (Disabled)
+            return;
         if (GuiUpdate.Mouse.IsLeftButtonDown)
         {
             _lPressedFrame = GuiUpdate.FrameId;

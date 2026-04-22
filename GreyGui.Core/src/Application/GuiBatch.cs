@@ -30,9 +30,9 @@ public class GuiBatch
     /// </summary>
     /// <param name="device">GraphicDevice of the running Game</param>
     /// <param name="uiShader">Custom shader</param>
-    public GuiBatch(GraphicsDevice device)
+    public GuiBatch()
     {
-        _device = device;
+        _device = GreyGuiCore.GameInstance.GraphicsDevice;
         _uiShader = GreyGuiCore.Shader;
 
         _renderContext = new RenderContext();

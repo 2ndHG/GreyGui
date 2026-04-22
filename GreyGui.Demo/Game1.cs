@@ -54,7 +54,7 @@ public class Game1 : Game
         // GreyGui.TextSystem.ReserveChars("kanit", Constant.VisibleAsciiVerbatim);
         // GreyGui.TextSystem.LoadAtlasAndInfo();
 
-        _guiBatch = new GuiBatch(GraphicsDevice);
+        _guiBatch = new GuiBatch();
 
         root = GenerateTextInputDemoPanel();
         root2 = GenerateButtonPanel();

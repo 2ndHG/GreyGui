@@ -8,10 +8,11 @@
     <Description>An HTML-inspired GUI Library for MonoGame</Description>
     <PackageTags>monogame;.net core;core;.net standard;standard;gui</PackageTags>
     <PackageId>GreyGui</PackageId>
-    <Version>0.1.3</Version>
+    <Version>0.1.4-alpha.3</Version>
     <Authors>Norphel Lynn</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <RepositoryUrl>https://github.com/2ndHG/GreyGui</RepositoryUrl>
   </PropertyGroup>
 
   <ItemGroup>

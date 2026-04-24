@@ -97,6 +97,7 @@ public static class GuiUpdate
         public static int GetPressedKeyCount() => pressedKeyCount;
         public static bool IsKeyDown(Keys key) => !prevKeyboardState.IsKeyDown(key) && currKeyboardState.IsKeyDown(key);
         public static bool IsKeyHold(Keys key) => currKeyboardState.IsKeyDown(key);
+        public static bool IsKeyUp(Keys key) => prevKeyboardState.IsKeyDown(key) && !currKeyboardState.IsKeyDown(key);
 
         public static ReadOnlySpan<char> GetTextInputBuffer() => CollectionsMarshal.AsSpan(activeInputBuffer);
     }

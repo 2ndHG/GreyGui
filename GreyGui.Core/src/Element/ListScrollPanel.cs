@@ -229,9 +229,9 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
 
     public void RemoveAllChildren()
     {
-        foreach (GreyGuiElement child in _children)
+        foreach (GreyGuiElement child in _children.ToArray())
         {
-            RemoveChild(child);
+            child.ChangeParentButParentWillNotKnow(null);
         }
         _isLayoutDirty = true;
         _isChildrenZIndexDirty = true;
@@ -301,7 +301,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
         // As an IContainer
         _containerSize = _finalSize - new Vector2(BorderRadius * (Constant.SQRT2 - 1) * 2);
         _containerSize.X -= PaddingSide * 2 + _scrollBarWidth;
-        _containerSize.Y -= PaddingTop;
+        _containerSize.Y -= PaddingTop + PaddingBottom;
         foreach (GreyGuiElement child in _children)
         {
             child.IsSizeDirty = true;
@@ -374,18 +374,34 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
 
         // scroll bar
         _contentHeight = y + rowHeight;
-        _scrollButtonHeight = (int)(_finalSize.Y / _contentHeight * _containerSize.Y);
-        _scrollButtonHeight = Math.Min(_finalSize.Y, _scrollButtonHeight);
+        // to make sure no divided by 0
+        if (_finalSize.Y <= 0 || _contentHeight <= 0)
+        {
+            _scrollButtonHeight = 0;
+        }
+        else
+        {
+            _scrollButtonHeight = (int)(_finalSize.Y * (_containerSize.Y / _contentHeight));
+            _scrollButtonHeight = Math.Min(_scrollButtonHeight, _finalSize.Y);
+        }
 
         // reposition scrollbar and content
-        float contentHeightDiff = Math.Max(0, _contentHeight - _finalSize.Y);
-        float scrollSpace = _finalSize.Y - _scrollButtonHeight;
-        // _contentOffset / contentHeightDiff = the percentage to fully scrolled down
-        // scrollSpace is how far can scroll button go. so scrollSpace * percentage is where the button should be .
-        _buttonYOffset = Math.Clamp((int)(scrollSpace * _contentOffset / contentHeightDiff), 0, (int)scrollSpace);
+        float contentHeightDiff = Math.Max(0, _contentHeight - _containerSize.Y);
+        if (contentHeightDiff <= 0)
+        {
+            _contentOffset = 0;
+            _buttonYOffset = 0;
+        }
+        else
+        {
+            float scrollSpace = Math.Max(_finalSize.Y - _scrollButtonHeight, 0);
+            // if the scroll panel gets bigger, than there might be not that many space to scroll, so the maximum of _contentOffset is contentHeightDiff, therefore use Math.Min to clamp it
+            _contentOffset = Math.Min(_contentOffset, (int)contentHeightDiff);
+            // _contentOffset / contentHeightDiff = the percentage to fully scrolled down
+            // scrollSpace is how far can scroll button go. so scrollSpace * percentage is where the button should be
+            _buttonYOffset = Math.Clamp((int)(scrollSpace * _contentOffset / (contentHeightDiff)), 0, (int)scrollSpace);
 
-        // if the scroll panel gets bigger, than there might be not that many space to scroll, so the maximum of _contentOffset is contentHeightDiff, therefore use Math.Min to clamp it
-        _contentOffset = Math.Min(_contentOffset, (int)contentHeightDiff);
+        }
 
         _isLayoutDirty = false;
     }
@@ -401,7 +417,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
             {
                 int diff = GuiUpdate.Mouse.Position.Y - _startScrollingMouseYPos;
                 _buttonYOffset = Math.Clamp(diff, 0, (int)(_finalSize.Y - _scrollButtonHeight));
-                _contentOffset = (int)((_contentHeight - _finalSize.Y) * _buttonYOffset / (_finalSize.Y - _scrollButtonHeight));
+                _contentOffset = (int)((_contentHeight - _containerSize.Y) * _buttonYOffset / (_finalSize.Y - _scrollButtonHeight));
             }
             else
             {
@@ -502,7 +518,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
             if (result != null)
                 return result;
         }
-        
+
         Rectangle selfRect = new(OnScreenPos, _finalSize.ToPoint());
         Rectangle lastAppliedScissor = LastScissor;
         Rectangle.Intersect(ref selfRect, ref lastAppliedScissor, out Rectangle detectingRect);

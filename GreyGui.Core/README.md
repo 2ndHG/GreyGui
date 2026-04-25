@@ -8,17 +8,17 @@ Demo picture:
 ![GreyGui Banner](https://raw.githubusercontent.com/2ndHG/GreyGui/main/Github/Image/GreyGuiDemo.png)
 
 ## Key Features
-GreyGui provides minimalism visuals with the following features.
+GreyGui provides minimalistic visuals with the following features.
 
-* **Dynamic Scaling** - Elements can auto scale with its container size to fit in any screen resolution
+* **Dynamic Scaling** - Elements can auto-scale with their container size to fit in any screen resolution
 * **Rounded Corner** - Create modern visuals with beautifully rounded rectangles
 * **SDF Font** - The text system uses signed distance field (SDF) technology to render sharp text at any font size
-* **Explicit Control** - You, as a programer, will control and know when to Update and Draw your elements
+* **Explicit Control** - You, as a programmer, will control and know when to Update and Draw your elements
 * **Customizable** - Load your own Texture2D or just override the default drawing methods
 
 ## Syntax Preview
 GreyGui simulates HTML syntax by doing some quirky utilizations of C# syntax.
-* Element have constructors that includes all their attributes, for instance, `new Panel(size: new Vector2(200, 100))` is just like writing  `<div style="width:200px; height:100px;">`
+* Elements have constructors that include all their attributes, for instance, `new Panel(size: new Vector2(200, 100))` is just like writing  `<div style="width:200px; height:100px;">`
 * Container elements have `SetChildren` method that accepts an array of child nodes and return themselves
 
 Combining these, we have:
@@ -31,3 +31,5 @@ new ListPanel(size: new(300, 200), colorMask: Color.Cyan, borderRadius: 5).SetCh
     new Image(imageTexture: _buttonTexture)
 ]);
 ```
+
+To dive in, head to [Hello GreyGui](https://github.com/2ndHG/GreyGui/blob/main/Github/Markdown/HELLO_GREY_GUI.md) to learn the basics 🐈

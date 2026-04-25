@@ -33,3 +33,13 @@ new ListPanel(size: new(300, 200), colorMask: Color.Cyan, borderRadius: 5).SetCh
 ```
 
 To dive in, head to [Hello GreyGui](https://github.com/2ndHG/GreyGui/blob/main/Github/Markdown/HELLO_GREY_GUI.md) to learn the basics 🐈
+
+# Author's Notes
+The project is based on other people's hard work; ALL of them are distributed with the MIT license, so is this project.
+
+This project includes code referencing, merging, and modifying from the following projects:
+
+* [SharpMSDF](https://github.com/MutsiMutsi/SharpMSDF.git)
+* [Typography](https://github.com/Tacodiva/Typography)
+
+I truly appreciate the open-sourcing activities and people. Thank you for providing me with so many learning opportunities.

@@ -23,7 +23,14 @@ public static class GuiUpdate
             _focusedElement?.TriggerOnFocused();
         }
     }
+    /// <summary>
+    /// If the mouse is being captured by a GreyGuiElement.
+    /// </summary>
     public static bool IsMouseHandled { get; private set; }
+    
+    /// <summary>
+    /// The GreyGuiElement currently captures the mouse.
+    /// </summary>
     public static GreyGuiElement? MouseHandler { get; set; }
 
     /// <summary>

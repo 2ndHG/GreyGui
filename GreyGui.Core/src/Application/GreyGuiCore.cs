@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace GreyGui;
 
-public static class GreyGui
+public static class GreyGuiCore
 {
     /// <summary>
     /// Initialize GreyGui. Need to be called before any usage of this library. 
@@ -19,9 +19,9 @@ public static class GreyGui
     public static void Initialize(Game game, int atlasWidth = 4096, int atlasHeight = 4096)
     {
         Assembly assembly = Assembly.GetExecutingAssembly();
-        string[] resourceNames = assembly.GetManifestResourceNames();
-        foreach (var name in resourceNames)
-            Console.WriteLine(name);
+        // string[] resourceNames = assembly.GetManifestResourceNames();
+        // foreach (var name in resourceNames)
+        //     Console.WriteLine(name);
         string resourcePath = "GreyGui.Core.resource.UI_SDF.mgfx";
         using Stream stream = assembly.GetManifestResourceStream(resourcePath);
         if (stream == null)
@@ -47,6 +47,9 @@ public static class GreyGui
         AtlasPixelUv = new Vector2(0.5f / atlasWidth, 0.5f / atlasHeight);
         TextSystem = new TextSystem();
 
+        VertexBuffer = new(game.GraphicsDevice, UiVertex.VertexDeclaration, DEFAULT_VERTEX_COUNT, BufferUsage.WriteOnly);
+        IndexBuffer = new DynamicIndexBuffer(game.GraphicsDevice, IndexElementSize.SixteenBits, DEFAULT_INDEX_COUNT, BufferUsage.WriteOnly);
+
         // Initialize GuiUpdate
         GuiUpdate.Initialize(game);
 
@@ -54,7 +57,7 @@ public static class GreyGui
         NullParentWidth = gameViewportRect.Width;
         NullParentHeight = gameViewportRect.Height;
     }
-    
+
     /// <summary>
     /// Set the size of the virtual parent, i.e., <see cref="NullParentWidth"/> and <see cref="NullParentHeight"/>.
     /// </summary>
@@ -69,11 +72,56 @@ public static class GreyGui
         NullParentHeight = height;
     }
 
+    public static void SetAtlas(Texture2D atlas)
+    {
+        Atlas = atlas;
+    }
+
+    public static void EnsureGpuBufferCapacity(int vertexCount, int indexCount)
+    {
+        if (vertexCount > VertexBufferSize)
+        {
+            int newSize = VertexBufferSize;
+            while (newSize < vertexCount)
+            {
+                newSize *= 2;
+            }
+            VertexBuffer?.Dispose();
+            VertexBuffer = new DynamicVertexBuffer(GameInstance.GraphicsDevice, UiVertex.VertexDeclaration, newSize, BufferUsage.WriteOnly);
+            VertexBufferSize = newSize;
+            // Console.WriteLine($"Resized vertex buffer to {newSize}");
+        }
+        if (indexCount > IndexBufferSize)
+        {
+
+            int newSize = IndexBufferSize;
+            while (newSize < indexCount)
+            {
+                newSize *= 2;
+            }
+            IndexBuffer?.Dispose();
+            IndexBuffer = new DynamicIndexBuffer(GameInstance.GraphicsDevice, IndexElementSize.SixteenBits, newSize, BufferUsage.WriteOnly);
+            IndexBufferSize = newSize;
+            // Console.WriteLine($"Resized index buffer to {newSize}");
+        }
+    }
+
+    #region Rendering
     public static Texture2D Atlas { get; private set; }
     public static Effect Shader { get; private set; }
+    public static DynamicVertexBuffer VertexBuffer { get; private set; }
+    public static int VertexBufferSize { get; private set; } = DEFAULT_VERTEX_COUNT;
+    public static DynamicIndexBuffer IndexBuffer { get; private set; }
+    public static int IndexBufferSize { get; private set; } = DEFAULT_INDEX_COUNT;
+    #endregion
+
     public static TextSystem TextSystem { get; private set; }
     public static Vector2 AtlasPixelUv { get; private set; }
     public static Game GameInstance { get; private set; }
     public static int NullParentWidth { get; private set; }
     public static int NullParentHeight { get; private set; }
+
+
+    private const int DEFAULT_VERTEX_COUNT = 2048;
+    private const int DEFAULT_INDEX_COUNT = 4096;
 }

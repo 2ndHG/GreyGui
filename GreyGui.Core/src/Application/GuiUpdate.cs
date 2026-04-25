@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -57,7 +56,7 @@ public static class GuiUpdate
     public static void Update(GreyGuiElement root)
     {
         // If the mouse has not been handled yet
-        if (GreyGui.GameInstance.IsActive && MouseHandler == null)
+        if (GreyGuiCore.GameInstance.IsActive && MouseHandler == null)
         {
             MouseHandler = root.GetMouseHandler();
             MouseHandler?.HandleMouseEvent();
@@ -98,6 +97,7 @@ public static class GuiUpdate
         public static int GetPressedKeyCount() => pressedKeyCount;
         public static bool IsKeyDown(Keys key) => !prevKeyboardState.IsKeyDown(key) && currKeyboardState.IsKeyDown(key);
         public static bool IsKeyHold(Keys key) => currKeyboardState.IsKeyDown(key);
+        public static bool IsKeyUp(Keys key) => prevKeyboardState.IsKeyDown(key) && !currKeyboardState.IsKeyDown(key);
 
         public static ReadOnlySpan<char> GetTextInputBuffer() => CollectionsMarshal.AsSpan(activeInputBuffer);
     }

@@ -224,9 +224,9 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
 
     public void RemoveAllChildren()
     {
-        foreach (GreyGuiElement child in _children)
+       foreach (GreyGuiElement child in _children.ToArray())
         {
-            RemoveChild(child);
+            child.ChangeParentButParentWillNotKnow(null);
         }
         _isLayoutDirty = true;
         _isChildrenZIndexDirty = true;

@@ -23,7 +23,14 @@ public static class GuiUpdate
             _focusedElement?.TriggerOnFocused();
         }
     }
+    /// <summary>
+    /// If the mouse is being captured by a GreyGuiElement.
+    /// </summary>
     public static bool IsMouseHandled { get; private set; }
+    
+    /// <summary>
+    /// The GreyGuiElement currently captures the mouse.
+    /// </summary>
     public static GreyGuiElement? MouseHandler { get; set; }
 
     /// <summary>
@@ -97,6 +104,7 @@ public static class GuiUpdate
         public static int GetPressedKeyCount() => pressedKeyCount;
         public static bool IsKeyDown(Keys key) => !prevKeyboardState.IsKeyDown(key) && currKeyboardState.IsKeyDown(key);
         public static bool IsKeyHold(Keys key) => currKeyboardState.IsKeyDown(key);
+        public static bool IsKeyUp(Keys key) => prevKeyboardState.IsKeyDown(key) && !currKeyboardState.IsKeyDown(key);
 
         public static ReadOnlySpan<char> GetTextInputBuffer() => CollectionsMarshal.AsSpan(activeInputBuffer);
     }

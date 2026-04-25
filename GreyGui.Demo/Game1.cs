@@ -125,16 +125,16 @@ public class Game1 : Game
         _spriteBatch.End();
 
         // GraphicsDevice.SetRenderTarget(_bannerRt);
-        double drawTime;
-        _stopwatch.Restart();
+        // double drawTime;
+        // _stopwatch.Restart();
 
         _guiBatch.ReceiveFrameInfo(gameTime);
         _guiBatch.Draw(root, new Point(50, 50));
 
-        drawTime = _stopwatch.Elapsed.TotalMilliseconds;
+        // drawTime = _stopwatch.Elapsed.TotalMilliseconds;
 
         _guiBatch.Flush();
-        Console.WriteLine($"Draw {drawTime.ToString("F3")}, Flush: {(_stopwatch.Elapsed.TotalMilliseconds - drawTime).ToString("F3")}, Total: {_stopwatch.Elapsed.TotalMilliseconds.ToString("F3")}");
+        // Console.WriteLine($"Draw {drawTime.ToString("F3")}, Flush: {(_stopwatch.Elapsed.TotalMilliseconds - drawTime).ToString("F3")}, Total: {_stopwatch.Elapsed.TotalMilliseconds.ToString("F3")}");
 
 
         // GraphicsDevice.SetRenderTarget(null);
@@ -500,8 +500,8 @@ public class Game1 : Game
                     alignModeButtons[2],
                     alignModeButtons[3],
                 ])
-            ]),
-            rootText
+            ])
+
         ]);
     }
     private GreyGuiElement GenerateGitHubBanner()
@@ -523,5 +523,61 @@ public class Game1 : Game
             ]),
         ]);
         return result;
+    }
+    private GreyGuiElement GenerateWireFrame2()
+    {
+        static GreyGuiElement GenerateExitCard(string exitText)
+        {
+            return new ListPanel(widthMode: WidthMode.ParentRatio, widthRatio: 1, heightMode: HeightMode.Fixed, size: new(0, 105), colorMask: new Color(64, 120, 94), borderRadius: 10, layoutMode: RowLayoutMode.Justify).SetChildren([
+                    new GreyGui.Text(displayText:exitText, colorMask: Color.White, widthMode: TextWidthMode.ParentRatio,widthRatio:.7f, heightMode: TextHeightMode.TextHeight),
+                    new GreyGui.Button(widthMode: WidthMode.ParentRatio, widthRatio: .3f,heightMode: HeightMode.HeightWidthRatio, heightWidthRatio:.4f, colorMask: new Color(.5f,.5f,.5f,.8f), borderRadius:5).SetChild(
+                        new GreyGui.Text(displayText: "Delete", colorMask: Color.White, widthMode: TextWidthMode.TextWidth, heightMode: TextHeightMode.TextHeight)
+                    ),
+                    new GreyGui.Text(displayText: "Position (223, 24)", colorMask: Color.White, widthMode: TextWidthMode.ParentRatio, widthRatio:1f, heightMode: TextHeightMode.Fixed, size: new(40, 32)),
+
+                    new GreyGui.Button(widthMode: WidthMode.ParentRatio, widthRatio: .3f,heightMode: HeightMode.HeightWidthRatio, heightWidthRatio:.4f, colorMask: new Color(96, 171, 143), borderRadius:5).SetChild(
+                        new GreyGui.Text(displayText: "Delete", colorMask: Color.White, widthMode: TextWidthMode.TextWidth, heightMode: TextHeightMode.TextHeight)
+                    ),
+                    new GreyGui.Text(displayText:"Length:", colorMask: Color.White, heightMode: TextHeightMode.TextHeight, widthMode: TextWidthMode.ParentRatio, widthRatio: .3f),
+                    new RowPanel(widthMode: WidthMode.ParentRatio, widthRatio: .2f, size: new(0,32),colorMask: new(0.5f,0.5f, 0.6f, 0.4f), borderRadius: 5, paddingSide:5).SetChildren([
+                        new GreyGui.Text(displayText:"40", colorMask: Color.White, heightMode: TextHeightMode.TextHeight, widthMode: TextWidthMode.ParentRatio, widthRatio: 1f)
+                    ]),
+                ]);
+        }
+        ListPanel listPanel = new ListPanel(colorMask: new(16, 45, 64, 255), widthMode: WidthMode.ParentRatio, heightMode: HeightMode.ParentRatio, widthRatio: .2f, heightRatio: 1f, rowGap: 10, childGap: 5, layoutMode: RowLayoutMode.Center).SetChildren([
+            new GreyGui.Text(displayText:"TopLeft", colorMask: Color.White, heightMode: TextHeightMode.TextHeight, widthMode: TextWidthMode.ParentRatio, widthRatio: 1f),
+
+            new GreyGui.Text(displayText:"X: ", colorMask: Color.Aqua, heightMode: TextHeightMode.TextHeight, widthMode: TextWidthMode.ParentRatio, widthRatio: .1f),
+            new RowPanel(widthMode: WidthMode.ParentRatio, widthRatio: .35f, size: new(0,32),colorMask: new(0.5f,0.5f, 0.6f, 0.4f), borderRadius: 5,paddingSide:5).SetChildren([
+                new GreyGui.Text(displayText:"32", colorMask: Color.White, heightMode: TextHeightMode.TextHeight, widthMode: TextWidthMode.ParentRatio, widthRatio: 1f)
+            ]),
+            new GreyGui.Text(displayText:"Y: ", colorMask: Color.Aqua, heightMode: TextHeightMode.TextHeight, widthMode: TextWidthMode.ParentRatio, widthRatio: .1f),
+            new RowPanel(widthMode: WidthMode.ParentRatio, widthRatio: .35f, size: new(0,32),colorMask: new(0.5f,0.5f, 0.6f, 0.4f), borderRadius: 5, paddingSide:5).SetChildren([
+                new GreyGui.Text(displayText:"-16", colorMask: Color.White, heightMode: TextHeightMode.TextHeight, widthMode: TextWidthMode.ParentRatio, widthRatio: 1f)
+            ]),
+
+            new GreyGui.Text(displayText:"BottomRight", colorMask: Color.White, heightMode: TextHeightMode.TextHeight, widthMode: TextWidthMode.ParentRatio, widthRatio: 1f),
+
+            new GreyGui.Text(displayText:"X: ", colorMask: Color.Aqua, heightMode: TextHeightMode.TextHeight, widthMode: TextWidthMode.ParentRatio, widthRatio: .1f),
+            new RowPanel(widthMode: WidthMode.ParentRatio, widthRatio: .35f, size: new(0,32),colorMask: new(0.5f,0.5f, 0.6f, 0.4f), borderRadius: 5,paddingSide:5).SetChildren([
+                new GreyGui.Text(displayText:"32", colorMask: Color.White, heightMode: TextHeightMode.TextHeight, widthMode: TextWidthMode.ParentRatio, widthRatio: 1f)
+            ]),
+            new GreyGui.Text(displayText:"Y: ", colorMask: Color.Aqua, heightMode: TextHeightMode.TextHeight, widthMode: TextWidthMode.ParentRatio, widthRatio: .1f),
+            new RowPanel(widthMode: WidthMode.ParentRatio, widthRatio: .35f, size: new(0,32),colorMask: new(0.5f,0.5f, 0.6f, 0.4f), borderRadius: 5, paddingSide:5).SetChildren([
+                new GreyGui.Text(displayText:"-16", colorMask: Color.White, heightMode: TextHeightMode.TextHeight, widthMode: TextWidthMode.ParentRatio, widthRatio: 1f)
+            ]),
+
+            new GreyGui.Button(widthMode: WidthMode.ParentRatio, widthRatio: .8f,heightMode: HeightMode.HeightWidthRatio, heightWidthRatio:.2f, colorMask: new Color(64, 120, 94), borderRadius:5).SetChild(
+                new GreyGui.Text(displayText: "Add Exit", colorMask: Color.White, widthMode: TextWidthMode.TextWidth, heightMode: TextHeightMode.TextHeight)
+            ),
+
+            new ListScrollPanel(widthMode: WidthMode.ParentRatio, widthRatio:1f, colorMask: new(10, 32, 46), heightMode: HeightMode.HeightWidthRatio, heightWidthRatio: .8f).SetChildren([
+                
+                GenerateExitCard("Exit 0"),
+                GenerateExitCard("Exit 1"), 
+                GenerateExitCard("Exit 2")
+            ])
+        ]);
+        return listPanel;
     }
 }

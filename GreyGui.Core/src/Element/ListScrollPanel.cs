@@ -233,6 +233,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
         {
             child.ChangeParentButParentWillNotKnow(null);
         }
+        _children.Clear();
         _isLayoutDirty = true;
         _isChildrenZIndexDirty = true;
     }

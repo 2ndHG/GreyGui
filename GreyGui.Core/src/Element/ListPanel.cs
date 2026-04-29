@@ -228,6 +228,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         {
             child.ChangeParentButParentWillNotKnow(null);
         }
+        _children.Clear();
         _isLayoutDirty = true;
         _isChildrenZIndexDirty = true;
     }

@@ -410,6 +410,19 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
     {
 
     }
+    private void ResolveChildrenZIndexDirty()
+    {
+        if (!_isChildrenZIndexDirty)
+            return;
+        // Sort the index using children's ZIndex, so the low-ZIndex-elements' indices in _children will be put in the front of _drawOrder, therefore be drew first later on
+        _drawOrder.Clear();
+        for (int i = 0; i < _children.Count; ++i)
+        {
+            _drawOrder.Add(i);
+        }
+        _drawOrder.Sort((a, b) => _children[a].ZIndex.CompareTo(_children[b].ZIndex));
+        _isChildrenZIndexDirty = false;
+    }
     public override void Update()
     {
         if (GuiUpdate.FocusedElement == this)
@@ -425,9 +438,9 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
                 GuiUpdate.FocusedElement = null;
             }
         }
-        for (int i = 0; i < _drawOrder.Count; ++i)
+        foreach (GreyGuiElement child in _children)
         {
-            _children[i].Update();
+            child.Update();
         }
     }
 
@@ -466,17 +479,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
         {
             ResolveLayoutDirty();
         }
-        if (_isChildrenZIndexDirty)
-        {
-            // Sort the index using children's ZIndex, so the low-ZIndex-elements' indices in _children will be put in the front of _drawOrder, therefore be drew first later on
-            _drawOrder.Clear();
-            for (int i = 0; i < _children.Count; ++i)
-            {
-                _drawOrder.Add(i);
-            }
-            _drawOrder.Sort((a, b) => _children[a].ZIndex.CompareTo(_children[b].ZIndex));
-            _isChildrenZIndexDirty = false;
-        }
+        ResolveChildrenZIndexDirty();
 
         Point scissorPos = new Point((int)(BorderRadius * (Constant.SQRT2 - 1) + PaddingTop));
         Rectangle selfScissor = new(position + scissorPos, _containerSize.ToPoint());
@@ -509,13 +512,16 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
 
     public override GreyGuiElement? GetMouseHandler()
     {
+        if (_isLayoutDirty)
+            return null;
         if (new Rectangle(OnScreenPos + new Point((int)(_finalSize.X - _scrollBarWidth), _buttonYOffset), new((int)_scrollBarWidth, (int)_scrollButtonHeight)).Contains(GuiUpdate.Mouse.Position))
         {
             return this;
         }
-        for (int i = 0; i < _drawOrder.Count; ++i)
+        ResolveChildrenZIndexDirty();
+        for (int i = _drawOrder.Count - 1; i >= 0; --i)
         {
-            GreyGuiElement? result = _children[i].GetMouseHandler();
+            GreyGuiElement? result = _children[_drawOrder[i]].GetMouseHandler();
             if (result != null)
                 return result;
         }

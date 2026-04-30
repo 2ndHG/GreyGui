@@ -27,7 +27,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         get => _widthMode;
         set
         {
-            if(_widthMode == value) return;
+            if (_widthMode == value) return;
             _widthMode = value;
 
             _isSizeDirty = true;
@@ -224,7 +224,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
 
     public void RemoveAllChildren()
     {
-       foreach (GreyGuiElement child in _children.ToArray())
+        foreach (GreyGuiElement child in _children.ToArray())
         {
             child.ChangeParentButParentWillNotKnow(null);
         }
@@ -366,9 +366,9 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
     }
     public override void Update()
     {
-        for (int i = 0; i < _drawOrder.Count; ++i)
+        foreach (GreyGuiElement child in _children)
         {
-            _children[i].Update();
+            child.Update();
         }
     }
 
@@ -399,17 +399,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         {
             ResolveLayoutDirty();
         }
-        if (_isChildrenZIndexDirty)
-        {
-            // Sort the index using children's ZIndex, so the low-ZIndex-elements' indices in _children will be put in the front of _drawOrder, therefore be drew first later on
-            _drawOrder.Clear();
-            for (int i = 0; i < _children.Count; ++i)
-            {
-                _drawOrder.Add(i);
-            }
-            _drawOrder.Sort((a, b) => _children[a].ZIndex.CompareTo(_children[b].ZIndex));
-            _isChildrenZIndexDirty = false;
-        }
+        ResolveChildrenZIndexDirty();
 
         for (int i = 0; i < _drawOrder.Count; i++)
         {
@@ -422,11 +412,30 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         }
     }
 
+    private void ResolveChildrenZIndexDirty()
+    {
+        if (!_isChildrenZIndexDirty)
+            return;
+        // Sort the index using children's ZIndex, so the low-ZIndex-elements' indices in _children will be put in the front of _drawOrder, therefore be drew first later on
+        _drawOrder.Clear();
+        for (int i = 0; i < _children.Count; ++i)
+        {
+            _drawOrder.Add(i);
+        }
+        _drawOrder.Sort((a, b) => _children[a].ZIndex.CompareTo(_children[b].ZIndex));
+        _isChildrenZIndexDirty = false;
+    }
+
     public override GreyGuiElement? GetMouseHandler()
     {
-        for (int i = 0; i < _drawOrder.Count; ++i)
+        if (_isLayoutDirty)
+            return null;
+        ResolveChildrenZIndexDirty();
+
+        // Later drew element earlier be tested
+        for (int i = _drawOrder.Count - 1; i >= 0; --i)
         {
-            GreyGuiElement? result = _children[i].GetMouseHandler();
+            GreyGuiElement? result = _children[_drawOrder[i]].GetMouseHandler();
             if (result != null)
                 return result;
         }

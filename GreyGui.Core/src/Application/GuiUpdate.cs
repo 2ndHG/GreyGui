@@ -26,8 +26,8 @@ public static class GuiUpdate
     /// <summary>
     /// If the mouse is being captured by a GreyGuiElement.
     /// </summary>
-    public static bool IsMouseHandled { get; private set; }
-    
+    public static bool IsMouseHandled { get => MouseHandler != null; }
+
     /// <summary>
     /// The GreyGuiElement currently captures the mouse.
     /// </summary>

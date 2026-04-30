@@ -198,9 +198,13 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
 
     public void AppendChildren(ICollection<GreyGuiElement> children)
     {
+        int i = 0;
         foreach (GreyGuiElement child in children)
         {
+            if (child == null)
+                throw new Exception($"Child at index {i} is null");
             AppendChild(child);
+            i++;
         }
     }
     public void RemoveChild(GreyGuiElement child)

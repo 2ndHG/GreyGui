@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -257,6 +258,8 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             RecalculateSize();
         }
     }
+    
+    public Span<GreyGuiElement> Children { get => CollectionsMarshal.AsSpan(_children); }
 
     private void RecalculateSize()
     {

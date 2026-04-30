@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 namespace GreyGui;
@@ -116,6 +117,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
             }
         }
     }
+    public Span<GreyGuiElement> Children { get => CollectionsMarshal.AsSpan(_children); }
 
     private WidthMode _widthMode;
     private HeightMode _heightMode;

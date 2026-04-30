@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -118,6 +119,8 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
             }
         }
     }
+
+    public Span<GreyGuiElement> Children { get => CollectionsMarshal.AsSpan(_children); }
 
     private WidthMode _widthMode;
     private HeightMode _heightMode;

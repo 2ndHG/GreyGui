@@ -75,8 +75,9 @@ public class GuiBatch
         // Check if there are generated SDF bitmaps that haven't be drawn to the atlas
         GreyGuiCore.TextSystem.SetGeneratedSdfBitmapToAtlas();
 
-        if (_renderContext.Batches.Count == 0)
+        if (_renderContext.Batches.Count == 0 || _renderContext.VertexCount == 0 || _renderContext.IndexCount == 0)
         {
+            _renderContext.Clear();
             return;
         }
 

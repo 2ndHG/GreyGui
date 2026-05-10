@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -209,7 +210,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
         {
             if (child == null)
                 throw new Exception($"Child at index {i} is null");
-            
+
             AppendChild(child);
             i++;
         }
@@ -258,7 +259,7 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
             RecalculateSize();
         }
     }
-    
+
     public Span<GreyGuiElement> Children { get => CollectionsMarshal.AsSpan(_children); }
 
     private void RecalculateSize()
@@ -354,9 +355,20 @@ public class RowPanel : GreyGuiElement, IContainer, IRatioElement
     }
     public override void Update()
     {
-        foreach (GreyGuiElement child in _children)
+        int count = _children.Count;
+        GreyGuiElement[] childrenCopy = ArrayPool<GreyGuiElement>.Shared.Rent(count);
+        try
         {
-            child.Update();
+            _children.CopyTo(childrenCopy, 0);
+            for (int i = 0; i < count; ++i)
+            {
+                childrenCopy[i].Update();
+            }
+        }
+        finally
+        {
+            Array.Clear(childrenCopy, 0, count);
+            ArrayPool<GreyGuiElement>.Shared.Return(childrenCopy);
         }
     }
 

@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
@@ -373,9 +374,20 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
     }
     public override void Update()
     {
-        foreach (GreyGuiElement child in _children)
+        int count = _children.Count;
+        GreyGuiElement[] childrenCopy = ArrayPool<GreyGuiElement>.Shared.Rent(count);
+        try
         {
-            child.Update();
+            _children.CopyTo(childrenCopy, 0);
+            for (int i = 0; i < count; ++i)
+            {
+                childrenCopy[i].Update();
+            }
+        }
+        finally
+        {
+            Array.Clear(childrenCopy, 0, count);
+            ArrayPool<GreyGuiElement>.Shared.Return(childrenCopy);
         }
     }
 

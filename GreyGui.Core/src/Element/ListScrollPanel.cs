@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
@@ -210,7 +211,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
         {
             if (child == null)
                 throw new Exception($"Child at index {i} is null");
-            
+
             AppendChild(child);
             i++;
         }
@@ -445,10 +446,22 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
                 GuiUpdate.FocusedElement = null;
             }
         }
-        foreach (GreyGuiElement child in _children)
+        int count = _children.Count;
+        GreyGuiElement[] childrenCopy = ArrayPool<GreyGuiElement>.Shared.Rent(count);
+        try
         {
-            child.Update();
+            _children.CopyTo(childrenCopy, 0);
+            for (int i = 0; i < count; ++i)
+            {
+                childrenCopy[i].Update();
+            }
         }
+        finally
+        {
+            Array.Clear(childrenCopy, 0, count);
+            ArrayPool<GreyGuiElement>.Shared.Return(childrenCopy);
+        }
+
     }
 
     // render context not implemented yet

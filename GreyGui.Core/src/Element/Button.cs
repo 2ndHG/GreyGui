@@ -286,6 +286,16 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
         }
     }
 
+    public void ClearOnLeftClicked()
+    {
+        OnLeftClicked = null;
+    }
+
+    public void ClearOnRightClicked()
+    {
+        OnRightClicked = null;
+    }
+
     public override void Draw(Point position, RenderContext renderContext, Rectangle screenScissor)
     {
         DrawMethod.Invoke(this, position, renderContext, screenScissor);

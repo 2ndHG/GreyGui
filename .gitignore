@@ -7,3 +7,5 @@ obj/
 *.DS_Store
 *.ttf
 .vscode
+
+*.lscache

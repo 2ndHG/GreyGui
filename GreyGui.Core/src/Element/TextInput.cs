@@ -208,6 +208,18 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     }
     public Color FocusedColor { get; set; } = Color.Yellow;
     public bool EnterSubmit { get; set; } = true;
+    public TextInputMode InputMode
+    {
+        get => _inputMode; set
+        {
+            if (value == _inputMode)
+                return;
+
+            _inputMode = value;
+
+            DisplayText = ApplyInputModeToString(DisplayText);
+        }
+    }
 
     private Vector2 _size;
     private Vector2 _finalSize;
@@ -226,6 +238,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     private float _textYOffset;
     private FontSizeScalingMode _fontSizeScalingMode;
     private float _fontSizeScalingBaseline;
+    private TextInputMode _inputMode;
 
     // events
     public event Action<TextInput>? OnBlurred;
@@ -251,7 +264,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     private float _maxWidth = 0;
 
     public TextInput(Color? colorMask = null, Color? borderColor = null, Color? backgroundColor = null, Vector2 size = default, int borderRadius = default, int borderWidth = default,
-    TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default, Color? focusedColor = null, bool enterSubmit = true, Action<TextInput>? onClicked = null, Action<TextInput>? onBlurred = null, Action<TextInput, string>? onTextChanged = null)
+    TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default, Color? focusedColor = null, bool enterSubmit = true, TextInputMode inputMode = TextInputMode.Text, Action<TextInput>? onClicked = null, Action<TextInput>? onBlurred = null, Action<TextInput, string>? onTextChanged = null)
     {
         ColorMask = colorMask ?? Color.Black;
         BackgroundColor = backgroundColor ?? Color.Transparent;
@@ -284,6 +297,8 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         };
         _autoEndLine = autoEndLine;
         EnterSubmit = enterSubmit;
+        _inputMode = inputMode;
+
         OnBlurred = onBlurred;
         OnClicked = onClicked;
         OnTextChanged = onTextChanged;
@@ -298,6 +313,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     }
     public void TriggerOnBlurred()
     {
+        DisplayText = ApplyInputModeToString(DisplayText);
         OnBlurred?.Invoke(this);
     }
     public void TriggerOnFocused()
@@ -928,15 +944,19 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
                     displayTextChanged = true;
                 }
             }
-            else if (c == '\n' && EnterSubmit
-                && !GuiUpdate.Keyboard.IsKeyHold(Keys.LeftShift)
-                && !GuiUpdate.Keyboard.IsKeyHold(Keys.RightShift))
+            else if (c == '\n'
+                && (
+                   // no endline when it's not TextInputMode.Text -> always blur
+                   _inputMode != TextInputMode.Text
+                    || (EnterSubmit && !GuiUpdate.Keyboard.IsKeyHold(Keys.LeftShift) && !GuiUpdate.Keyboard.IsKeyHold(Keys.RightShift))
+                )
+            )
             {
                 // the user presses enter, complete the input
                 shouldBlur = true;
                 break;
             }
-            else
+            else if (FilterCharByTextInputMode(c))
             {
                 DisplayText = _displayText.Insert(cursorIndex++, c.ToString());
                 displayTextChanged = true;
@@ -1017,5 +1037,44 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
 
         // Need to plus onScreenPos because GetCharIndexAtMouse uses last onScreen pos to calculate char index
         _cursorIndex = GetCharIndexAtMouse(cursorOffset.ToPoint() + OnScreenPos);
+    }
+
+    private bool FilterCharByTextInputMode(char c)
+    {
+        if (_inputMode == TextInputMode.Number)
+        {
+            return (c >= '0' && c <= '9') || c == '.' || c == '-' || c == '+';
+        }
+        else if (_inputMode == TextInputMode.Integer)
+        {
+            return (c >= '0' && c <= '9') || c == '-' || c == '+';
+        }
+        return true;
+    }
+    private string ApplyInputModeToString(string str)
+    {
+        if (_inputMode == TextInputMode.Number)
+        {
+            if (decimal.TryParse(str, out decimal dec))
+            {
+                return dec.ToString();
+            }
+            else
+            {
+                return "0";
+            }
+        }
+        else if (_inputMode == TextInputMode.Integer)
+        {
+            if (int.TryParse(str, out int result))
+            {
+                return result.ToString();
+            }
+            else
+            {
+                return "0";
+            }
+        }
+        return str;
     }
 }

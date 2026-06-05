@@ -45,7 +45,7 @@ public class Game1 : Game
 
     protected override void LoadContent()
     {
-        _buttonTexture = Content.Load<Texture2D>("SampleImage/ButtonSample");
+        // _buttonTexture = Content.Load<Texture2D>("SampleImage/ButtonSample");
         _bannerRt = new RenderTarget2D(GraphicsDevice, 800, 180);
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         GreyGuiCore.Initialize(this);
@@ -99,7 +99,7 @@ public class Game1 : Game
 
             if (keyboardState.IsKeyDown(Keys.R))
             {
-                root = GenerateText2();
+                root = MockFacebookLogin();
             }
             if (GuiUpdate.Keyboard.IsKeyDown(Keys.P))
             {
@@ -118,10 +118,10 @@ public class Game1 : Game
     {
         if (!IsActive)
             return;
-        GraphicsDevice.Clear(new Color(0, 0, 0));
+        GraphicsDevice.Clear(new Color(100, 100, 100));
         // Point point = Mouse.GetState().Position;
         _spriteBatch.Begin();
-        _spriteBatch.Draw(GreyGuiCore.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
+        // _spriteBatch.Draw(GreyGuiCore.Atlas, new Rectangle(0, 0, 1024, 1024), Color.White);
         _spriteBatch.End();
 
         // GraphicsDevice.SetRenderTarget(_bannerRt);
@@ -129,7 +129,9 @@ public class Game1 : Game
         // _stopwatch.Restart();
 
         _guiBatch.ReceiveFrameInfo(gameTime);
-        _guiBatch.Draw(root, new Point(50, 50));
+        Point diff = (new Point(GreyGuiCore.NullParentWidth, GreyGuiCore.NullParentHeight) - root.FinalSize.ToPoint());
+        _guiBatch.Draw(root2, new Point(diff.X / 2, diff.Y / 2));
+        _guiBatch.Draw(root, new Point(diff.X / 2, diff.Y / 2));
 
         // drawTime = _stopwatch.Elapsed.TotalMilliseconds;
 
@@ -500,7 +502,8 @@ public class Game1 : Game
                     alignModeButtons[2],
                     alignModeButtons[3],
                 ])
-            ])
+            ]),
+            rootText
 
         ]);
     }
@@ -572,12 +575,168 @@ public class Game1 : Game
             ),
 
             new ListScrollPanel(widthMode: WidthMode.ParentRatio, widthRatio:1f, colorMask: new(10, 32, 46), heightMode: HeightMode.HeightWidthRatio, heightWidthRatio: .8f).SetChildren([
-                
+
                 GenerateExitCard("Exit 0"),
-                GenerateExitCard("Exit 1"), 
+                GenerateExitCard("Exit 1"),
                 GenerateExitCard("Exit 2")
             ])
         ]);
         return listPanel;
     }
+
+
+    private ListPanel MockFacebookLogin()
+    {
+        static ListPanel InputField(string fieldName, Action<TextInput, string> onTextChanged)
+        {
+            return new ListPanel(
+                colorMask: new(100, 100, 100, 0), widthMode: WidthMode.ParentRatio, widthRatio: 1f, heightMode: HeightMode.Fixed, size: new(0, 80), rowGap: 10).SetChildren([
+                new Text(
+                    displayText: fieldName, fontSize:18, alignMode: TextAlignment.Left, colorMask: Color.Gray,
+                    widthMode: TextWidthMode.ParentRatio, widthRatio: 1f,
+                    heightMode: TextHeightMode.TextHeight),
+                new RowPanel(
+                    colorMask: Color.Transparent, borderColor: new(100, 100, 100, 100),
+                    widthMode: WidthMode.ParentRatio, widthRatio:1f, heightMode: HeightMode.Fixed,
+                    size: new(0, 40),
+                    borderRadius:10, borderWidth: 2,
+                    paddingSide:10
+                    ).SetChildren([
+                        new TextInput(
+                        colorMask: Color.Black, focusedColor:Color.Black,
+                        fontSize:28, alignMode: TextAlignment.Left,
+                        textYOffset:2,
+                        widthMode: TextWidthMode.ParentRatio, widthRatio: 1f,
+                        heightMode: TextHeightMode.TextHeight,
+                        onTextChanged: onTextChanged),
+                    ])
+            ]);
+        }
+
+        string username = "";
+        string password = "";
+
+        ListPanel result = new ListPanel(
+            colorMask: Color.White,
+            widthMode: WidthMode.ParentRatio, widthRatio: .5f,
+            heightMode: HeightMode.HeightWidthRatio, heightWidthRatio: .8f,
+            layoutMode: RowLayoutMode.Center,
+            borderRadius: 10,
+            paddingTop: 40, paddingSide: 40,
+            rowGap: 10
+        ).SetChildren([
+            new Text(
+                displayText: "Login", fontSize:40, alignMode: TextAlignment.Center,
+                widthMode: TextWidthMode.ParentRatio, widthRatio:1f,
+                heightMode: TextHeightMode.TextHeight),
+            InputField("Email or Username", (TextInput, text)=>{username = text;}),
+            InputField("Password", (TextInput, text)=>{password = text;}),
+            new Button(
+                colorMask: new(24, 119, 242),
+                widthMode: WidthMode.ParentRatio, widthRatio:1f,
+                heightMode: HeightMode.Fixed, size: new(0, 50),
+                borderRadius: 10,
+                onLeftClicked: ()=>{
+                    // Login logic here
+                }
+            ).SetChild(
+                new Text(
+                    colorMask: Color.White,
+                    displayText: "Log in", fontSize:30, alignMode: TextAlignment.Center,
+                    textYOffset: -4,
+                    widthMode: TextWidthMode.ParentRatio, widthRatio:1f,
+                    heightMode: TextHeightMode.TextHeight)
+            ),
+            new Button(
+                colorMask: Color.White,
+                widthMode: WidthMode.ParentRatio, widthRatio: .3f,
+                heightMode: HeightMode.Fixed, size: new(0, 30),
+                borderRadius: 10,
+                onLeftClicked: ()=>{
+                    // Forget password logic here
+                }
+            ).SetChild(
+                new Text(
+                    colorMask: new(24, 119, 242),
+                    displayText: "Forgot password?", fontSize:18, alignMode: TextAlignment.Center,
+                    textYOffset: -4,
+                    widthMode: TextWidthMode.ParentRatio, widthRatio:1f,
+                    heightMode: TextHeightMode.TextHeight)
+            ),
+            // this RowPanel is a separator
+            new RowPanel(
+                colorMask: new(100, 100, 100, 100),
+                widthMode: WidthMode.ParentRatio, widthRatio: 1f,
+                heightMode: HeightMode.Fixed, size: new(0,2)),
+            new RowPanel(
+                colorMask: new(0, 0, 0, 0),
+                widthMode: WidthMode.ParentRatio, widthRatio: 1f,
+                heightMode: HeightMode.Fixed, size: new(0,10)),
+            new Button(
+                colorMask: new(66, 183, 42),
+                widthMode: WidthMode.ParentRatio, widthRatio:.4f,
+                heightMode: HeightMode.Fixed, size: new(0, 40),
+                borderRadius: 10,
+                onLeftClicked: ()=>{
+                    // Create new account logic here
+                }
+            ).SetChild(
+                new Text(
+                    colorMask: Color.White,
+                    displayText: "Create new account", fontSize:20, alignMode: TextAlignment.Center,
+                    textYOffset: -4,
+                    widthMode: TextWidthMode.ParentRatio, widthRatio:1f,
+                    heightMode: TextHeightMode.TextHeight)
+            ),
+
+        ]);
+        return result;
+    }
+
+    private GreyGuiElement GenerateDialoguePanel()
+    {
+        var _optionPanel = new ListPanel(
+            widthMode: WidthMode.ParentRatio, widthRatio: .75f,
+            heightMode: HeightMode.ParentRatio, heightRatio: .4f,
+            layoutMode: RowLayoutMode.Center,
+            colorMask: new Color(66, 73, 86));
+        var _sentenceText = new Text(fontSize: 32, widthMode: TextWidthMode.ParentRatio, widthRatio: 1f, heightMode: TextHeightMode.TextHeight, autoEndLine: true);
+        var _speakerNameText = new GreyGui.Text(
+             widthMode: TextWidthMode.ParentRatio, widthRatio: 1,
+             heightMode: TextHeightMode.TextHeight,
+             displayText: "TEXT", alignMode: TextAlignment.Center,
+             colorMask: Color.White
+         );
+        var MainPanel = new ListPanel(
+            widthMode: WidthMode.ParentRatio, widthRatio: .75f,
+            heightMode: HeightMode.ParentRatio, heightRatio: .25f,
+            layoutMode: RowLayoutMode.Justify,
+            borderRadius: 10,
+            paddingTop: 10, paddingSide: 10,
+            colorMask: new Color(126, 153, 166)).SetChildren([
+            // Avatar panel
+            new ListPanel(
+                widthMode: WidthMode.ParentRatio, widthRatio: .18f,
+                heightMode: HeightMode.ParentRatio, heightRatio:1f,
+                layoutMode: RowLayoutMode.Center, colorMask: Color.Transparent
+            ).SetChildren([
+                new GreyGui.Image(
+                    widthMode: WidthMode.ParentRatio, widthRatio:.75f,
+                    heightMode: HeightMode.HeightWidthRatio,
+                    heightWidthRatio: 1f, borderRadius:10),
+                _speakerNameText,
+            ]),
+            new RowPanel(
+                colorMask:new(0,0,0,100),
+                widthMode: WidthMode.ParentRatio, widthRatio: .8f,
+                heightMode: HeightMode.HeightWidthRatio, heightWidthRatio:0.2f,
+                borderRadius:10, paddingSide:10
+            ).SetChildren([
+
+                _sentenceText
+            ]),
+        ]);
+        return MainPanel;
+    }
+
 }

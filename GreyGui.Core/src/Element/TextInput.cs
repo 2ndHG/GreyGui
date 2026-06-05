@@ -207,6 +207,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         }
     }
     public Color FocusedColor { get; set; } = Color.Yellow;
+    public bool EnterSubmit { get; set; } = true;
 
     private Vector2 _size;
     private Vector2 _finalSize;
@@ -250,7 +251,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     private float _maxWidth = 0;
 
     public TextInput(Color? colorMask = null, Color? borderColor = null, Color? backgroundColor = null, Vector2 size = default, int borderRadius = default, int borderWidth = default,
-    TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default, Color? focusedColor = null, Action<TextInput>? onClicked = null, Action<TextInput>? onBlurred = null, Action<TextInput, string>? onTextChanged = null)
+    TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default, Color? focusedColor = null, bool enterSubmit = true, Action<TextInput>? onClicked = null, Action<TextInput>? onBlurred = null, Action<TextInput, string>? onTextChanged = null)
     {
         ColorMask = colorMask ?? Color.Black;
         BackgroundColor = backgroundColor ?? Color.Transparent;
@@ -282,6 +283,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
             _ => fontSize,
         };
         _autoEndLine = autoEndLine;
+        EnterSubmit = enterSubmit;
         OnBlurred = onBlurred;
         OnClicked = onClicked;
         OnTextChanged = onTextChanged;
@@ -911,6 +913,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
 
         ReadOnlySpan<char> inputBuffer = GuiUpdate.Keyboard.GetTextInputBuffer();
         bool displayTextChanged = false;
+        bool shouldBlur = false;
 
         // when using 'DisplayText = ' assignment, the _cursorIndex field will be set to _displayText.Length, hence we need to record the original index first
         int cursorIndex = _cursorIndex;
@@ -924,6 +927,14 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
                     DisplayText = _displayText.Remove((cursorIndex--) - 1, 1);
                     displayTextChanged = true;
                 }
+            }
+            else if (c == '\n' && EnterSubmit
+                && !GuiUpdate.Keyboard.IsKeyHold(Keys.LeftShift)
+                && !GuiUpdate.Keyboard.IsKeyHold(Keys.RightShift))
+            {
+                // the user presses enter, complete the input
+                shouldBlur = true;
+                break;
             }
             else
             {
@@ -971,6 +982,11 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         if (displayTextChanged)
         {
             OnTextChanged?.Invoke(this, _displayText);
+        }
+
+        if (shouldBlur)
+        {
+            GuiUpdate.FocusedElement = null;
         }
     }
 

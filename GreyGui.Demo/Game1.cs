@@ -99,7 +99,7 @@ public class Game1 : Game
 
             if (keyboardState.IsKeyDown(Keys.R))
             {
-                rootText.InputMode = rootText.InputMode == TextInputMode.Number? TextInputMode.Text: TextInputMode.Number;
+                rootText.InputMode = rootText.InputMode == TextInputMode.Number ? TextInputMode.Text : TextInputMode.Number;
             }
             if (GuiUpdate.Keyboard.IsKeyDown(Keys.P))
             {
@@ -460,7 +460,9 @@ public class Game1 : Game
         alignModeButtons[2].OnLeftClicked += () => { ChangeAlignMode(TextAlignment.Right); };
         alignModeButtons[3].OnLeftClicked += () => { ChangeAlignMode(TextAlignment.Justify); };
 
-        return new ListScrollPanel(colorMask: new Color(87, 125, 91), size: new(1200, 800), widthMode: WidthMode.Fixed, widthRatio: .8f, heightMode: HeightMode.Fixed, heightRatio: .8f, paddingSide: 10, paddingTop: 10, borderRadius: 10, layoutMode: RowLayoutMode.Center).SetChildren([
+        return new ListScrollPanel(colorMask: new Color(87, 125, 91), size: new(1200, 800), widthMode: WidthMode.Fixed, widthRatio: .8f, heightMode: HeightMode.Fixed, heightRatio: .8f, paddingSide: 10, paddingTop: 10, borderRadius: 10, layoutMode: RowLayoutMode.Center
+        , scrollBarColor: new(.7f, 1f, .8f, .8f)
+        ).SetChildren([
             new RowPanel(colorMask: Color.Transparent, widthMode: WidthMode.ParentRatio, widthRatio: 1f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([
                 new Text(colorMask: Color.White, widthMode: TextWidthMode.ParentRatio, widthRatio: .33f, heightMode: TextHeightMode.TextHeight, fontSize: 26f, displayText: "Element Width Definer"),
                 new RowPanel(colorMask: Color.Transparent, widthMode: WidthMode.ParentRatio, widthRatio: .67f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([

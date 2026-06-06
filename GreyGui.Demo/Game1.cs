@@ -99,7 +99,7 @@ public class Game1 : Game
 
             if (keyboardState.IsKeyDown(Keys.R))
             {
-                root = MockFacebookLogin();
+                rootText.InputMode = rootText.InputMode == TextInputMode.Number? TextInputMode.Text: TextInputMode.Number;
             }
             if (GuiUpdate.Keyboard.IsKeyDown(Keys.P))
             {
@@ -318,11 +318,11 @@ public class Game1 : Game
          widthRatio: .5f,
          widthMode: TextWidthMode.ParentRatio,
          fontSize: 20,
-         fontName: "huninn"
-        //  borderColor: Color.AntiqueWhite,
-        //  backgroundColor: new Color(184, 217, 253, 120),
-        //  borderRadius: 10,
-        //  borderWidth : 3
+         fontName: "huninn",
+         inputMode: TextInputMode.Integer,
+         borderColor: Color.AntiqueWhite,
+         backgroundColor: new Color(184, 217, 253, 120),
+         borderWidth: 3
          );
         rootText.OnClicked += (_) => { Console.WriteLine("display text clicked"); };
         rootText.OnBlurred += (_) => { Console.WriteLine("display text blurred"); };

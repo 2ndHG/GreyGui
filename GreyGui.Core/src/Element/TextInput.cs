@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -1055,9 +1056,9 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     {
         if (_inputMode == TextInputMode.Number)
         {
-            if (decimal.TryParse(str, out decimal dec))
+            if (decimal.TryParse(str, NumberStyles.Float, CultureInfo.InvariantCulture, out var dec))
             {
-                return dec.ToString();
+                return dec.ToString(CultureInfo.InvariantCulture);
             }
             else
             {
@@ -1066,10 +1067,8 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         }
         else if (_inputMode == TextInputMode.Integer)
         {
-            if (int.TryParse(str, out int result))
-            {
-                return result.ToString();
-            }
+            if (int.TryParse(str, NumberStyles.Integer, CultureInfo.InvariantCulture, out int result))
+                return result.ToString(CultureInfo.InvariantCulture);
             else
             {
                 return "0";

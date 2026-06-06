@@ -308,7 +308,7 @@ public class Game1 : Game
                 new Text(colorMask: Color.White, fontSize: 22, widthMode: TextWidthMode.ParentRatio, heightMode: TextHeightMode.TextHeight, widthRatio: 1, alignMode: TextAlignment.Center, displayText: displayText, autoEndLine: true, textYOffset: -4)
             );
         }
-        rootText = new TextInput(colorMask: Color.White, size: new(1200, 600), displayText: "I need this paragraph because I need to showcase this very flexible TextInput element, this element allows you to have a dynamic font size that can scale with its own parent's size.Also, various text alignments are supported, you can choose between apply left, center, right, or justify alignment and the layout behavior will be the same as the Google docs'.Furthermore, you can also have dynamic element size based on the text content, the more text it has, the bigger it becomes, awesome.If you are a doubting engineer thinking some attributes are affecting each other, you are right! But worry not! GreyGui gets your back, the conflicts are handled so you won't facing the infinite looping calculation.",
+        rootText = new TextInput(colorMask: Color.White, size: new(1200, 600), displayText: "I need this paragraph because I need to showcase this very flexible TextInput element, this element allows you to have a dynamic font size that can scale with its own parent's size.Also, various text alignments are supported, you can choose between apply left, center, right, or justify alignment and the layout behavior will be the same as the Google docs'.Furthermore, you can also have dynamic element size based on the text content, the more text it has, the bigger it becomes, awesome.If you are a doubting engineer thinking some attributes are affecting each other, you are right! But worry not! GreyGui gets your back, the conflicts are handled so you won't facing the infinite looping calculation....'''",
          alignMode: TextAlignment.Left,
          textYOffset: -6,
          heightMode: TextHeightMode.TextHeight,
@@ -319,7 +319,7 @@ public class Game1 : Game
          widthMode: TextWidthMode.ParentRatio,
          fontSize: 20,
          fontName: "huninn",
-         inputMode: TextInputMode.Integer,
+         inputMode: TextInputMode.Text,
          borderColor: Color.AntiqueWhite,
          backgroundColor: new Color(184, 217, 253, 120),
          borderWidth: 3

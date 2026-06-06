@@ -931,6 +931,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         ReadOnlySpan<char> inputBuffer = GuiUpdate.Keyboard.GetTextInputBuffer();
         bool displayTextChanged = false;
         bool shouldBlur = false;
+        bool isHoldingCtrl = GuiUpdate.Keyboard.IsKeyHold(Keys.LeftControl) || GuiUpdate.Keyboard.IsKeyHold(Keys.RightControl);
 
         // when using 'DisplayText = ' assignment, the _cursorIndex field will be set to _displayText.Length, hence we need to record the original index first
         int cursorIndex = _cursorIndex;
@@ -941,7 +942,16 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
             {
                 if (cursorIndex > 0)
                 {
-                    DisplayText = _displayText.Remove((cursorIndex--) - 1, 1);
+                    if (isHoldingCtrl)
+                    {
+                        int target = FindWordBoundary(cursorIndex, -1);
+                        DisplayText = _displayText.Remove(target, cursorIndex - target);
+                        cursorIndex = target;
+                    }
+                    else
+                    {
+                        DisplayText = _displayText.Remove((cursorIndex--) - 1, 1);
+                    }
                     displayTextChanged = true;
                 }
             }
@@ -1021,11 +1031,55 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     }
     private void CursorMoveLeft()
     {
-        _cursorIndex = Math.Max(_cursorIndex - 1, 0);
+        bool ctrl = GuiUpdate.Keyboard.IsKeyHold(Keys.LeftControl) || GuiUpdate.Keyboard.IsKeyHold(Keys.RightControl);
+        _cursorIndex = ctrl ? FindWordBoundary(_cursorIndex, -1) : Math.Max(_cursorIndex - 1, 0);
     }
     private void CursorMoveRight()
     {
-        _cursorIndex = Math.Min(_cursorIndex + 1, _displayText.Length);
+        bool ctrl = GuiUpdate.Keyboard.IsKeyHold(Keys.LeftControl) || GuiUpdate.Keyboard.IsKeyHold(Keys.RightControl);
+        _cursorIndex = ctrl ? FindWordBoundary(_cursorIndex, 1) : Math.Min(_cursorIndex + 1, _displayText.Length);
+    }
+
+    private int FindWordBoundary(int index, int direction)
+    {
+        int i = Math.Clamp(index, 0, _displayText.Length);
+        if (direction < 0)
+        {
+            // if moving left, skip continuous whitespaces first
+            while (i > 0 && char.IsWhiteSpace(_displayText[i - 1]))
+                i--;
+
+            if (i > 0)
+            {
+                // the first non-space char determines if it's continuous letter or digits
+                bool isProcessingLetterDigit = char.IsLetterOrDigit(_displayText[i - 1]);
+                while (i > 0
+                    && !char.IsWhiteSpace(_displayText[i - 1])
+                    && char.IsLetterOrDigit(_displayText[i - 1]) == isProcessingLetterDigit)
+                {
+                    i--;
+                }
+            }
+            return i;
+        }
+        else
+        {
+            // skip the contiguous run of same-class characters at/after the cursor
+            if (i < _displayText.Length)
+            {
+                bool isProcessingLetterDigit = char.IsLetterOrDigit(_displayText[i]);
+                while (i < _displayText.Length
+                    && !char.IsWhiteSpace(_displayText[i])
+                    && char.IsLetterOrDigit(_displayText[i]) == isProcessingLetterDigit)
+                {
+                    i++;
+                }
+            }
+            // skip trailing whitespace
+            while (i < _displayText.Length && char.IsWhiteSpace(_displayText[i]))
+                i++;
+            return i;
+        }
     }
     private void CursorMovePlaceHolder()
     {

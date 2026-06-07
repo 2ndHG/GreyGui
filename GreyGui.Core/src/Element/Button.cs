@@ -36,6 +36,7 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
 
     public Vector2 ContainerSize { get => _containerSize - new Vector2(PaddingSide * 2, PaddingVertical * 2); }
 
+    public GreyGuiElement Child { get => _children[0]; }
     public WidthMode WidthMode
     {
         get => _widthMode;
@@ -283,6 +284,16 @@ public class Button : GreyGuiElement, IContainer, IRatioElement
             _lHoldingFrames = 0;
             _rHoldingFrames = 0;
         }
+    }
+
+    public void ClearOnLeftClicked()
+    {
+        OnLeftClicked = null;
+    }
+
+    public void ClearOnRightClicked()
+    {
+        OnRightClicked = null;
     }
 
     public override void Draw(Point position, RenderContext renderContext, Rectangle screenScissor)

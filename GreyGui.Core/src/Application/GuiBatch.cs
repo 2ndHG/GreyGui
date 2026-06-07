@@ -5,6 +5,7 @@ namespace GreyGui;
 
 public class GuiBatch
 {
+    public RenderContext RenderContext => _renderContext;
     private const int MAX_VERTEX_COUNT = 32768; // Limited by 16-bit index buffer
     private const int MAX_INDEX_COUNT = 65536;
     private readonly GraphicsDevice _device;
@@ -75,8 +76,9 @@ public class GuiBatch
         // Check if there are generated SDF bitmaps that haven't be drawn to the atlas
         GreyGuiCore.TextSystem.SetGeneratedSdfBitmapToAtlas();
 
-        if (_renderContext.Batches.Count == 0)
+        if (_renderContext.Batches.Count == 0 || _renderContext.VertexCount == 0 || _renderContext.IndexCount == 0)
         {
+            _renderContext.Clear();
             return;
         }
 

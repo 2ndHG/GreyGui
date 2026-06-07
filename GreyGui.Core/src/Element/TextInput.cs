@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
@@ -207,6 +208,19 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         }
     }
     public Color FocusedColor { get; set; } = Color.Yellow;
+    public bool EnterSubmit { get; set; } = true;
+    public TextInputMode InputMode
+    {
+        get => _inputMode; set
+        {
+            if (value == _inputMode)
+                return;
+
+            _inputMode = value;
+
+            DisplayText = ApplyInputModeToString(DisplayText);
+        }
+    }
 
     private Vector2 _size;
     private Vector2 _finalSize;
@@ -225,6 +239,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     private float _textYOffset;
     private FontSizeScalingMode _fontSizeScalingMode;
     private float _fontSizeScalingBaseline;
+    private TextInputMode _inputMode;
 
     // events
     public event Action<TextInput>? OnBlurred;
@@ -250,7 +265,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     private float _maxWidth = 0;
 
     public TextInput(Color? colorMask = null, Color? borderColor = null, Color? backgroundColor = null, Vector2 size = default, int borderRadius = default, int borderWidth = default,
-    TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default, Color? focusedColor = null, Action<TextInput>? onClicked = null, Action<TextInput>? onBlurred = null, Action<TextInput, string>? onTextChanged = null)
+    TextWidthMode widthMode = TextWidthMode.Fixed, TextHeightMode heightMode = TextHeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int zIndex = default, TextAlignment alignMode = TextAlignment.Left, string? fontName = null, string displayText = "", float fontSize = -1f, float textYOffset = default, FontSizeScalingMode fontSizeScalingMode = FontSizeScalingMode.None, float fontSizeScalingBaseline = 0, bool autoEndLine = default, Color? focusedColor = null, bool enterSubmit = true, TextInputMode inputMode = TextInputMode.Text, Action<TextInput>? onClicked = null, Action<TextInput>? onBlurred = null, Action<TextInput, string>? onTextChanged = null)
     {
         ColorMask = colorMask ?? Color.Black;
         BackgroundColor = backgroundColor ?? Color.Transparent;
@@ -282,6 +297,9 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
             _ => fontSize,
         };
         _autoEndLine = autoEndLine;
+        EnterSubmit = enterSubmit;
+        _inputMode = inputMode;
+
         OnBlurred = onBlurred;
         OnClicked = onClicked;
         OnTextChanged = onTextChanged;
@@ -296,6 +314,7 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     }
     public void TriggerOnBlurred()
     {
+        DisplayText = ApplyInputModeToString(DisplayText);
         OnBlurred?.Invoke(this);
     }
     public void TriggerOnFocused()
@@ -911,6 +930,8 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
 
         ReadOnlySpan<char> inputBuffer = GuiUpdate.Keyboard.GetTextInputBuffer();
         bool displayTextChanged = false;
+        bool shouldBlur = false;
+        bool isHoldingCtrl = GuiUpdate.Keyboard.IsKeyHold(Keys.LeftControl) || GuiUpdate.Keyboard.IsKeyHold(Keys.RightControl);
 
         // when using 'DisplayText = ' assignment, the _cursorIndex field will be set to _displayText.Length, hence we need to record the original index first
         int cursorIndex = _cursorIndex;
@@ -921,11 +942,32 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
             {
                 if (cursorIndex > 0)
                 {
-                    DisplayText = _displayText.Remove((cursorIndex--) - 1, 1);
+                    if (isHoldingCtrl)
+                    {
+                        int target = FindWordBoundary(cursorIndex, -1);
+                        DisplayText = _displayText.Remove(target, cursorIndex - target);
+                        cursorIndex = target;
+                    }
+                    else
+                    {
+                        DisplayText = _displayText.Remove((cursorIndex--) - 1, 1);
+                    }
                     displayTextChanged = true;
                 }
             }
-            else
+            else if (c == '\n'
+                && (
+                   // no endline when it's not TextInputMode.Text -> always blur
+                   _inputMode != TextInputMode.Text
+                    || (EnterSubmit && !GuiUpdate.Keyboard.IsKeyHold(Keys.LeftShift) && !GuiUpdate.Keyboard.IsKeyHold(Keys.RightShift))
+                )
+            )
+            {
+                // the user presses enter, complete the input
+                shouldBlur = true;
+                break;
+            }
+            else if (FilterCharByTextInputMode(c))
             {
                 DisplayText = _displayText.Insert(cursorIndex++, c.ToString());
                 displayTextChanged = true;
@@ -972,6 +1014,11 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
         {
             OnTextChanged?.Invoke(this, _displayText);
         }
+
+        if (shouldBlur)
+        {
+            GuiUpdate.FocusedElement = null;
+        }
     }
 
     private void CursorMoveUp()
@@ -984,11 +1031,55 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
     }
     private void CursorMoveLeft()
     {
-        _cursorIndex = Math.Max(_cursorIndex - 1, 0);
+        bool ctrl = GuiUpdate.Keyboard.IsKeyHold(Keys.LeftControl) || GuiUpdate.Keyboard.IsKeyHold(Keys.RightControl);
+        _cursorIndex = ctrl ? FindWordBoundary(_cursorIndex, -1) : Math.Max(_cursorIndex - 1, 0);
     }
     private void CursorMoveRight()
     {
-        _cursorIndex = Math.Min(_cursorIndex + 1, _displayText.Length);
+        bool ctrl = GuiUpdate.Keyboard.IsKeyHold(Keys.LeftControl) || GuiUpdate.Keyboard.IsKeyHold(Keys.RightControl);
+        _cursorIndex = ctrl ? FindWordBoundary(_cursorIndex, 1) : Math.Min(_cursorIndex + 1, _displayText.Length);
+    }
+
+    private int FindWordBoundary(int index, int direction)
+    {
+        int i = Math.Clamp(index, 0, _displayText.Length);
+        if (direction < 0)
+        {
+            // if moving left, skip continuous whitespaces first
+            while (i > 0 && char.IsWhiteSpace(_displayText[i - 1]))
+                i--;
+
+            if (i > 0)
+            {
+                // the first non-space char determines if it's continuous letter or digits
+                bool isProcessingLetterDigit = char.IsLetterOrDigit(_displayText[i - 1]);
+                while (i > 0
+                    && !char.IsWhiteSpace(_displayText[i - 1])
+                    && char.IsLetterOrDigit(_displayText[i - 1]) == isProcessingLetterDigit)
+                {
+                    i--;
+                }
+            }
+            return i;
+        }
+        else
+        {
+            // skip the contiguous run of same-class characters at/after the cursor
+            if (i < _displayText.Length)
+            {
+                bool isProcessingLetterDigit = char.IsLetterOrDigit(_displayText[i]);
+                while (i < _displayText.Length
+                    && !char.IsWhiteSpace(_displayText[i])
+                    && char.IsLetterOrDigit(_displayText[i]) == isProcessingLetterDigit)
+                {
+                    i++;
+                }
+            }
+            // skip trailing whitespace
+            while (i < _displayText.Length && char.IsWhiteSpace(_displayText[i]))
+                i++;
+            return i;
+        }
     }
     private void CursorMovePlaceHolder()
     {
@@ -1001,5 +1092,42 @@ public class TextInput : GreyGuiElement, IRatioElement, IFocusable
 
         // Need to plus onScreenPos because GetCharIndexAtMouse uses last onScreen pos to calculate char index
         _cursorIndex = GetCharIndexAtMouse(cursorOffset.ToPoint() + OnScreenPos);
+    }
+
+    private bool FilterCharByTextInputMode(char c)
+    {
+        if (_inputMode == TextInputMode.Number)
+        {
+            return (c >= '0' && c <= '9') || c == '.' || c == '-' || c == '+';
+        }
+        else if (_inputMode == TextInputMode.Integer)
+        {
+            return (c >= '0' && c <= '9') || c == '-' || c == '+';
+        }
+        return true;
+    }
+    private string ApplyInputModeToString(string str)
+    {
+        if (_inputMode == TextInputMode.Number)
+        {
+            if (decimal.TryParse(str, NumberStyles.Float, CultureInfo.InvariantCulture, out var dec))
+            {
+                return dec.ToString(CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                return "0";
+            }
+        }
+        else if (_inputMode == TextInputMode.Integer)
+        {
+            if (int.TryParse(str, NumberStyles.Integer, CultureInfo.InvariantCulture, out int result))
+                return result.ToString(CultureInfo.InvariantCulture);
+            else
+            {
+                return "0";
+            }
+        }
+        return str;
     }
 }

@@ -106,7 +106,7 @@ public class Text : GreyGuiElement, IRatioElement
             {
                 _alignMode = value;
 
-                _isSizeDirty = _autoEndLine;
+                _isSizeDirty = true;
             }
         }
     }
@@ -119,7 +119,7 @@ public class Text : GreyGuiElement, IRatioElement
                 return;
             _fontName = value;
             _isDisplayTextDirty = true;
-            _isSizeDirty = _autoEndLine;
+            _isSizeDirty = true;
         }
     }
     public string DisplayText
@@ -133,7 +133,7 @@ public class Text : GreyGuiElement, IRatioElement
             }
             _displayText = value;
             _isDisplayTextDirty = true;
-            _isSizeDirty = _autoEndLine;
+            _isSizeDirty = true;
         }
     }
     public float FontSize
@@ -147,7 +147,7 @@ public class Text : GreyGuiElement, IRatioElement
             }
             _fontSize = value;
 
-            _isSizeDirty = _autoEndLine;
+            _isSizeDirty = true;
         }
     }
     public float TextYOffset
@@ -182,7 +182,7 @@ public class Text : GreyGuiElement, IRatioElement
             }
             _fontSizeScalingBaseline = value;
 
-            _isSizeDirty = _autoEndLine;
+            _isSizeDirty = true;
         }
     }
     public bool AutoEndLine
@@ -196,7 +196,7 @@ public class Text : GreyGuiElement, IRatioElement
             }
             _autoEndLine = value;
 
-            _isSizeDirty = _autoEndLine;
+            _isSizeDirty = true;
         }
     }
 

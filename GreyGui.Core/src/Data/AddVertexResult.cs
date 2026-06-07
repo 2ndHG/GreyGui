@@ -1,6 +1,6 @@
 namespace GreyGui;
 
-public record AddVertexResult
+public record struct AddVertexResult
 {
     public int VertexStart { get; set; }
     public int VertexCount { get; set; }

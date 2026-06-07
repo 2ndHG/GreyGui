@@ -1,4 +1,6 @@
+using System.Buffers;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 namespace GreyGui;
@@ -116,6 +118,13 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
             }
         }
     }
+    public float ScrollBarWidth { get => _scrollBarWidth; set => _scrollBarWidth = value; }
+    /// <summary>
+    /// Color of the scroll bar when it is not dragged. suggested to have a .8f Alpha value, therefore dragging effect can set alpha to 1 to emphasize the state
+    /// </summary>
+    public Color ScrollBarColor { get => _scrollBarColor; set => _scrollBarColor = value; }
+    public Color TrackColor { get => _trackColor; set => _trackColor = value; }
+    public Span<GreyGuiElement> Children { get => CollectionsMarshal.AsSpan(_children); }
 
     private WidthMode _widthMode;
     private HeightMode _heightMode;
@@ -137,6 +146,8 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
 
     // scroll bar
     private float _scrollBarWidth = 16;
+    private Color _scrollBarColor;
+    private Color _trackColor;
     private float _scrollButtonHeight;
     private int _buttonYOffset;
     private int _startScrollingMouseYPos;
@@ -150,7 +161,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
 
     public ListScrollPanel(
         Color? colorMask = null, Color borderColor = default, int borderRadius = default, int borderWidth = default,
-        Vector2 size = default, WidthMode widthMode = WidthMode.Fixed, HeightMode heightMode = HeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, float childGap = default, float rowGap = default, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, ICollection<GreyGuiElement>? children = null)
+        Vector2 size = default, WidthMode widthMode = WidthMode.Fixed, HeightMode heightMode = HeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, float childGap = default, float rowGap = default, float scrollBarWidth = 16, Color? scrollBarColor = null, Color? trackColor = null, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, ICollection<GreyGuiElement>? children = null)
     {
         ColorMask = (colorMask, imageTexture) switch
         {
@@ -175,6 +186,10 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
         _childGap = childGap;
         _rowGap = rowGap;
         _zIndex = zIndex;
+        _scrollBarWidth = scrollBarWidth;
+        _scrollBarColor = scrollBarColor ?? new Color(.8f, .8f, .8f, .7f);
+        _trackColor = trackColor ?? new Color(1, 1, 1, .2f);
+
         _imageTexture = imageTexture ?? GreyGuiCore.Atlas;
         _imageSrcRect = (imageTexture, imageSrcRect.IsEmpty) switch
         {
@@ -203,9 +218,14 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
 
     public void AppendChildren(ICollection<GreyGuiElement> children)
     {
+        int i = 0;
         foreach (GreyGuiElement child in children)
         {
+            if (child == null)
+                throw new Exception($"Child at index {i} is null");
+
             AppendChild(child);
+            i++;
         }
     }
     public void RemoveChild(GreyGuiElement child)
@@ -233,6 +253,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
         {
             child.ChangeParentButParentWillNotKnow(null);
         }
+        _children.Clear();
         _isLayoutDirty = true;
         _isChildrenZIndexDirty = true;
     }
@@ -409,6 +430,19 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
     {
 
     }
+    private void ResolveChildrenZIndexDirty()
+    {
+        if (!_isChildrenZIndexDirty)
+            return;
+        // Sort the index using children's ZIndex, so the low-ZIndex-elements' indices in _children will be put in the front of _drawOrder, therefore be drew first later on
+        _drawOrder.Clear();
+        for (int i = 0; i < _children.Count; ++i)
+        {
+            _drawOrder.Add(i);
+        }
+        _drawOrder.Sort((a, b) => _children[a].ZIndex.CompareTo(_children[b].ZIndex));
+        _isChildrenZIndexDirty = false;
+    }
     public override void Update()
     {
         if (GuiUpdate.FocusedElement == this)
@@ -424,10 +458,22 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
                 GuiUpdate.FocusedElement = null;
             }
         }
-        for (int i = 0; i < _drawOrder.Count; ++i)
+        int count = _children.Count;
+        GreyGuiElement[] childrenCopy = ArrayPool<GreyGuiElement>.Shared.Rent(count);
+        try
         {
-            _children[i].Update();
+            _children.CopyTo(childrenCopy, 0);
+            for (int i = 0; i < count; ++i)
+            {
+                childrenCopy[i].Update();
+            }
         }
+        finally
+        {
+            Array.Clear(childrenCopy, 0, count);
+            ArrayPool<GreyGuiElement>.Shared.Return(childrenCopy);
+        }
+
     }
 
     // render context not implemented yet
@@ -446,9 +492,11 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
             screenScissor
         );
         position.X += (int)(_finalSize.X - _scrollBarWidth);
+
+        // Draw scroll bar track
         context.FillRect(
             new Rectangle(position, new((int)_scrollBarWidth, (int)_finalSize.Y)),
-            new(1, 1, 1, .2f),
+            _trackColor,
             Color.Transparent,
             BorderRadius,
             0,
@@ -465,17 +513,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
         {
             ResolveLayoutDirty();
         }
-        if (_isChildrenZIndexDirty)
-        {
-            // Sort the index using children's ZIndex, so the low-ZIndex-elements' indices in _children will be put in the front of _drawOrder, therefore be drew first later on
-            _drawOrder.Clear();
-            for (int i = 0; i < _children.Count; ++i)
-            {
-                _drawOrder.Add(i);
-            }
-            _drawOrder.Sort((a, b) => _children[a].ZIndex.CompareTo(_children[b].ZIndex));
-            _isChildrenZIndexDirty = false;
-        }
+        ResolveChildrenZIndexDirty();
 
         Point scissorPos = new Point((int)(BorderRadius * (Constant.SQRT2 - 1) + PaddingTop));
         Rectangle selfScissor = new(position + scissorPos, _containerSize.ToPoint());
@@ -498,7 +536,7 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
         position.Y += _buttonYOffset;
         context.FillRect(
             new Rectangle(position, new((int)_scrollBarWidth, (int)_scrollButtonHeight)),
-            GuiUpdate.FocusedElement == this ? new(.8f, .8f, .8f, 1f) : new(.8f, .8f, .8f, .7f),
+            GuiUpdate.FocusedElement == this ? _scrollBarColor with { A = 255 } : _scrollBarColor,
             Color.Transparent,
             BorderRadius,
             0,
@@ -508,13 +546,16 @@ public class ListScrollPanel : GreyGuiElement, IContainer, IRatioElement, IFocus
 
     public override GreyGuiElement? GetMouseHandler()
     {
+        if (_isLayoutDirty)
+            return null;
         if (new Rectangle(OnScreenPos + new Point((int)(_finalSize.X - _scrollBarWidth), _buttonYOffset), new((int)_scrollBarWidth, (int)_scrollButtonHeight)).Contains(GuiUpdate.Mouse.Position))
         {
             return this;
         }
-        for (int i = 0; i < _drawOrder.Count; ++i)
+        ResolveChildrenZIndexDirty();
+        for (int i = _drawOrder.Count - 1; i >= 0; --i)
         {
-            GreyGuiElement? result = _children[i].GetMouseHandler();
+            GreyGuiElement? result = _children[_drawOrder[i]].GetMouseHandler();
             if (result != null)
                 return result;
         }

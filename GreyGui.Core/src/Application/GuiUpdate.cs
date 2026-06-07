@@ -26,8 +26,8 @@ public static class GuiUpdate
     /// <summary>
     /// If the mouse is being captured by a GreyGuiElement.
     /// </summary>
-    public static bool IsMouseHandled { get; private set; }
-    
+    public static bool IsMouseHandled { get => MouseHandler != null; }
+
     /// <summary>
     /// The GreyGuiElement currently captures the mouse.
     /// </summary>
@@ -43,16 +43,16 @@ public static class GuiUpdate
     {
         ElapsedTimeSecond = gameTime.ElapsedGameTime.TotalSeconds;
 
-        prevMouseState = currMouseState;
-        currMouseState = mouseState;
-        prevKeyboardState = currKeyboardState;
-        currKeyboardState = keyboardState;
-        keyboardState.GetPressedKeys(pressedKeys);
-        pressedKeyCount = keyboardState.GetPressedKeyCount();
+        _prevMouseState = _currMouseState;
+        _currMouseState = mouseState;
+        _prevKeyboardState = _currKeyboardState;
+        _currKeyboardState = keyboardState;
+        keyboardState.GetPressedKeys(_pressedKeys);
+        _pressedKeyCount = keyboardState.GetPressedKeyCount();
         MouseHandler = null;
 
-        (nextFrameInputBuffer, activeInputBuffer) = (activeInputBuffer, nextFrameInputBuffer);
-        nextFrameInputBuffer.Clear();
+        (_nextFrameInputBuffer, _activeInputBuffer) = (_activeInputBuffer, _nextFrameInputBuffer);
+        _nextFrameInputBuffer.Clear();
         ++FrameId;
     }
 
@@ -70,6 +70,10 @@ public static class GuiUpdate
         }
         root.Update();
     }
+    public static void StopHandlingMouseThisFrame()
+    {
+        MouseHandler ??= _virtualMouseHandler;
+    }
 
     /// <summary>
     /// Initialize GuiUpdate. This will be called on GreyGui.Initialize.
@@ -86,13 +90,13 @@ public static class GuiUpdate
     /// </summary>
     public static class Mouse
     {
-        public static Point Position => currMouseState.Position;
-        public static bool IsLeftButtonDown => currMouseState.LeftButton == ButtonState.Pressed && currMouseState.LeftButton != prevMouseState.LeftButton;
-        public static bool IsLeftButtonUp => currMouseState.LeftButton == ButtonState.Released && currMouseState.LeftButton != prevMouseState.LeftButton;
-        public static bool IsLeftHold => currMouseState.LeftButton == ButtonState.Pressed;
-        public static bool IsRightButtonDown => currMouseState.RightButton == ButtonState.Pressed && currMouseState.RightButton != prevMouseState.RightButton;
-        public static bool IsRightButtonUp => currMouseState.RightButton == ButtonState.Released && currMouseState.RightButton != prevMouseState.RightButton;
-        public static bool IsRightHold => currMouseState.RightButton == ButtonState.Pressed;
+        public static Point Position => _currMouseState.Position;
+        public static bool IsLeftButtonDown => _currMouseState.LeftButton == ButtonState.Pressed && _currMouseState.LeftButton != _prevMouseState.LeftButton;
+        public static bool IsLeftButtonUp => _currMouseState.LeftButton == ButtonState.Released && _currMouseState.LeftButton != _prevMouseState.LeftButton;
+        public static bool IsLeftHold => _currMouseState.LeftButton == ButtonState.Pressed;
+        public static bool IsRightButtonDown => _currMouseState.RightButton == ButtonState.Pressed && _currMouseState.RightButton != _prevMouseState.RightButton;
+        public static bool IsRightButtonUp => _currMouseState.RightButton == ButtonState.Released && _currMouseState.RightButton != _prevMouseState.RightButton;
+        public static bool IsRightHold => _currMouseState.RightButton == ButtonState.Pressed;
     }
 
     /// <summary>
@@ -100,30 +104,31 @@ public static class GuiUpdate
     /// </summary>
     public static class Keyboard
     {
-        public static Keys[] GetPressedKeys() => pressedKeys;
-        public static int GetPressedKeyCount() => pressedKeyCount;
-        public static bool IsKeyDown(Keys key) => !prevKeyboardState.IsKeyDown(key) && currKeyboardState.IsKeyDown(key);
-        public static bool IsKeyHold(Keys key) => currKeyboardState.IsKeyDown(key);
-        public static bool IsKeyUp(Keys key) => prevKeyboardState.IsKeyDown(key) && !currKeyboardState.IsKeyDown(key);
+        public static Keys[] GetPressedKeys() => _pressedKeys;
+        public static int GetPressedKeyCount() => _pressedKeyCount;
+        public static bool IsKeyDown(Keys key) => !_prevKeyboardState.IsKeyDown(key) && _currKeyboardState.IsKeyDown(key);
+        public static bool IsKeyHold(Keys key) => _currKeyboardState.IsKeyDown(key);
+        public static bool IsKeyUp(Keys key) => _prevKeyboardState.IsKeyDown(key) && !_currKeyboardState.IsKeyDown(key);
 
-        public static ReadOnlySpan<char> GetTextInputBuffer() => CollectionsMarshal.AsSpan(activeInputBuffer);
+        public static ReadOnlySpan<char> GetTextInputBuffer() => CollectionsMarshal.AsSpan(_activeInputBuffer);
     }
 
     private const int maxInputBufferSize = 64;
     private static IFocusable? _focusedElement = null;
-    private static MouseState prevMouseState;
-    private static MouseState currMouseState;
-    private static KeyboardState prevKeyboardState;
-    private static KeyboardState currKeyboardState;
-    private readonly static Keys[] pressedKeys = new Keys[64];
-    private static int pressedKeyCount = 0;
-    private static List<char> nextFrameInputBuffer = [];
-    private static List<char> activeInputBuffer = [];
+    private static MouseState _prevMouseState;
+    private static MouseState _currMouseState;
+    private static KeyboardState _prevKeyboardState;
+    private static KeyboardState _currKeyboardState;
+    private readonly static Keys[] _pressedKeys = new Keys[64];
+    private static int _pressedKeyCount = 0;
+    private static List<char> _nextFrameInputBuffer = [];
+    private static List<char> _activeInputBuffer = [];
+    private readonly static GreyGuiElement _virtualMouseHandler = new Text(displayText: "Virtual Mouse Handler");
 
     private static void OnTextInput(object? _, TextInputEventArgs eventArgs)
     {
         // Console.WriteLine(eventArgs.Key.ToString() + eventArgs.Character.ToString());
-        if (nextFrameInputBuffer.Count > maxInputBufferSize)
+        if (_nextFrameInputBuffer.Count > maxInputBufferSize)
         {
             return;
         }
@@ -131,14 +136,14 @@ public static class GuiUpdate
         if (eventArgs.Key == Keys.Enter)
         {
             // Unify \n, \r to \n
-            nextFrameInputBuffer.Add('\n');
+            _nextFrameInputBuffer.Add('\n');
             return;
         }
         if (eventArgs.Key == Keys.Back)
         {
-            nextFrameInputBuffer.Add('\b');
+            _nextFrameInputBuffer.Add('\b');
             return;
         }
-        nextFrameInputBuffer.Add(eventArgs.Character);
+        _nextFrameInputBuffer.Add(eventArgs.Character);
     }
 }

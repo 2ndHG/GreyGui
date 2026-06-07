@@ -68,6 +68,8 @@ public class RenderContext
     /// <param name="scissor">Scissor rectangle</param>
     public void FillRect(Rectangle dest, Color color, Color borderColor, float borderRadius, float borderWidth, Rectangle scissor)
     {
+        if (color.A == 0 && borderColor.A == 0)
+            return;
         EnsureCapacity(4, 6);
 
         PrepareDrawBatchForTexture(GreyGuiCore.Atlas, scissor);
@@ -93,6 +95,8 @@ public class RenderContext
     /// </summary>
     public void FillRect(Rectangle dest, Color colorTl, Color colorTr, Color colorBl, Color colorBr, Color borderColorTl, Color borderColorTr, Color borderColorBl, Color borderColorBr, float borderRadius, float borderWidth, Rectangle scissor)
     {
+        if (colorTl.A == 0 && colorTr.A == 0 && colorBl.A == 0 && colorBr.A == 0 && borderColorTl.A == 0 && borderColorTr.A == 0 && borderColorBl.A == 0 && borderColorBr.A == 0)
+            return;
         EnsureCapacity(4, 6);
         PrepareDrawBatchForTexture(GreyGuiCore.Atlas, scissor);
         AddIndicesToLastBatch(6);
@@ -126,6 +130,8 @@ public class RenderContext
     /// <param name="scissor">Scissor rectangle</param>
     public void RenderTexture(Texture2D texture, Rectangle destRect, Rectangle srcRect, Color color, Color borderColor, float borderRadius, float borderWidth, Rectangle scissor)
     {
+        if (color.A == 0 && borderColor.A == 0)
+            return;
         EnsureCapacity(4, 6);
 
         PrepareDrawBatchForTexture(texture, scissor);
@@ -218,6 +224,8 @@ public class RenderContext
     /// <param name="scissor">Screen scissor</param>
     public void RenderTextUsingCharIndices(List<int> indices, int startIndex, int length, Vector2 position, float fontSize, Color color, Rectangle scissor)
     {
+        if (color.A == 0)
+            return;
         EnsureCapacity(4 * length, 6 * length);
         PrepareDrawBatchForTexture(GreyGuiCore.Atlas, scissor);
         AddIndicesToLastBatch(6 * length);
@@ -349,6 +357,8 @@ public class RenderContext
     /// <param name="scissor">Scissor rectangle</param>
     public void FillCircle(Vector2 center, float radius, Color color, Rectangle scissor)
     {
+        if (color.A == 0)
+            return;
         EnsureCapacity(4, 6);
         PrepareDrawBatchForTexture(GreyGuiCore.Atlas, scissor);
         AddIndicesToLastBatch(6);
@@ -383,6 +393,8 @@ public class RenderContext
     /// <param name="scissor">Scissor rectangle</param>
     public void RenderLine(Vector2 start, Vector2 end, float thickness, Color color, Rectangle scissor)
     {
+        if (color.A == 0)
+            return;
         EnsureCapacity(4, 6);
 
         PrepareDrawBatchForTexture(GreyGuiCore.Atlas, scissor);

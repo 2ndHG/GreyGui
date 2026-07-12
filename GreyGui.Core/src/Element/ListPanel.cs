@@ -104,6 +104,17 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
             IsLayoutDirty = true;
         }
     }
+    public VerticalAlignment VerticalAlignment
+    {
+        get => _verticalAlignment;
+        set
+        {
+            if (_verticalAlignment == value) return;
+
+            _verticalAlignment = value;
+            IsLayoutDirty = true;
+        }
+    }
     public bool IsLayoutDirty { get => _isLayoutDirty; set => _isLayoutDirty = value; }
     public bool IsChildrenZIndexDirty { get => _isChildrenZIndexDirty; set => _isChildrenZIndexDirty = value; }
     public override int ZIndex
@@ -132,6 +143,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
     private Vector2 _finalSize;
     private int _zIndex;
     private RowLayoutMode _layoutMode;
+    private VerticalAlignment _verticalAlignment;
     private float _childGap;
     private float _rowGap;
     private Vector2 _containerSize;
@@ -149,7 +161,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
     public ListPanel() { }
     public ListPanel(
         Color? colorMask = null, Color borderColor = default, int borderRadius = default, int borderWidth = default,
-        Vector2 size = default, WidthMode widthMode = WidthMode.Fixed, HeightMode heightMode = HeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, float childGap = default, float rowGap = default, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, ICollection<GreyGuiElement>? children = null)
+        Vector2 size = default, WidthMode widthMode = WidthMode.Fixed, HeightMode heightMode = HeightMode.Fixed, float widthRatio = default, float heightRatio = default, float heightWidthRatio = default, int paddingTop = default, int paddingBottom = default, int paddingSide = default, int zIndex = default, RowLayoutMode layoutMode = default, VerticalAlignment verticalAlignment = VerticalAlignment.Top, float childGap = default, float rowGap = default, Texture2D? imageTexture = null, Rectangle imageSrcRect = default, ICollection<GreyGuiElement>? children = null)
     {
         ColorMask = (colorMask, imageTexture) switch
         {
@@ -171,6 +183,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
         PaddingBottom = paddingBottom;
         PaddingSide = paddingSide;
         LayoutMode = layoutMode;
+        _verticalAlignment = verticalAlignment;
         _childGap = childGap;
         _rowGap = rowGap;
         _zIndex = zIndex;
@@ -318,6 +331,12 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
             RowLayoutMode.Right => 1f,
             _ => 0
         };
+        float yLayoutMulti = _verticalAlignment switch
+        {
+            VerticalAlignment.Center => .5f,
+            VerticalAlignment.Bottom => 1f,
+            _ => 0
+        };
         void InsertRow(float y, float rowElementTotalWidth, float rowHeight, int elementBegin, int elementEnd)
         {
             int gapCount = elementEnd - elementBegin - 1;
@@ -337,7 +356,7 @@ public class ListPanel : GreyGuiElement, IContainer, IRatioElement
 
             for (int i = elementBegin; i < elementEnd; ++i)
             {
-                _childrenPosition.Add(new Point((int)MathF.Round(x), (int)MathF.Round(y)));
+                _childrenPosition.Add(new Point((int)MathF.Round(x), (int)MathF.Round(y +  (rowHeight - _children[i].FinalSize.Y) * yLayoutMulti)));
                 x += _children[i].FinalSize.X + childGapWidth;
             }
         }

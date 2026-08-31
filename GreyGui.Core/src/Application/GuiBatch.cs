@@ -90,7 +90,7 @@ public class GuiBatch
 
         Matrix projection = Matrix.CreateOrthographicOffCenter(0, _device.Viewport.Width, _device.Viewport.Height, 0, 0, 1);
 
-        _device.BlendState = BlendState.NonPremultiplied;
+        _device.BlendState = BlendState.AlphaBlend;
         _device.RasterizerState = ScissorState;
 
         _uiShader.Parameters["WorldViewProjection"].SetValue(projection);

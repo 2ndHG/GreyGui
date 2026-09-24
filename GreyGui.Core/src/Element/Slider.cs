@@ -96,7 +96,8 @@ public class Slider : GreyGuiElement, IRatioElement, IFocusable
 
     public event Action? OnValueChanged;
     public float Percentage => _percentage;
-    public float Step => MathF.Floor(_percentage * MaxStep);
+    public float Step => ValueMode == SliderValueMode.Step ?
+        MathF.Round(_percentage * MaxStep) : MathF.Floor(_percentage * MaxStep);
 
     private WidthMode _widthMode;
     private HeightMode _heightMode;
@@ -146,7 +147,7 @@ public class Slider : GreyGuiElement, IRatioElement, IFocusable
         {
             (null, _) => new Rectangle(0, 0, 1, 1),
             (not null, true) => buttonTexture.Bounds,
-            (not null, false) => panelSrcRect
+            (not null, false) => buttonSrcRect
         };
 
         BorderRadius = borderRadius;
@@ -202,7 +203,7 @@ public class Slider : GreyGuiElement, IRatioElement, IFocusable
             _buttonTexture,
             new Rectangle(buttonPosition, _buttonSize.ToPoint()),
             _buttonSrcRect,
-            GuiUpdate.FocusedElement == this ? 
+            GuiUpdate.FocusedElement == this ?
                 _buttonColor with { A = 255 } : _buttonColor,
             BorderColor,
             BorderRadius,
@@ -264,7 +265,7 @@ public class Slider : GreyGuiElement, IRatioElement, IFocusable
         }
         else
         {
-            _buttonSize.X = Math.Max(_buttonSize.X / MaxStep, _buttonSize.Y);
+            _buttonSize.X = Math.Max(_finalSize.X / (MaxStep + 1), _finalSize.Y);
         }
         _isSizeDirty = false;
     }
@@ -301,18 +302,21 @@ public class Slider : GreyGuiElement, IRatioElement, IFocusable
     {
         float originalValue = Step;
 
-        float trackLength = _finalSize.X - _buttonSize.X;
-        float percentageOffset = (GuiUpdate.Mouse.Position.X - OnScreenPos.X) / trackLength;
-        _percentage = Math.Clamp(percentageOffset, 0f, 1f);
+        if (MaxStep <= 0)
+            return;
+
+        float trackLength = (_finalSize.X - _buttonSize.X) / MaxStep;
+        int step = (int)MathF.Floor((GuiUpdate.Mouse.Position.X - OnScreenPos.X - _buttonSize.X / 2f) / trackLength + 0.5f);
+        step = Math.Clamp(step, 0, MaxStep);
+        _percentage = (float)step / MaxStep;
 
         float newValue = Step;
-        _percentage = newValue / MaxStep;
 
 
         if (originalValue != newValue)
         {
             OnValueChanged?.Invoke();
-            Console.WriteLine($"{Percentage}, {Step}");
+            // Console.WriteLine($"{Percentage}, {Step}");
         }
     }
     private void PercentageModeDragUpdate()

@@ -467,7 +467,8 @@ public class Game1 : Game
             new Slider(
                 widthMode: WidthMode.ParentRatio, widthRatio: .5f,
                 heightMode: HeightMode.Fixed, size: new(0, 20),
-                borderRadius: 10
+                borderRadius: 10,
+                valueMode: SliderValueMode.Step
             ),
             new RowPanel(colorMask: Color.Transparent, widthMode: WidthMode.ParentRatio, widthRatio: 1f, size: new(0, 60),layoutMode: RowLayoutMode.Justify).SetChildren([
                 new Text(colorMask: Color.White, widthMode: TextWidthMode.ParentRatio, widthRatio: .33f, heightMode: TextHeightMode.TextHeight, fontSize: 26f, displayText: "Element Width Definer"),

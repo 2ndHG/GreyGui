@@ -1,6 +1,6 @@
 namespace GreyGui.Core;
-public enum TrackLengthMode
+public enum ButtonTravelMode
 {
-    UseButtonSize,
-    UseButtonCenter,
+    Inclusion,
+    Exclusion,
 }

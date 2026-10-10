@@ -91,8 +91,8 @@ public class Slider : GreyGuiElement, IRatioElement, IFocusable
     public int MaxStep { get; set; }
     public SliderValueMode ValueMode { get; set; }
 
-    public TrackDirection TrackDirection { get; set; } = TrackDirection.Horizontal;
-    public TrackLengthMode TrackLengthMode { get; set; } = TrackLengthMode.UseButtonSize;
+    // public TrackDirection TrackDirection { get; set; } = TrackDirection.Horizontal;
+    // public ButtonTravelMode TrackLengthMode { get; set; } = ButtonTravelMode.Inclusion;
 
     public event Action? OnValueChanged;
     public float Percentage => _percentage;

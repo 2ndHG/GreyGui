@@ -45,7 +45,7 @@ public class Game1 : Game
 
     protected override void LoadContent()
     {
-        // _buttonTexture = Content.Load<Texture2D>("SampleImage/ButtonSample");
+        _buttonTexture = Content.Load<Texture2D>("SampleImage/ButtonSample");
         _bannerRt = new RenderTarget2D(GraphicsDevice, 800, 180);
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         GreyGuiCore.Initialize(this);

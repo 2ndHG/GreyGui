@@ -58,12 +58,11 @@ float4 MainPS(VertexShaderOutput input) : COLOR
         float cutOff = 0.5;
         float antiAliasingDistant = antiAliasingFactor / radius; // radius is font size
 
-        float alpha = smoothstep(cutOff - antiAliasingDistant - size.x, cutOff + antiAliasingDistant- size.x, distance);
-        
-        float4 finalColor = fillColor;
-        finalColor.a *= alpha;
-        
-        return finalColor;
+        float coverage = smoothstep(cutOff - antiAliasingDistant - size.x, cutOff + antiAliasingDistant- size.x, distance);
+
+        float a = fillColor.a * coverage;
+        // For AlphaBlend, premultiplied the rgb section
+        return float4(fillColor.rgb * a, a);
     }
     
     float2 halfSize = size * 0.5;
@@ -81,8 +80,10 @@ float4 MainPS(VertexShaderOutput input) : COLOR
     float4 finalColor = lerp(borderColor, fillColor, borderAlpha);
     
     float4 texColor = tex2D(TextureSampler, input.TexCoord);
-    
-    return finalColor * texColor * alpha;
+
+    float a = finalColor.a * texColor.a * alpha;
+    // For AlphaBlend, premultiplied the rgb section
+    return float4(finalColor.rgb * texColor.rgb * a, a);
 }
 
 technique SpriteBatch

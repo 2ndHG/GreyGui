@@ -8,7 +8,7 @@
     <Description>An HTML-inspired GUI Library for MonoGame</Description>
     <PackageTags>monogame;.net core;core;.net standard;standard;gui</PackageTags>
     <PackageId>GreyGui</PackageId>
-    <Version>0.1.8-alpha.2</Version>
+    <Version>0.1.8-alpha.3</Version>
     <Authors>Norphel Lynn</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -16,7 +16,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Monogame.Framework.desktopGL" Version="3.8.4.1" />
+    <PackageReference Include="Monogame.Framework.desktopGL" Version="3.8.5" />
   </ItemGroup>
 
   <ItemGroup>

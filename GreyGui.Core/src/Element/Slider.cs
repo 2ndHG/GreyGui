@@ -92,7 +92,7 @@ public class Slider : GreyGuiElement, IRatioElement, IFocusable
     public SliderValueMode ValueMode { get; set; }
 
     // public TrackDirection TrackDirection { get; set; } = TrackDirection.Horizontal;
-    // public ButtonTravelMode TrackLengthMode { get; set; } = ButtonTravelMode.Inclusion;
+    public ButtonTravelMode ButtonInclusion { get; set; } = ButtonTravelMode.Inclusion;
 
     public event Action? OnValueChanged;
     public float Percentage => _percentage;
@@ -173,8 +173,9 @@ public class Slider : GreyGuiElement, IRatioElement, IFocusable
         {
             GuiUpdate.FocusedElement = this;
             _onPressedPercentage = _percentage;
+            var (minOffset, travel) = GetButtonTravel();
             Point buttonPosition = OnScreenPos;
-            buttonPosition.X += (int)(_percentage * (_finalSize.X - _buttonSize.X));
+            buttonPosition.X += (int)(minOffset + _percentage * travel);
 
             _onPressedMousePosition = new Rectangle(buttonPosition, _buttonSize.ToPoint()).Contains(GuiUpdate.Mouse.Position) ?
                 GuiUpdate.Mouse.Position : buttonPosition + new Point((int)(_buttonSize.X / 2), 0);
@@ -197,8 +198,11 @@ public class Slider : GreyGuiElement, IRatioElement, IFocusable
             BorderWidth,
             screenScissor
         );
+
+        var (minOffset, travel) = GetButtonTravel();
         Point buttonPosition = position;
-        buttonPosition.X += (int)(_percentage * (_finalSize.X - _buttonSize.X));
+        buttonPosition.X += (int)(minOffset + _percentage * travel);
+        buttonPosition.Y += 10;
         renderContext.RenderTexture(
             _buttonTexture,
             new Rectangle(buttonPosition, _buttonSize.ToPoint()),
@@ -261,6 +265,7 @@ public class Slider : GreyGuiElement, IRatioElement, IFocusable
         _buttonSize = _finalSize;
         if (ValueMode == SliderValueMode.Percentage)
         {
+            // if(ButtonInclusion == TrackButtonInclusion.Included)
             _buttonSize.X = Math.Max(_buttonSize.X * 0.2f, _buttonSize.Y);
         }
         else
@@ -298,6 +303,15 @@ public class Slider : GreyGuiElement, IRatioElement, IFocusable
     {
     }
 
+    /// <summary>
+    /// minOffset: button's left edge (relative to slider's left edge) when percentage = 0.
+    /// travel: how far the button's left edge moves from percentage 0 to 1.
+    /// </summary>
+    private (float minOffset, float travel) GetButtonTravel() =>
+        ButtonInclusion == ButtonTravelMode.Inclusion
+            ? (0f, _finalSize.X - _buttonSize.X)
+            : (-_buttonSize.X / 2f, _finalSize.X);
+
     private void StepModeDragUpdate()
     {
         float originalValue = Step;
@@ -305,8 +319,14 @@ public class Slider : GreyGuiElement, IRatioElement, IFocusable
         if (MaxStep <= 0)
             return;
 
-        float trackLength = (_finalSize.X - _buttonSize.X) / MaxStep;
-        int step = (int)MathF.Floor((GuiUpdate.Mouse.Position.X - OnScreenPos.X - _buttonSize.X / 2f) / trackLength + 0.5f);
+        var (minOffset, travel) = GetButtonTravel();
+        if (travel <= 0)
+            return;
+
+        float stepLength = travel / MaxStep;
+        // Distance from the button's min position, assuming the mouse holds the button center
+        float mouseOnTrack = GuiUpdate.Mouse.Position.X - OnScreenPos.X - minOffset - _buttonSize.X / 2f;
+        int step = (int)MathF.Floor(mouseOnTrack / stepLength + 0.5f);
         step = Math.Clamp(step, 0, MaxStep);
         _percentage = (float)step / MaxStep;
 
@@ -323,8 +343,11 @@ public class Slider : GreyGuiElement, IRatioElement, IFocusable
     {
         float originalValue = _percentage;
 
-        float trackLength = _finalSize.X - _buttonSize.X;
-        float percentageOffset = (GuiUpdate.Mouse.Position.X - _onPressedMousePosition.X) / trackLength;
+        var (_, travel) = GetButtonTravel();
+        if (travel <= 0)
+            return;
+
+        float percentageOffset = (GuiUpdate.Mouse.Position.X - _onPressedMousePosition.X) / travel;
         _percentage = Math.Clamp(_onPressedPercentage + percentageOffset, 0f, 1f);
         float newValue = _percentage;
 
